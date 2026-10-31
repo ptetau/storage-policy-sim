@@ -1,6 +1,6 @@
 # IN-0001 · Solar self-consumption simulator
 
-Status: specifying · Ticket: none · Branch: none · Added: 2026-10-31
+Status: ready · Ticket: none · Branch: none · Added: 2026-10-31
 
 ## What and why
 
@@ -45,43 +45,50 @@ Acceptance-Passed: none
 - IN-0001 (simulator): What is the time step? → one hour, from 1 January, for a number of days (assumed).
 - IN-0001 (simulator): Where does weather come from? → a seeded random model, so that each run with the same seed is the same (assumed).
 - IN-0001 (simulator): Which strategies? → none, greedy, evening, and shift (assumed), so that a battery strategy and a load strategy can be compared.
+- JOB-simulate.R5 (bad command line): What do bad values give? → one `error: <code>: <detail>` line on stderr, empty stdout, and exit code 2 (assumed).
+- JOB-simulate.R5 (bad command line): Which number forms count? → an optional sign, digits, and an optional point with digits. `--days` and `--seed` are whole (assumed).
+- JOB-simulate.R5 (bad command line): What ranges hold? → the table of the requirement, for example `--days` 1 to 3650 (assumed).
+- JOB-simulate.R5 (bad command line): What if an option comes twice? → the last value counts (assumed).
+- JOB-simulate.R3 (compare strategies): Does `sim compare` take `--strategy` or `--monthly`? → no, each gives `UNKNOWN_OPTION` (assumed).
+- CAP-scenario.R1 (seasonal sun): What if a latitude or a size is out of range? → JOB-simulate.R5 (bad command line) refuses it before the simulation (assumed).
+- DES-lean-checks (Lean check files): How does a Lean check file run and report? → a Lean script with a name filter and a count line (assumed).
 
 ## Handoff
 
-### Handoff · IN-0001 · intake → ready
+### Handoff · IN-0001 · ready → change
 
-Time: 2026-10-31T22:54:06+00:00
+Time: 2026-10-31T22:55:38+00:00
 
 ### Done
 
-- Intake added four new specs for IN-0001 (solar self-consumption simulator).
-- CAP-scenario (sun, weather and load) gets three requirements. CAP-strategies (battery and load strategies) gets five.
-- CAP-simulation (hourly energy flows) gets five requirements. JOB-simulate (the `sim` command) gets five.
-- The project has no code yet. Thus, no spec had a deep look from recon.
+- Ready added the bad command-line lines to JOB-simulate.R5 (bad command line), with six error codes in DES-errors (error codes).
+- Ready agreed DES-lean-checks (Lean check files), because the project had no checks yet.
+- Each of the 18 requirements of IN-0001 (solar self-consumption simulator) is now `ready`.
+- Ready found no contradiction.
 
 ### Decided on defaults
 
-- IN-0001 (simulator): What does "self consumption" mean? → the share of the solar energy that the house uses itself, and does not export (assumed).
-- IN-0001 (simulator): What is the time step? → one hour, from 1 January, for a number of days (assumed).
-- IN-0001 (simulator): Where does weather come from? → a seeded random model, so that each run with the same seed is the same (assumed).
-- IN-0001 (simulator): Which strategies? → none, greedy, evening, and shift (assumed), so that a battery strategy and a load strategy can be compared.
+- JOB-simulate.R5 (bad command line): What do bad values give? → one `error: <code>: <detail>` line on stderr, empty stdout, and exit code 2 (assumed).
+- JOB-simulate.R5 (bad command line): Which number forms count? → an optional sign, digits, and an optional point with digits. `--days` and `--seed` are whole (assumed).
+- JOB-simulate.R5 (bad command line): What ranges hold? → the table of the requirement, for example `--days` 1 to 3650 (assumed).
+- JOB-simulate.R5 (bad command line): What if an option comes twice? → the last value counts (assumed).
+- JOB-simulate.R3 (compare strategies): Does `sim compare` take `--strategy` or `--monthly`? → no, each gives `UNKNOWN_OPTION` (assumed).
+- CAP-scenario.R1 (seasonal sun): What if a latitude or a size is out of range? → JOB-simulate.R5 (bad command line) refuses it before the simulation (assumed).
+- DES-lean-checks (Lean check files): How does a Lean check file run and report? → a Lean script with a name filter and a count line (assumed).
 
 ### Open
 
-- The bad forms of each command-line value need lines and error codes in `DES-errors` (error codes).
-- The checks need a convention for Lean check files, because the project has no checks yet.
+- none
 
 ### Look here
 
-- `pdlc/specs/capabilities/CAP-scenario.md`
-- `pdlc/specs/capabilities/CAP-strategies.md`
-- `pdlc/specs/capabilities/CAP-simulation.md`
-- `pdlc/specs/jobs/JOB-simulate.md`
+- `pdlc/specs/jobs/JOB-simulate.md`: the range table and the error lines of R5 (bad command line).
+- `pdlc/specs/design/DES-lean-checks.md`: how each check file runs.
 
 ### Don't redo
 
-- The split into three capabilities and one job.
+- The requirements of the four specs, and the six new error codes.
 
 ### Next: do this first
 
-Settle the bad command-line values and their error codes. Then agree how a Lean check file runs and reports.
+Plan one change for each spec. CAP-scenario (sun, weather and load) comes first, then CAP-strategies (strategies), CAP-simulation (energy flows), and JOB-simulate (the command).

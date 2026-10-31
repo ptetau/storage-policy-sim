@@ -24,7 +24,7 @@ option is a fair test.
 
 ### JOB-simulate.R1 · Run one strategy
 
-Status: proposed · Intents: IN-0001
+Status: ready · Intents: IN-0001
 
 `sim run` simulates one strategy, prints the result on stdout, and exits with 0. Each line
 is a label, spaces to column 19, and a value (assumed). An energy has one decimal and `kWh`,
@@ -50,7 +50,7 @@ The options and their defaults are these (assumed):
 
 ### JOB-simulate.R2 · Monthly table
 
-Status: proposed · Intents: IN-0001
+Status: ready · Intents: IN-0001
 
 `sim run --monthly` prints the 11 lines, a blank line, and a table with one row for each
 month (assumed). The header is `month solar-kWh load-kWh import-kWh export-kWh
@@ -64,7 +64,7 @@ row starts with the short month name, for example `Jan`, and has seven fields.
 
 ### JOB-simulate.R3 · Compare strategies
 
-Status: proposed · Intents: IN-0001
+Status: ready · Intents: IN-0001
 
 `sim compare` runs each strategy on the same weather, and prints one row for each strategy.
 The header is `strategy self-consumption-% self-sufficiency-% import-kWh export-kWh`
@@ -79,7 +79,7 @@ spaces. `sim compare` takes each option of `sim run` except `--strategy` and `--
 
 ### JOB-simulate.R4 · Repeatable weather
 
-Status: proposed · Intents: IN-0001
+Status: ready · Intents: IN-0001
 
 The seed sets the weather. The same options and seed give the same output each time.
 
@@ -88,8 +88,55 @@ The seed sets the weather. The same options and seed give the same output each t
 
 ### JOB-simulate.R5 · Bad command line
 
-Status: proposed · Intents: IN-0001
+Status: ready · Intents: IN-0001
 
 A bad command line prints one error line on stderr, prints nothing on stdout, and exits
 with 2 (assumed). The line is `error: <code>: <detail>` (assumed). `sim`, `sim help` and
 `sim --help` print the usage on stdout and exit with 0.
+
+A number option takes an optional sign, digits, and an optional point with more digits
+(assumed). `--days` and `--seed` take only whole numbers (assumed). When an option comes
+twice, the last value counts (assumed). The `--flex` range shows the `--load` value as
+the person typed it (assumed). Any other word is an unknown option (assumed). The ranges are these (assumed):
+
+| Option | Lowest | Highest |
+|---|---|---|
+| `--days` | 1 | 3650 |
+| `--seed` | 0 | 4294967295 |
+| `--lat` | -90 | 90 |
+| `--pv` | 0 | 100 |
+| `--battery` | 0 | 200 |
+| `--power` | 0 | 100 |
+| `--load` | 0.1 | 1000 |
+| `--flex` | 0 | the `--load` value |
+
+- Given no arguments, when the person runs `sim`, then the first line on stdout is `usage: sim run [options] | sim compare [options]`. The exit code is 0.
+- Given `help`, when the person runs `sim help`, then it prints the same usage and exits with 0.
+- Given `--help`, when the person runs `sim --help`, then it prints the same usage and exits with 0.
+- Given the command `fly`, when the person runs `sim fly`, then stderr is `error: UNKNOWN_COMMAND: fly`. The exit code is 2.
+- Given `--colour red`, when the person runs `sim run`, then stderr is `error: UNKNOWN_OPTION: --colour`. The exit code is 2.
+- Given `--days` with no value, when the person runs `sim run`, then stderr is `error: MISSING_VALUE: --days`. The exit code is 2.
+- Given `--days abc`, when the person runs `sim run`, then stderr is `error: BAD_NUMBER: --days abc`. The exit code is 2.
+- Given `--days ""`, when the person runs `sim run`, then stderr is `error: BAD_NUMBER: --days `. The exit code is 2.
+- Given `--days 36.5`, when the person runs `sim run`, then stderr is `error: BAD_NUMBER: --days 36.5`. The exit code is 2.
+- Given `--pv 1e3`, `--pv .5`, `--pv 5.` or `--pv 5kW`, when the person runs `sim run`, then each gives `BAD_NUMBER` and exit code 2.
+- Given `--pv +3`, when the person runs `sim run`, then it exits with 0, and the result equals the result of `--pv 3`.
+- Given `--days 0`, when the person runs `sim run`, then stderr is `error: OUT_OF_RANGE: --days 0 (1 to 3650)`. The exit code is 2.
+- Given `--days 3651`, when the person runs `sim run`, then stderr is `error: OUT_OF_RANGE: --days 3651 (1 to 3650)`. The exit code is 2.
+- Given `--days 99999999999999999999`, when the person runs `sim run`, then it gives `OUT_OF_RANGE` and exit code 2.
+- Given `--seed -1`, when the person runs `sim run`, then stderr is `error: OUT_OF_RANGE: --seed -1 (0 to 4294967295)`. The exit code is 2.
+- Given `--seed 4294967295`, when the person runs `sim run`, then it exits with 0. `--seed 4294967296` gives `OUT_OF_RANGE`.
+- Given `--lat 90` and `--lat -90`, when the person runs `sim run`, then each exits with 0.
+- Given `--lat 90.1` and `--lat -90.1`, when the person runs `sim run`, then each gives `OUT_OF_RANGE` and exit code 2.
+- Given `--pv 100` and `--pv 100.1`, when the person runs `sim run`, then the first exits with 0. The second gives `OUT_OF_RANGE`.
+- Given `--pv -1`, when the person runs `sim run`, then stderr is `error: OUT_OF_RANGE: --pv -1 (0 to 100)`. The exit code is 2.
+- Given `--battery 200` and `--battery 200.1`, when the person runs `sim run`, then the first exits with 0. The second gives `OUT_OF_RANGE`.
+- Given `--power 100` and `--power 100.1`, when the person runs `sim run`, then the first exits with 0. The second gives `OUT_OF_RANGE`.
+- Given `--load 0.1` and `--load 0`, when the person runs `sim run`, then the first exits with 0. The second gives `OUT_OF_RANGE`.
+- Given `--load 1000` and `--load 1000.1`, when the person runs `sim run`, then the first exits with 0. The second gives `OUT_OF_RANGE`.
+- Given `--load 10 --flex 10`, when the person runs `sim run`, then it exits with 0.
+- Given `--load 10 --flex 10.5`, when the person runs `sim run`, then stderr is `error: OUT_OF_RANGE: --flex 10.5 (0 to 10)`. The exit code is 2.
+- Given `--strategy wild`, when the person runs `sim run`, then stderr is `error: UNKNOWN_STRATEGY: wild (none, greedy, evening, shift)`. The exit code is 2.
+- Given the extra word `now`, when the person runs `sim run now`, then stderr is `error: UNKNOWN_OPTION: now`. The exit code is 2.
+- Given `--days 10 --days 20`, when the person runs `sim run`, then the `days` line shows 20.
+- Given each error above, when the person runs the command, then stdout is empty.
