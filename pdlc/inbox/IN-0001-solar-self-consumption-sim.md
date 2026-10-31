@@ -1,6 +1,6 @@
 # IN-0001 · Solar self-consumption simulator
 
-Status: ready · Ticket: none · Branch: none · Added: 2026-10-31
+Status: ready · Ticket: none · Branch: pdlc/IN-0001-solar-sim · Added: 2026-10-31
 
 ## What and why
 
@@ -37,7 +37,7 @@ maximizing self consumption of solar captured power. Written in lean4 using late
 
 ## Acceptance checks
 
-Acceptance-File: none
+Acceptance-File: tests/acceptance/IN-0001.acceptance.lean
 Acceptance-Locked: none
 Acceptance-Passed: none
 
