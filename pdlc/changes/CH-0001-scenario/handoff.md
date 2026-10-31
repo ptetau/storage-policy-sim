@@ -1,11 +1,11 @@
-# Handoff · CH-0001 · build → verify
+# Handoff · CH-0001 · verify → user
 
-Time: 2026-10-31T23:28:55+00:00
+Time: 2026-10-31T23:30:36+00:00
 
 ## Done
 
-- The builder renamed the array of the day skies to `daySkies`, and the sky of one day to `sky`, in `scenario`.
-- All 34 checks of `tests/CAP-scenario.lean` pass. No check changed since the lock.
+- Verify failed three times. Round 1 failed on one name in the code and on spec wording. Rounds 2 and 3 failed only on the words of the progress log.
+- The code passes all 34 checks, and the quality, security, privacy and compliance remits.
 
 ## Decided on defaults
 
@@ -13,16 +13,18 @@ Time: 2026-10-31T23:28:55+00:00
 
 ## Open
 
-- none
+- The third failure of verify stops CH-0001 (scenario). The user must decide how the change goes on.
+- The open problem: `change.md` lines 130 and 131 do not say which two names the builder renamed (DES-writing-style rule 4.1).
+- Recommended answer: correct the two log lines to name `daySkies` and `sky`, and run the specification review one more time. No code or check changes.
 
 ## Look here
 
-- `StoragePolicySim/Scenario.lean`
+- `pdlc/changes/CH-0001-scenario/review/specification/result.md`
 
 ## Don't redo
 
-- The checks, and the code that verify round 1 passed.
+- The code, the checks, and the passed remits.
 
 ## Next: do this first
 
-Make the re-review packets with `make_packets.py CH-0001 --verify`.
+Take the answer of the user, or the recommended answer.
