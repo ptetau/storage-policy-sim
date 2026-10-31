@@ -1,31 +1,28 @@
-# Handoff · CH-0001 · build → verify
+# Handoff · CH-0001 · verify → build
 
-Time: 2026-10-31T23:26:26+00:00
+Time: 2026-10-31T23:28:12+00:00
 
 ## Done
 
-- The builder wrote `StoragePolicySim/Scenario.lean`, `lakefile.toml`, `lean-toolchain` and `lake-manifest.json`.
-- All 34 checks of `tests/CAP-scenario.lean` pass with the "all" command of `pdlc/config.md`. No check changed since the lock `5de000a`.
-- The weather uses a seeded SplitMix64 generator. The base load profile has its peaks at 07:00 and 19:00.
-- CAP-scenario.R1 (seasonal sun), R2 (daily weather) and R3 (household load) are now `built`.
+- Verify round 1 failed on quality and specification. Security, privacy and compliance passed. This is round 2 of 2 of CH-0001 (scenario).
+- The specification problem was old wording in the summary of CAP-scenario (sun, weather and load). Verify fixed the words on this branch.
 
 ## Decided on defaults
 
-- CH-0001 (scenario): Does `lake-manifest.json` go into "Files"? → yes, so that each build is the same (assumed).
+- none
 
 ## Open
 
-- none
+- StoragePolicySim/Scenario.lean:149 · In `scenario`, the name `sky` holds the array of the skies of all days, but the name tells of one sky. Two lines later, `s` holds the one sky of the day. Rename the array to `skyOfDay` or `daySkies`, and rename `s` to `sky`. · Remit rule "Names tell what things are and what they do."
 
 ## Look here
 
-- `StoragePolicySim/Scenario.lean`
-- `tests/CAP-scenario.lean`
+- `pdlc/changes/CH-0001-scenario/review/quality/result.md`
 
 ## Don't redo
 
-- The code and the checks.
+- The checks, and the other code of `StoragePolicySim/Scenario.lean`.
 
 ## Next: do this first
 
-Run all checks, then make the review packets with `make_packets.py CH-0001 --verify`.
+Rename the two names in `scenario`, run all checks, and send the change to verify again.

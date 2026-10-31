@@ -4,7 +4,7 @@ Status: active
 
 ## What it is for
 
-CAP-scenario (sun, weather and load) makes the world that a strategy must deal with, one hour at a time. It gives
+CAP-scenario (sun, weather and load) makes the conditions that a strategy must handle, one hour at a time. It gives
 the solar output of each hour from the season and the sun height, and a daily sky from a
 seeded weather model. It also gives the household load of each hour, with a seasonal base
 load and a flexible load that a strategy can move.

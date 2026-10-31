@@ -127,3 +127,4 @@ none
 - After the fix, the 34 checks of `tests/CAP-scenario.lean` pass on the code of the builder. App code exists after a send-back, so a pass is permitted.
 - Build: the 34 checks of `tests/CAP-scenario.lean` pass. No check changed since the lock `5de000a`.
 - Verify round 1: quality and specification failed. The follow-ups of security (a cap on days, and large seeds) need no intent, because JOB-simulate.R5 (bad command line) has these ranges.
+- Send back to build for one name in `scenario`.
