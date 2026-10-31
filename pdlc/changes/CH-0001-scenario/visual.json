@@ -1,0 +1,120 @@
+{
+  "kind": "terminal",
+  "title": "CH-0001 \u00b7 Seasonal sun, daily weather and household load",
+  "width": 1000,
+  "height": 640,
+  "steps": [
+    {
+      "caption": "CAP-scenario \u00b7 setup: build the library",
+      "run": "lake build 2>&1 | tail -1"
+    },
+    {
+      "caption": "CAP-scenario.R1 \u00b7 latitude 45: day 171 gives more than twice day 354",
+      "run": "lake env lean --run pdlc/changes/CH-0001-scenario/demo.lean r1-1"
+    },
+    {
+      "caption": "CAP-scenario.R1 \u00b7 latitude -41: day 354 gives more than twice day 171",
+      "run": "lake env lean --run pdlc/changes/CH-0001-scenario/demo.lean r1-2"
+    },
+    {
+      "caption": "CAP-scenario.R1 \u00b7 latitude 0: days 171 and 354 differ by less than 1%",
+      "run": "lake env lean --run pdlc/changes/CH-0001-scenario/demo.lean r1-3"
+    },
+    {
+      "caption": "CAP-scenario.R1 \u00b7 latitude 45: 00:00 on day 171 gives 0 kWh",
+      "run": "lake env lean --run pdlc/changes/CH-0001-scenario/demo.lean r1-4"
+    },
+    {
+      "caption": "CAP-scenario.R1 \u00b7 each sunny hour of a year gives 0 to 5 kWh",
+      "run": "lake env lean --run pdlc/changes/CH-0001-scenario/demo.lean r1-5"
+    },
+    {
+      "caption": "CAP-scenario.R1 \u00b7 cloudy gives 0.5 times the sunny output",
+      "run": "lake env lean --run pdlc/changes/CH-0001-scenario/demo.lean r1-6"
+    },
+    {
+      "caption": "CAP-scenario.R1 \u00b7 overcast gives 0.15 times the sunny output",
+      "run": "lake env lean --run pdlc/changes/CH-0001-scenario/demo.lean r1-7"
+    },
+    {
+      "caption": "CAP-scenario.R1 \u00b7 0 kW of panels gives 0 kWh",
+      "run": "lake env lean --run pdlc/changes/CH-0001-scenario/demo.lean r1-8"
+    },
+    {
+      "caption": "CAP-scenario.R2 \u00b7 seed 7 gives the same hours two times",
+      "run": "lake env lean --run pdlc/changes/CH-0001-scenario/demo.lean r2-1"
+    },
+    {
+      "caption": "CAP-scenario.R2 \u00b7 seeds 7 and 8 differ on at least 50 days",
+      "run": "lake env lean --run pdlc/changes/CH-0001-scenario/demo.lean r2-2"
+    },
+    {
+      "caption": "CAP-scenario.R2 \u00b7 365 days give 8760 hours in order",
+      "run": "lake env lean --run pdlc/changes/CH-0001-scenario/demo.lean r2-3"
+    },
+    {
+      "caption": "CAP-scenario.R2 \u00b7 0 days give no hours",
+      "run": "lake env lean --run pdlc/changes/CH-0001-scenario/demo.lean r2-4"
+    },
+    {
+      "caption": "CAP-scenario.R2 \u00b7 the 24 hours of each day have one sky",
+      "run": "lake env lean --run pdlc/changes/CH-0001-scenario/demo.lean r2-5"
+    },
+    {
+      "caption": "CAP-scenario.R2 \u00b7 each solar output equals R1 (seasonal sun)",
+      "run": "lake env lean --run pdlc/changes/CH-0001-scenario/demo.lean r2-6"
+    },
+    {
+      "caption": "CAP-scenario.R2 \u00b7 latitude 45: winter has over twice the overcast days",
+      "run": "lake env lean --run pdlc/changes/CH-0001-scenario/demo.lean r2-7"
+    },
+    {
+      "caption": "CAP-scenario.R2 \u00b7 latitude -41: June to August has over twice the overcast days",
+      "run": "lake env lean --run pdlc/changes/CH-0001-scenario/demo.lean r2-8"
+    },
+    {
+      "caption": "CAP-scenario.R2 \u00b7 60% or more of days keep the previous sky",
+      "run": "lake env lean --run pdlc/changes/CH-0001-scenario/demo.lean r2-9"
+    },
+    {
+      "caption": "CAP-scenario.R2 \u00b7 after day 364, the day of the year starts at 0",
+      "run": "lake env lean --run pdlc/changes/CH-0001-scenario/demo.lean r2-10"
+    },
+    {
+      "caption": "CAP-scenario.R3 \u00b7 365 days have 7300 kWh of load",
+      "run": "lake env lean --run pdlc/changes/CH-0001-scenario/demo.lean r3-1"
+    },
+    {
+      "caption": "CAP-scenario.R3 \u00b7 latitude 45: day 15 has 1.45 to 1.55 times the base load of day 197",
+      "run": "lake env lean --run pdlc/changes/CH-0001-scenario/demo.lean r3-2"
+    },
+    {
+      "caption": "CAP-scenario.R3 \u00b7 latitude -41: day 197 has 1.45 to 1.55 times the base load of day 15",
+      "run": "lake env lean --run pdlc/changes/CH-0001-scenario/demo.lean r3-3"
+    },
+    {
+      "caption": "CAP-scenario.R3 \u00b7 day 100: more base load at 19:00 than at 13:00",
+      "run": "lake env lean --run pdlc/changes/CH-0001-scenario/demo.lean r3-4"
+    },
+    {
+      "caption": "CAP-scenario.R3 \u00b7 day 100: more base load at 07:00 than at 03:00",
+      "run": "lake env lean --run pdlc/changes/CH-0001-scenario/demo.lean r3-5"
+    },
+    {
+      "caption": "CAP-scenario.R3 \u00b7 3 kWh of flexible load: 1 kWh at 18:00, 19:00 and 20:00",
+      "run": "lake env lean --run pdlc/changes/CH-0001-scenario/demo.lean r3-6"
+    },
+    {
+      "caption": "CAP-scenario.R3 \u00b7 0 kWh of flexible load: 0 kWh in each hour",
+      "run": "lake env lean --run pdlc/changes/CH-0001-scenario/demo.lean r3-7"
+    },
+    {
+      "caption": "CAP-scenario.R3 \u00b7 seeds 7 and 8 have the same base and flexible load",
+      "run": "lake env lean --run pdlc/changes/CH-0001-scenario/demo.lean r3-8"
+    },
+    {
+      "caption": "CH-0001 \u00b7 all checks pass",
+      "run": "for f in tests/*.lean; do lake env lean --run \"$f\" || exit 1; done"
+    }
+  ]
+}
