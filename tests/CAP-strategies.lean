@@ -193,6 +193,13 @@ def checks : List Check := [
     run := do
       return badDay (Strategy.placeFlex Strategy.shift sunDay defaultFlex)
         (mkDay [(11, 1), (12, 1), (13, 1)]) },
+  -- The three sunniest hours are not next to each other. A version that takes the best
+  -- window of three hours in a row gives 13:00 to 15:00 or 14:00 to 16:00, and fails here.
+  { name := "CAP-strategies.R5 3 kWh with the most sun at 09:00, 14:00 and 15:00 gives each 1 kWh",
+    run := do
+      let pv := mkDay [(9, 4), (10, 1), (11, 1), (12, 1), (14, 3.5), (15, 3)]
+      return badDay (Strategy.placeFlex Strategy.shift pv defaultFlex)
+        (mkDay [(9, 1), (14, 1), (15, 1)]) },
   -- Equal parts: a version that always puts 1 kWh in each hour fails here.
   { name := "CAP-strategies.R5 4.5 kWh at other default hours gives 1.5 kWh at 11:00, 12:00 and 13:00",
     run := do
