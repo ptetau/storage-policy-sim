@@ -2,49 +2,12 @@
 
 Judge only what is in this packet. Write your result next to it, in result.md.
 
-Made at: 8140b59cb6287722876e78c8b75412b987542569
+Made at: bb95de49d5658af7f27da99df48b969d62c7e516
 
 Acceptance-Locked: a404bbe
 
 These are the acceptance checks of an intent. Judge them by the section "Acceptance
 checks of an intent" of the remit below, and by its "Wrong versions".
-
-## Re-review
-
-Earlier review: 67970d4
-
-An earlier review of this remit judged the checks locked at 67970d4. Judge only these two things:
-
-1. Each earlier problem below. If the problem is not fixed, list it again under "Problems".
-2. The changes since the earlier review, in the diff below. List a new problem only
-   where a changed line causes the problem.
-
-Do not raise a new problem on material that did not change. This rule also applies
-to a problem that the earlier review missed.
-Write a "Wrong versions" line only for each check that changed. If no check
-changed, write "none" under "Wrong versions".
-
-### Earlier problems
-
-none
-
-### Changes since the earlier review
-
-````
-diff --git a/tests/acceptance/IN-0001.acceptance.lean b/tests/acceptance/IN-0001.acceptance.lean
-index 17a7776..6833666 100644
---- a/tests/acceptance/IN-0001.acceptance.lean
-+++ b/tests/acceptance/IN-0001.acceptance.lean
-@@ -1011,7 +1011,7 @@ def checks : List Check := [
- 
- def main (args : List String) : IO UInt32 := do
-   let sel := match args with
--    | f :: _ => checks.filter (fun c => c.name.startsWith (f ++ " "))
-+    | f :: _ => checks.filter (fun (c : Check) => c.name.startsWith (f ++ " "))
-     | [] => checks
-   let mut failed := 0
-   for c in sel do
-````
 
 # Remit: tests
 
@@ -237,7 +200,7 @@ Start CH-0001 (scenario) from `pdlc/IN-0001-solar-sim`. Its component checks go 
 
 ### CAP-scenario.R1 · Seasonal sun
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 The output of an hour is the panel power, times the sine of the sun height, times the sky
 factor (assumed). The sun height uses the latitude, the day of the year, and the middle of
@@ -259,7 +222,7 @@ unless the line says otherwise.
 
 ### CAP-scenario.R2 · Daily weather
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 A seed and a number of days give one sky for each day, and the same hours each time. The
 scenario starts on 1 January and gives the hours in order of day, then hour.
@@ -286,7 +249,7 @@ a negative latitude (assumed). After day 364, the day of the year starts again a
 
 ### CAP-scenario.R3 · Household load
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 The daily load includes the flexible load. The base load is the daily load less the flexible
 load, spread over the hours by a fixed profile (assumed).
@@ -924,7 +887,7 @@ Status: active
 
 ## What it is for
 
-CAP-scenario (sun, weather and load) makes the world that a strategy must deal with, one hour at a time. It gives
+CAP-scenario (sun, weather and load) makes the conditions that a strategy must handle, one hour at a time. It gives
 the solar output of each hour from the season and the sun height, and a daily sky from a
 seeded weather model. It also gives the household load of each hour, with a seasonal base
 load and a flexible load that a strategy can move.
@@ -940,7 +903,7 @@ load and a flexible load that a strategy can move.
 
 ### CAP-scenario.R1 · Seasonal sun
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 The output of an hour is the panel power, times the sine of the sun height, times the sky
 factor (assumed). The sun height uses the latitude, the day of the year, and the middle of
@@ -962,7 +925,7 @@ unless the line says otherwise.
 
 ### CAP-scenario.R2 · Daily weather
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 A seed and a number of days give one sky for each day, and the same hours each time. The
 scenario starts on 1 January and gives the hours in order of day, then hour.
@@ -989,7 +952,7 @@ a negative latitude (assumed). After day 364, the day of the year starts again a
 
 ### CAP-scenario.R3 · Household load
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 The daily load includes the flexible load. The base load is the daily load less the flexible
 load, spread over the hours by a fixed profile (assumed).
