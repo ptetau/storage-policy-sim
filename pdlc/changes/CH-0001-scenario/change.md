@@ -124,3 +124,4 @@ none
 - Planned as the first change of IN-0001 (solar self-consumption simulator), because each other change uses its hours.
 - The builder found that `tests/CAP-scenario.lean` does not compile. `fun c => c.name` needs the type `Check` in Lean 4.35.0. The check goes back to the test writer, round 1 of 2.
 - `lake build` writes `lake-manifest.json`. The file goes into "Files" (assumed), so that the build is the same each time.
+- After the fix, the 34 checks of `tests/CAP-scenario.lean` pass on the code of the builder. App code exists after a send-back, so a pass is permitted.

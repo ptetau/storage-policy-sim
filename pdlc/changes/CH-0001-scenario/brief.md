@@ -5,7 +5,7 @@ Write the component checks of this change, only in the files under its "Check fi
 This brief holds each input of the checks. Read another file only when this brief names
 it, for example an existing check file to match its style.
 
-Made at: da151336be627b86beffd2c801935b90c91dd21b
+Made at: 90be743df35754adf09f42536c8cbbee2cbf2cee
 
 ## The change spec
 
@@ -14,9 +14,9 @@ Path: pdlc/changes/CH-0001-scenario/change.md
 ````
 # CH-0001 · Seasonal sun, daily weather and household load
 
-Intent: IN-0001 · Scope: CAP-scenario · Status: testing · Ticket: none · Branch: pdlc/CH-0001-scenario · Base: main
+Intent: IN-0001 · Scope: CAP-scenario · Status: building · Ticket: none · Branch: pdlc/CH-0001-scenario · Base: main
 
-Tests-Locked: none
+Tests-Locked: 0185f3e
 
 ## Delivers
 
@@ -103,6 +103,7 @@ so no entry has an error code.
 - `StoragePolicySim/Scenario.lean`
 - `lakefile.toml: the rest`
 - `lean-toolchain`
+- `lake-manifest.json`
 
 ## Check files
 
@@ -135,6 +136,43 @@ none
 ## Progress log
 
 - Planned as the first change of IN-0001 (solar self-consumption simulator), because each other change uses its hours.
+- The builder found that `tests/CAP-scenario.lean` does not compile. `fun c => c.name` needs the type `Check` in Lean 4.35.0. The check goes back to the test writer, round 1 of 2.
+- `lake build` writes `lake-manifest.json`. The file goes into "Files" (assumed), so that the build is the same each time.
+````
+
+## The handoff
+
+````
+# Handoff · CH-0001 · tests → build
+
+Time: 2026-10-31T23:21:28+00:00
+
+## Done
+
+- The test writer wrote 36 checks in `tests/CAP-scenario.lean`, for R1 (seasonal sun), R2 (daily weather) and R3 (household load).
+- The checks failed before any code, because the library and `lakefile.toml` do not exist yet.
+- The lock is `0185f3e`. The tests review passed with no problem.
+
+## Decided on defaults
+
+- none
+
+## Open
+
+- The acceptance check of CAP-simulation.R2 (battery limits) needs an hour that discharges 2 kWh, from a 5 kWh battery with 2 kW. The evening load profile must give a shortfall above 2 kWh in some hours.
+
+## Look here
+
+- `tests/CAP-scenario.lean`
+- The "Interface" of `pdlc/changes/CH-0001-scenario/change.md`
+
+## Don't redo
+
+- The checks and their lock.
+
+## Next: do this first
+
+Create `lakefile.toml` with the library `StoragePolicySim` and its modules, and `lean-toolchain` with `leanprover/lean4:v4.35.0`. Then write `StoragePolicySim/Scenario.lean`.
 ````
 
 ## The specs
@@ -158,6 +196,7 @@ load and a flexible load that a strategy can move.
 - `StoragePolicySim/Scenario.lean`
 - `lakefile.toml: the rest`
 - `lean-toolchain`
+- `lake-manifest.json`
 
 ## Requirements
 
@@ -371,7 +410,7 @@ def checks : List Check := [
 
 def main (args : List String) : IO UInt32 := do
   let sel := match args with
-    | f :: _ => checks.filter (fun c => c.name.startsWith (f ++ " "))
+    | f :: _ => checks.filter (fun (c : Check) => c.name.startsWith (f ++ " "))
     | [] => checks
   let mut failed := 0
   for c in sel do
@@ -409,4 +448,5 @@ checks yet keeps its checks in `tests/`.
 
 ## The check files that exist now
 
+- tests/CAP-scenario.lean
 - tests/acceptance/IN-0001.acceptance.lean
