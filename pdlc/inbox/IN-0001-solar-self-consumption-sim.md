@@ -30,7 +30,10 @@ maximizing self consumption of solar captured power. Written in lean4 using late
 
 ## Changes
 
-- none yet
+- CH-0001 (scenario): CAP-scenario (sun, weather and load)
+- CH-0002 (strategies): CAP-strategies (battery and load strategies)
+- CH-0003 (simulation): CAP-simulation (hourly energy flows)
+- CH-0004 (sim command): JOB-simulate (the `sim` command)
 
 ## Acceptance checks
 
@@ -55,26 +58,25 @@ Acceptance-Passed: none
 
 ## Handoff
 
-### Handoff · IN-0001 · ready → change
+### Handoff · IN-0001 · change → acceptance
 
-Time: 2026-10-31T22:55:38+00:00
+Time: 2026-10-31T22:58:08+00:00
 
 ### Done
 
-- Ready added the bad command-line lines to JOB-simulate.R5 (bad command line), with six error codes in DES-errors (error codes).
-- Ready agreed DES-lean-checks (Lean check files), because the project had no checks yet.
-- Each of the 18 requirements of IN-0001 (solar self-consumption simulator) is now `ready`.
-- Ready found no contradiction.
+- Change planned four changes, one for each spec, in this order:
+  1. CH-0001 (scenario): the hours of a scenario, in `StoragePolicySim/Scenario.lean`.
+  2. CH-0002 (strategies): the four strategies, in `StoragePolicySim/Strategy.lean`.
+  3. CH-0003 (simulation): the energy flows and the totals, in `StoragePolicySim/Simulation.lean`.
+  4. CH-0004 (sim command): the `sim` command, in `Main.lean`, with the README.
+- The order follows what each change uses. CH-0003 (simulation) uses the first two, and CH-0004 (sim command) uses all three.
 
 ### Decided on defaults
 
-- JOB-simulate.R5 (bad command line): What do bad values give? → one `error: <code>: <detail>` line on stderr, empty stdout, and exit code 2 (assumed).
-- JOB-simulate.R5 (bad command line): Which number forms count? → an optional sign, digits, and an optional point with digits. `--days` and `--seed` are whole (assumed).
-- JOB-simulate.R5 (bad command line): What ranges hold? → the table of the requirement, for example `--days` 1 to 3650 (assumed).
-- JOB-simulate.R5 (bad command line): What if an option comes twice? → the last value counts (assumed).
-- JOB-simulate.R3 (compare strategies): Does `sim compare` take `--strategy` or `--monthly`? → no, each gives `UNKNOWN_OPTION` (assumed).
-- CAP-scenario.R1 (seasonal sun): What if a latitude or a size is out of range? → JOB-simulate.R5 (bad command line) refuses it before the simulation (assumed).
-- DES-lean-checks (Lean check files): How does a Lean check file run and report? → a Lean script with a name filter and a count line (assumed).
+- CH-0001 (scenario): What are the Lean names? → `Sky`, `Site`, `Hour`, `pvOutput` and `scenario`, in the namespace `StoragePolicySim` (assumed).
+- CH-0002 (strategies): What are the Lean names? → `Strategy`, `Request`, `Strategy.decide` and `Strategy.placeFlex` (assumed).
+- CH-0003 (simulation): What are the Lean names? → `Battery`, `Flow`, `stepHour`, `Totals`, `Month`, `Result` and `simulate` (assumed).
+- CH-0004 (sim command): In which order does `sim` find problems? → the command, then each option from left to right, then the ranges, then `--flex` (assumed).
 
 ### Open
 
@@ -82,13 +84,13 @@ Time: 2026-10-31T22:55:38+00:00
 
 ### Look here
 
-- `pdlc/specs/jobs/JOB-simulate.md`: the range table and the error lines of R5 (bad command line).
-- `pdlc/specs/design/DES-lean-checks.md`: how each check file runs.
+- The "Interface" of each change spec in `pdlc/changes/`.
+- `pdlc/specs/design/DES-lean-checks.md`: the form of a check file.
 
 ### Don't redo
 
-- The requirements of the four specs, and the six new error codes.
+- The four change specs and their order.
 
 ### Next: do this first
 
-Plan one change for each spec. CAP-scenario (sun, weather and load) comes first, then CAP-strategies (strategies), CAP-simulation (energy flows), and JOB-simulate (the command).
+Write the acceptance checks in `tests/acceptance/IN-0001.acceptance.lean`. Prove the JOB-simulate (the `sim` command) lines through the `sim` process, and the capability lines through the library functions.
