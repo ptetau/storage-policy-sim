@@ -3,14 +3,14 @@ Result: fail
 Remit: specification
 
 Problems:
-- pdlc/changes/CH-0001-scenario/change.md:130 · The progress-log line "Send back to build for one name in `scenario`." is an imperative with no subject in descriptive text. "Send back" is also a phrasal verb. Write, for example, "The verify step sent the change back to build to change one name in `scenario`." · DES-writing-style rules 4.2 (do not omit subjects), Part 1 section 6 (no imperative in descriptive text) and 9.3 (do not use phrasal verbs)
-- pdlc/changes/CH-0001-scenario/change.md:131 · The clause "the names of `scenario` are fixed" uses the passive voice, but the agent is known (the builder). The word "fixed" can also mean "constant". Write, for example, "the builder corrected the names in `scenario`, and the 34 checks pass." · DES-writing-style rules 3.6 (use the active voice) and 9.2 (use each word correctly)
-- pdlc/changes/CH-0001-scenario/change.md:129 · The noun "these ranges" refers to no noun in the same paragraph. The paragraph names "a cap on days" and "large seeds", not ranges. Write, for example, "because JOB-simulate.R5 (bad command line) limits the days and the seed." · DES-writing-style local-references rule (a short noun must refer to a noun in the same paragraph)
+- pdlc/changes/CH-0001-scenario/change.md:131 · The line "The builder renamed the two names in `scenario`, and the 34 checks pass." gives a fact that does not agree with line 130. Line 130 says that "one name in `scenario` was not clear". Line 131 then says "the two names", and no noun in the same list item tells the reader which two names. The reader cannot tell if the builder renamed one name or two names. Write, for example, "The builder renamed `<old>` to `<new>` and `<old>` to `<new>` in `scenario`, and the 34 checks pass." Or, if only one name changed, write "one name". · DES-writing-style rule 4.1 (give accurate facts) and the local-references rule (a short noun must refer to a noun in the same paragraph)
 
 Follow-ups: none
 
 Notes:
-- The earlier problem is fixed. CAP-scenario.md line 7 now reads "makes the conditions that a strategy must handle, one hour at a time". The phrasal verb "deal with" is gone. The packet does not contain the STE dictionary, so this review cannot confirm that "handle" is an approved verb.
-- The code change in `scenario` only renames two local names (`sky` to `daySkies`, and `s` to `sky`). The behaviour does not change, and the code still meets CAP-scenario.R1 (seasonal sun), R2 (daily weather) and R3 (household load).
-- The writing check gave no findings. The three problems above are rules that a script cannot measure.
-- The claim on change.md line 129 that JOB-simulate.R5 (bad command line) limits the days and the seed is not in this packet. This review cannot confirm the claim.
+- Earlier problem at change.md:130 (imperative "Send back to build") is fixed. Line 130 now reads "Verify returned the change to build, because one name in `scenario` was not clear." The sentence has a subject, uses the active voice, and has no phrasal verb.
+- Earlier problem at change.md:131 (passive "the names of `scenario` are fixed") is fixed. The new line uses the active voice with the builder as the subject, and does not use "fixed". The new line causes the new problem above.
+- Earlier problem at change.md:129 ("these ranges" with no referent) is fixed. Line 129 now says that JOB-simulate.R5 (bad command line) "limits `--days` and `--seed`".
+- Line 132 ("Verify round 2: specification failed on the words of three log lines. Verify corrected the words, and no code changed.") follows the writing rules.
+- The writing check gave no findings for the changed lines.
+- The code, "Files", and the spec did not change since the earlier review. Thus, this review did not judge them again.
