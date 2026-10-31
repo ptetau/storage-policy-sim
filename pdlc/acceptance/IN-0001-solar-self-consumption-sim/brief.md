@@ -5,7 +5,7 @@ Write the acceptance checks of this intent, only in the file on its line `Accept
 This brief holds each input of the checks. Read another file only when this brief names
 it, for example an existing check file to match its style.
 
-Made at: 33c1415c2b32bc8df6d011b26682ff8e3ff1b21d
+Made at: 90be743df35754adf09f42536c8cbbee2cbf2cee
 
 ## The intent
 
@@ -52,7 +52,7 @@ maximizing self consumption of solar captured power. Written in lean4 using late
 ## Acceptance checks
 
 Acceptance-File: tests/acceptance/IN-0001.acceptance.lean
-Acceptance-Locked: 36a6e76
+Acceptance-Locked: 67970d4
 Acceptance-Passed: none
 
 ## Notes
@@ -74,42 +74,38 @@ Acceptance-Passed: none
 
 ## Handoff
 
-### Handoff · IN-0001 · change → acceptance
+### Handoff · IN-0001 · acceptance → tests
 
-Time: 2026-10-31T22:58:08+00:00
+Time: 2026-10-31T23:14:03+00:00
 
 ### Done
 
-- Change planned four changes, one for each spec, in this order:
-  1. CH-0001 (scenario): the hours of a scenario, in `StoragePolicySim/Scenario.lean`.
-  2. CH-0002 (strategies): the four strategies, in `StoragePolicySim/Strategy.lean`.
-  3. CH-0003 (simulation): the energy flows and the totals, in `StoragePolicySim/Simulation.lean`.
-  4. CH-0004 (sim command): the `sim` command, in `Main.lean`, with the README.
-- The order follows what each change uses. CH-0003 (simulation) uses the first two, and CH-0004 (sim command) uses all three.
+- The test writer wrote 154 acceptance checks in `tests/acceptance/IN-0001.acceptance.lean`, for all 18 requirements of IN-0001 (simulator).
+- The checks failed before any code, because the library and `lakefile.toml` do not exist yet.
+- The first review failed on one check of CAP-simulation.R2 (battery limits). The test writer fixed it, and the re-review passed.
+- The lock is `67970d4`. The file has no stored-data line.
 
 ### Decided on defaults
 
-- CH-0001 (scenario): What are the Lean names? → `Sky`, `Site`, `Hour`, `pvOutput` and `scenario`, in the namespace `StoragePolicySim` (assumed).
-- CH-0002 (strategies): What are the Lean names? → `Strategy`, `Request`, `Strategy.decide` and `Strategy.placeFlex` (assumed).
-- CH-0003 (simulation): What are the Lean names? → `Battery`, `Flow`, `stepHour`, `Totals`, `Month`, `Result` and `simulate` (assumed).
-- CH-0004 (sim command): In which order does `sim` find problems? → the command, then each option from left to right, then the ranges, then `--flex` (assumed).
+- JOB-simulate.R1 (run one strategy): What is the `--flex` default when `--load` is less than 3? → the `--load` value (assumed).
+- JOB-simulate.R5 (bad command line): How does a range show? → `(<lowest> to <highest>)` as in the table (assumed).
 
 ### Open
 
-- none
+- The check of CAP-simulation.R2 (battery limits) needs one hour that discharges exactly 2 kWh. The load profile of CH-0001 (scenario) must give such an hour.
 
 ### Look here
 
-- The "Interface" of each change spec in `pdlc/changes/`.
-- `pdlc/specs/design/DES-lean-checks.md`: the form of a check file.
+- `tests/acceptance/IN-0001.acceptance.lean`
+- `pdlc/acceptance/IN-0001-solar-self-consumption-sim/review/tests/result.md`
 
 ### Don't redo
 
-- The four change specs and their order.
+- The acceptance checks and their lock.
 
 ### Next: do this first
 
-Write the acceptance checks in `tests/acceptance/IN-0001.acceptance.lean`. Prove the JOB-simulate (the `sim` command) lines through the `sim` process, and the capability lines through the library functions.
+Start CH-0001 (scenario) from `pdlc/IN-0001-solar-sim`. Its component checks go in `tests/CAP-scenario.lean`.
 ````
 
 ## The change specs of the intent
@@ -119,9 +115,9 @@ Write the acceptance checks in `tests/acceptance/IN-0001.acceptance.lean`. Prove
 ````
 # CH-0001 · Seasonal sun, daily weather and household load
 
-Intent: IN-0001 · Scope: CAP-scenario · Status: planned · Ticket: none · Branch: none · Base: main
+Intent: IN-0001 · Scope: CAP-scenario · Status: building · Ticket: none · Branch: pdlc/CH-0001-scenario · Base: main
 
-Tests-Locked: none
+Tests-Locked: 0185f3e
 
 ## Delivers
 
@@ -208,6 +204,7 @@ so no entry has an error code.
 - `StoragePolicySim/Scenario.lean`
 - `lakefile.toml: the rest`
 - `lean-toolchain`
+- `lake-manifest.json`
 
 ## Check files
 
@@ -240,6 +237,8 @@ none
 ## Progress log
 
 - Planned as the first change of IN-0001 (solar self-consumption simulator), because each other change uses its hours.
+- The builder found that `tests/CAP-scenario.lean` does not compile. `fun c => c.name` needs the type `Check` in Lean 4.35.0. The check goes back to the test writer, round 1 of 2.
+- `lake build` writes `lake-manifest.json`. The file goes into "Files" (assumed), so that the build is the same each time.
 ````
 
 ### pdlc/changes/CH-0002-strategies/change.md
@@ -766,6 +765,7 @@ load and a flexible load that a strategy can move.
 - `StoragePolicySim/Scenario.lean`
 - `lakefile.toml: the rest`
 - `lean-toolchain`
+- `lake-manifest.json`
 
 ## Requirements
 
@@ -1321,7 +1321,7 @@ def checks : List Check := [
 
 def main (args : List String) : IO UInt32 := do
   let sel := match args with
-    | f :: _ => checks.filter (fun c => c.name.startsWith (f ++ " "))
+    | f :: _ => checks.filter (fun (c : Check) => c.name.startsWith (f ++ " "))
     | [] => checks
   let mut failed := 0
   for c in sel do
@@ -1359,4 +1359,5 @@ checks yet keeps its checks in `tests/`.
 
 ## The check files that exist now
 
+- tests/CAP-scenario.lean
 - tests/acceptance/IN-0001.acceptance.lean
