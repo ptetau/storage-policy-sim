@@ -38,7 +38,7 @@ maximizing self consumption of solar captured power. Written in lean4 using late
 ## Acceptance checks
 
 Acceptance-File: tests/acceptance/IN-0001.acceptance.lean
-Acceptance-Locked: 67970d4
+Acceptance-Locked: a404bbe
 Acceptance-Passed: none
 
 ## Notes
