@@ -2,7 +2,48 @@
 
 Judge only what is in this packet. Write your result next to it, in result.md.
 
-Made at: bb95de49d5658af7f27da99df48b969d62c7e516
+Made at: 1093906a5f98767df7f1cd25e670285225b0b2f4
+
+## Re-review
+
+Earlier review: 5de000a
+
+An earlier review of this remit judged the checks locked at 5de000a. Judge only these two things:
+
+1. Each earlier problem below. If the problem is not fixed, list it again under "Problems".
+2. The changes since the earlier review, in the diff below. List a new problem only
+   where a changed line causes the problem.
+
+Do not raise a new problem on material that did not change. This rule also applies
+to a problem that the earlier review missed.
+Write a "Wrong versions" line only for each check that changed. If no check
+changed, write "none" under "Wrong versions".
+
+### Earlier problems
+
+- tests/CAP-scenario.lean:121-123 · The check "CAP-scenario.R1 the sky factors are 1.0, 0.5 and 0.15" compares each `Float` factor with `==`. The value 0.15 has no exact binary form. A correct app that computes the factor in another way, for example `1.0 - 0.85`, gives 0.15000000000000002 and fails the check. Use `near` with a small tolerance, as the other checks do. · DES-lean-checks ("A `Float` comparison uses a tolerance"), and the remit rule "A correct app passes each check"
+
+### Changes since the earlier review
+
+````
+diff --git a/tests/CAP-scenario.lean b/tests/CAP-scenario.lean
+index c67da5a..5f27ca0 100644
+--- a/tests/CAP-scenario.lean
++++ b/tests/CAP-scenario.lean
+@@ -118,9 +118,9 @@ def checks : List Check := [
+   { name := "CAP-scenario.R1 the sky factors are 1.0, 0.5 and 0.15",
+     run := do
+       return firstFail [
+-        (Sky.factor Sky.sunny == 1.0, s!"sunny {Sky.factor Sky.sunny}"),
+-        (Sky.factor Sky.cloudy == 0.5, s!"cloudy {Sky.factor Sky.cloudy}"),
+-        (Sky.factor Sky.overcast == 0.15, s!"overcast {Sky.factor Sky.overcast}")] },
++        (near (Sky.factor Sky.sunny) 1.0 1e-9, s!"sunny {Sky.factor Sky.sunny}"),
++        (near (Sky.factor Sky.cloudy) 0.5 1e-9, s!"cloudy {Sky.factor Sky.cloudy}"),
++        (near (Sky.factor Sky.overcast) 0.15 1e-9, s!"overcast {Sky.factor Sky.overcast}")] },
+   { name := "CAP-scenario.R1 0 kW of panels gives 0 kWh at 12:00 of day 171",
+     run := do
+       let v := noon (site 45 (pv := 0)) 171 Sky.sunny
+````
 
 # Remit: tests
 
@@ -99,7 +140,7 @@ Write "Wrong versions" for the acceptance checks in the same way as for other ch
 
 Intent: IN-0001 · Scope: CAP-scenario · Status: in review · Ticket: none · Branch: pdlc/CH-0001-scenario · Base: main
 
-Tests-Locked: 5de000a
+Tests-Locked: 6feecd6
 
 ## Delivers
 
@@ -229,6 +270,7 @@ none
 - Verify round 2: specification failed on the words of three log lines. Verify corrected the words, and no code changed.
 - Verify round 3: specification failed, because two log lines did not agree on the count of names. The user chose to correct the words and review again.
 - Verify round 4: each remit passed. The change is `in review`.
+- The tests review found a `Float` compared with `==`. The test writer used a tolerance, and the 34 checks pass.
 ````
 
 ## The spec it covers: title and summary
@@ -494,7 +536,7 @@ port.
 ````
 diff --git a/tests/CAP-scenario.lean b/tests/CAP-scenario.lean
 new file mode 100644
-index 0000000..c67da5a
+index 0000000..5f27ca0
 --- /dev/null
 +++ b/tests/CAP-scenario.lean
 @@ -0,0 +1,309 @@
@@ -618,9 +660,9 @@ index 0000000..c67da5a
 +  { name := "CAP-scenario.R1 the sky factors are 1.0, 0.5 and 0.15",
 +    run := do
 +      return firstFail [
-+        (Sky.factor Sky.sunny == 1.0, s!"sunny {Sky.factor Sky.sunny}"),
-+        (Sky.factor Sky.cloudy == 0.5, s!"cloudy {Sky.factor Sky.cloudy}"),
-+        (Sky.factor Sky.overcast == 0.15, s!"overcast {Sky.factor Sky.overcast}")] },
++        (near (Sky.factor Sky.sunny) 1.0 1e-9, s!"sunny {Sky.factor Sky.sunny}"),
++        (near (Sky.factor Sky.cloudy) 0.5 1e-9, s!"cloudy {Sky.factor Sky.cloudy}"),
++        (near (Sky.factor Sky.overcast) 0.15 1e-9, s!"overcast {Sky.factor Sky.overcast}")] },
 +  { name := "CAP-scenario.R1 0 kW of panels gives 0 kWh at 12:00 of day 171",
 +    run := do
 +      let v := noon (site 45 (pv := 0)) 171 Sky.sunny
@@ -932,9 +974,9 @@ def checks : List Check := [
   { name := "CAP-scenario.R1 the sky factors are 1.0, 0.5 and 0.15",
     run := do
       return firstFail [
-        (Sky.factor Sky.sunny == 1.0, s!"sunny {Sky.factor Sky.sunny}"),
-        (Sky.factor Sky.cloudy == 0.5, s!"cloudy {Sky.factor Sky.cloudy}"),
-        (Sky.factor Sky.overcast == 0.15, s!"overcast {Sky.factor Sky.overcast}")] },
+        (near (Sky.factor Sky.sunny) 1.0 1e-9, s!"sunny {Sky.factor Sky.sunny}"),
+        (near (Sky.factor Sky.cloudy) 0.5 1e-9, s!"cloudy {Sky.factor Sky.cloudy}"),
+        (near (Sky.factor Sky.overcast) 0.15 1e-9, s!"overcast {Sky.factor Sky.overcast}")] },
   { name := "CAP-scenario.R1 0 kW of panels gives 0 kWh at 12:00 of day 171",
     run := do
       let v := noon (site 45 (pv := 0)) 171 Sky.sunny
