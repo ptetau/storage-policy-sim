@@ -14,6 +14,7 @@ load and a flexible load that a strategy can move.
 - `StoragePolicySim/Scenario.lean`
 - `lakefile.toml: the rest`
 - `lean-toolchain`
+- `lake-manifest.json`
 
 ## Requirements
 
