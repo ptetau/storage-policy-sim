@@ -2,18 +2,18 @@
 
 Judge only what is in this packet. Write your result next to it, in result.md.
 
-Made at: 45f5be7beb5ff0c787f2c9104f6f8fbc45d57ae4
+Made at: 8140b59cb6287722876e78c8b75412b987542569
 
-Acceptance-Locked: 67970d4
+Acceptance-Locked: a404bbe
 
 These are the acceptance checks of an intent. Judge them by the section "Acceptance
 checks of an intent" of the remit below, and by its "Wrong versions".
 
 ## Re-review
 
-Earlier review: 36a6e76
+Earlier review: 67970d4
 
-An earlier review of this remit judged the checks locked at 36a6e76. Judge only these two things:
+An earlier review of this remit judged the checks locked at 67970d4. Judge only these two things:
 
 1. Each earlier problem below. If the problem is not fixed, list it again under "Problems".
 2. The changes since the earlier review, in the diff below. List a new problem only
@@ -26,30 +26,24 @@ changed, write "none" under "Wrong versions".
 
 ### Earlier problems
 
-- tests/acceptance/IN-0001.acceptance.lean:539 · The check "CAP-simulation.R2 a battery with 2 kW of power charges and discharges 2 kWh or less" never shows that a shortfall reaches the 2 kWh cap. A plausible wrong version limits the charge by the power but not the discharge. That version passes if no hour of the run has a shortfall over 2 kWh while the battery holds over 2.1 kWh. The packet does not give the load profile, so no value in the packet catches that version. Fix: also expect that at least one hour discharges 2 kWh (within 1e-6), so that the discharge cap must bind. · CAP-simulation.R2 (battery limits), line 1: "no hour charges or discharges over 2 kWh", and the remit rule "Each check can fail".
+none
 
 ### Changes since the earlier review
 
 ````
 diff --git a/tests/acceptance/IN-0001.acceptance.lean b/tests/acceptance/IN-0001.acceptance.lean
-index 1753319..17a7776 100644
+index 17a7776..6833666 100644
 --- a/tests/acceptance/IN-0001.acceptance.lean
 +++ b/tests/acceptance/IN-0001.acceptance.lean
-@@ -541,10 +541,13 @@ def checks : List Check := [
-       let res := simulate (site 45) (bat 5 2) Strategy.greedy 7 365
-       let bad := res.hours.toList.find? (fun h =>
-         h.flow.chargeKwh > 2 + 1e-9 || h.flow.dischargeKwh > 2 + 1e-9)
-+      -- The discharge cap must bind in at least one hour. Else a version with no cap on the
-+      -- discharge also passes.
-+      let capped := res.hours.any (fun h => near h.flow.dischargeKwh 2 1e-6)
-       return if res.hours.size != 8760 then some s!"{res.hours.size} hours"
-         else match bad with
-           | some h => some s!"day {h.hour.day} hour {h.hour.hour}: charge {h.flow.chargeKwh}, discharge {h.flow.dischargeKwh}"
--          | none => none },
-+          | none => if capped then none else some "no hour discharges 2 kWh" },
-   { name := "CAP-simulation.R2 a 5 kWh battery holds 0 to 5 kWh each hour",
-     run := do
-       let res := simulate (site 45) (bat 5 2) Strategy.greedy 7 365
+@@ -1011,7 +1011,7 @@ def checks : List Check := [
+ 
+ def main (args : List String) : IO UInt32 := do
+   let sel := match args with
+-    | f :: _ => checks.filter (fun c => c.name.startsWith (f ++ " "))
++    | f :: _ => checks.filter (fun (c : Check) => c.name.startsWith (f ++ " "))
+     | [] => checks
+   let mut failed := 0
+   for c in sel do
 ````
 
 # Remit: tests
@@ -183,7 +177,7 @@ maximizing self consumption of solar captured power. Written in lean4 using late
 ## Acceptance checks
 
 Acceptance-File: tests/acceptance/IN-0001.acceptance.lean
-Acceptance-Locked: 67970d4
+Acceptance-Locked: a404bbe
 Acceptance-Passed: none
 
 ## Notes
@@ -205,42 +199,38 @@ Acceptance-Passed: none
 
 ## Handoff
 
-### Handoff · IN-0001 · change → acceptance
+### Handoff · IN-0001 · acceptance → tests
 
-Time: 2026-10-31T22:58:08+00:00
+Time: 2026-10-31T23:14:03+00:00
 
 ### Done
 
-- Change planned four changes, one for each spec, in this order:
-  1. CH-0001 (scenario): the hours of a scenario, in `StoragePolicySim/Scenario.lean`.
-  2. CH-0002 (strategies): the four strategies, in `StoragePolicySim/Strategy.lean`.
-  3. CH-0003 (simulation): the energy flows and the totals, in `StoragePolicySim/Simulation.lean`.
-  4. CH-0004 (sim command): the `sim` command, in `Main.lean`, with the README.
-- The order follows what each change uses. CH-0003 (simulation) uses the first two, and CH-0004 (sim command) uses all three.
+- The test writer wrote 154 acceptance checks in `tests/acceptance/IN-0001.acceptance.lean`, for all 18 requirements of IN-0001 (simulator).
+- The checks failed before any code, because the library and `lakefile.toml` do not exist yet.
+- The first review failed on one check of CAP-simulation.R2 (battery limits). The test writer fixed it, and the re-review passed.
+- The lock is `67970d4`. The file has no stored-data line.
 
 ### Decided on defaults
 
-- CH-0001 (scenario): What are the Lean names? → `Sky`, `Site`, `Hour`, `pvOutput` and `scenario`, in the namespace `StoragePolicySim` (assumed).
-- CH-0002 (strategies): What are the Lean names? → `Strategy`, `Request`, `Strategy.decide` and `Strategy.placeFlex` (assumed).
-- CH-0003 (simulation): What are the Lean names? → `Battery`, `Flow`, `stepHour`, `Totals`, `Month`, `Result` and `simulate` (assumed).
-- CH-0004 (sim command): In which order does `sim` find problems? → the command, then each option from left to right, then the ranges, then `--flex` (assumed).
+- JOB-simulate.R1 (run one strategy): What is the `--flex` default when `--load` is less than 3? → the `--load` value (assumed).
+- JOB-simulate.R5 (bad command line): How does a range show? → `(<lowest> to <highest>)` as in the table (assumed).
 
 ### Open
 
-- none
+- The check of CAP-simulation.R2 (battery limits) needs one hour that discharges exactly 2 kWh. The load profile of CH-0001 (scenario) must give such an hour.
 
 ### Look here
 
-- The "Interface" of each change spec in `pdlc/changes/`.
-- `pdlc/specs/design/DES-lean-checks.md`: the form of a check file.
+- `tests/acceptance/IN-0001.acceptance.lean`
+- `pdlc/acceptance/IN-0001-solar-self-consumption-sim/review/tests/result.md`
 
 ### Don't redo
 
-- The four change specs and their order.
+- The acceptance checks and their lock.
 
 ### Next: do this first
 
-Write the acceptance checks in `tests/acceptance/IN-0001.acceptance.lean`. Prove the JOB-simulate (the `sim` command) lines through the `sim` process, and the capability lines through the library functions.
+Start CH-0001 (scenario) from `pdlc/IN-0001-solar-sim`. Its component checks go in `tests/CAP-scenario.lean`.
 ````
 
 ## The requirements, in full
@@ -904,7 +894,7 @@ def checks : List Check := [
 
 def main (args : List String) : IO UInt32 := do
   let sel := match args with
-    | f :: _ => checks.filter (fun c => c.name.startsWith (f ++ " "))
+    | f :: _ => checks.filter (fun (c : Check) => c.name.startsWith (f ++ " "))
     | [] => checks
   let mut failed := 0
   for c in sel do
@@ -944,6 +934,7 @@ load and a flexible load that a strategy can move.
 - `StoragePolicySim/Scenario.lean`
 - `lakefile.toml: the rest`
 - `lean-toolchain`
+- `lake-manifest.json`
 
 ## Requirements
 
@@ -2231,7 +2222,7 @@ def checks : List Check := [
 
 def main (args : List String) : IO UInt32 := do
   let sel := match args with
-    | f :: _ => checks.filter (fun c => c.name.startsWith (f ++ " "))
+    | f :: _ => checks.filter (fun (c : Check) => c.name.startsWith (f ++ " "))
     | [] => checks
   let mut failed := 0
   for c in sel do
