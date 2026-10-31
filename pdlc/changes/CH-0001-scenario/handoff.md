@@ -1,11 +1,14 @@
-# Handoff · CH-0001 · verify → user
+# Handoff · CH-0001 · verify → show
 
-Time: 2026-10-31T23:30:36+00:00
+Time: 2026-10-31T23:39:18+00:00
 
 ## Done
 
-- Verify failed three times. Round 1 failed on one name in the code and on spec wording. Rounds 2 and 3 failed only on the words of the progress log.
-- The code passes all 34 checks, and the quality, security, privacy and compliance remits.
+- All 34 checks of `tests/CAP-scenario.lean` pass, and no check changed since the lock.
+- Each remit passed: tests, specification, security, quality and privacy. Compliance does not apply.
+- CAP-scenario.R1 (seasonal sun), R2 (daily weather) and R3 (household load) are `verified`.
+- The run acceptance step is for the last change, CH-0004 (sim command). A failure now is expected.
+- Verify filed no new intent.
 
 ## Decided on defaults
 
@@ -13,18 +16,16 @@ Time: 2026-10-31T23:30:36+00:00
 
 ## Open
 
-- The third failure of verify stops CH-0001 (scenario). The user must decide how the change goes on.
-- The open problem: `change.md` lines 130 and 131 do not say which two names the builder renamed (DES-writing-style rule 4.1).
-- Recommended answer: correct the two log lines to name `daySkies` and `sky`, and run the specification review one more time. No code or check changes.
+- none
 
 ## Look here
 
-- `pdlc/changes/CH-0001-scenario/review/specification/result.md`
+- `pdlc/changes/CH-0001-scenario/review/`
 
 ## Don't redo
 
-- The code, the checks, and the passed remits.
+- The code, the checks and the reviews.
 
 ## Next: do this first
 
-Take the answer of the user, or the recommended answer.
+Record the GIF in a terminal, with a short Lean script that calls `pvOutput` and `scenario`.
