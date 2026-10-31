@@ -2,7 +2,44 @@
 
 Judge only what is in this packet. Write your result next to it, in result.md.
 
-Made at: 5742a262ac8038e9843cc20e618254a84356f203
+Made at: 9b40a79d6f20cdd5fa22569cf342433d1e1b4e94
+
+## Re-review
+
+Earlier review: 0185f3e
+
+An earlier review of this remit judged the checks locked at 0185f3e. Judge only these two things:
+
+1. Each earlier problem below. If the problem is not fixed, list it again under "Problems".
+2. The changes since the earlier review, in the diff below. List a new problem only
+   where a changed line causes the problem.
+
+Do not raise a new problem on material that did not change. This rule also applies
+to a problem that the earlier review missed.
+Write a "Wrong versions" line only for each check that changed. If no check
+changed, write "none" under "Wrong versions".
+
+### Earlier problems
+
+none
+
+### Changes since the earlier review
+
+````
+diff --git a/tests/CAP-scenario.lean b/tests/CAP-scenario.lean
+index cb90ab0..c67da5a 100644
+--- a/tests/CAP-scenario.lean
++++ b/tests/CAP-scenario.lean
+@@ -295,7 +295,7 @@ def checks : List Check := [
+ 
+ def main (args : List String) : IO UInt32 := do
+   let sel := match args with
+-    | f :: _ => checks.filter (fun c => c.name.startsWith (f ++ " "))
++    | f :: _ => checks.filter (fun (c : Check) => c.name.startsWith (f ++ " "))
+     | [] => checks
+   let mut failed := 0
+   for c in sel do
+````
 
 # Remit: tests
 
@@ -97,9 +134,9 @@ Write "Wrong versions" for the acceptance checks in the same way as for other ch
 ````
 # CH-0001 · Seasonal sun, daily weather and household load
 
-Intent: IN-0001 · Scope: CAP-scenario · Status: testing · Ticket: none · Branch: pdlc/CH-0001-scenario · Base: main
+Intent: IN-0001 · Scope: CAP-scenario · Status: building · Ticket: none · Branch: pdlc/CH-0001-scenario · Base: main
 
-Tests-Locked: 0185f3e
+Tests-Locked: 5de000a
 
 ## Delivers
 
@@ -186,6 +223,7 @@ so no entry has an error code.
 - `StoragePolicySim/Scenario.lean`
 - `lakefile.toml: the rest`
 - `lean-toolchain`
+- `lake-manifest.json`
 
 ## Check files
 
@@ -218,6 +256,9 @@ none
 ## Progress log
 
 - Planned as the first change of IN-0001 (solar self-consumption simulator), because each other change uses its hours.
+- The builder found that `tests/CAP-scenario.lean` does not compile. `fun c => c.name` needs the type `Check` in Lean 4.35.0. The check goes back to the test writer, round 1 of 2.
+- `lake build` writes `lake-manifest.json`. The file goes into "Files" (assumed), so that the build is the same each time.
+- After the fix, the 34 checks of `tests/CAP-scenario.lean` pass on the code of the builder. App code exists after a send-back, so a pass is permitted.
 ````
 
 ## The spec it covers: title and summary
@@ -239,6 +280,7 @@ load and a flexible load that a strategy can move.
 - `StoragePolicySim/Scenario.lean`
 - `lakefile.toml: the rest`
 - `lean-toolchain`
+- `lake-manifest.json`
 ````
 
 ## The requirements, in full
@@ -454,7 +496,7 @@ def checks : List Check := [
 
 def main (args : List String) : IO UInt32 := do
   let sel := match args with
-    | f :: _ => checks.filter (fun c => c.name.startsWith (f ++ " "))
+    | f :: _ => checks.filter (fun (c : Check) => c.name.startsWith (f ++ " "))
     | [] => checks
   let mut failed := 0
   for c in sel do
@@ -482,7 +524,7 @@ port.
 ````
 diff --git a/tests/CAP-scenario.lean b/tests/CAP-scenario.lean
 new file mode 100644
-index 0000000..cb90ab0
+index 0000000..c67da5a
 --- /dev/null
 +++ b/tests/CAP-scenario.lean
 @@ -0,0 +1,309 @@
@@ -783,7 +825,7 @@ index 0000000..cb90ab0
 +
 +def main (args : List String) : IO UInt32 := do
 +  let sel := match args with
-+    | f :: _ => checks.filter (fun c => c.name.startsWith (f ++ " "))
++    | f :: _ => checks.filter (fun (c : Check) => c.name.startsWith (f ++ " "))
 +    | [] => checks
 +  let mut failed := 0
 +  for c in sel do
@@ -1097,7 +1139,7 @@ def checks : List Check := [
 
 def main (args : List String) : IO UInt32 := do
   let sel := match args with
-    | f :: _ => checks.filter (fun c => c.name.startsWith (f ++ " "))
+    | f :: _ => checks.filter (fun (c : Check) => c.name.startsWith (f ++ " "))
     | [] => checks
   let mut failed := 0
   for c in sel do
