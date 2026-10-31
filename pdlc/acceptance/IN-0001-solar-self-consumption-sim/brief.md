@@ -5,7 +5,7 @@ Write the acceptance checks of this intent, only in the file on its line `Accept
 This brief holds each input of the checks. Read another file only when this brief names
 it, for example an existing check file to match its style.
 
-Made at: 8dec4b61ac1dd986aba1b54e0e0154850b1d954b
+Made at: 33c1415c2b32bc8df6d011b26682ff8e3ff1b21d
 
 ## The intent
 
@@ -14,7 +14,7 @@ Path: pdlc/inbox/IN-0001-solar-self-consumption-sim.md
 ````
 # IN-0001 · Solar self-consumption simulator
 
-Status: ready · Ticket: none · Branch: pdlc/IN-0001-solar-sim · Added: 2026-10-31
+Status: building · Ticket: none · Branch: pdlc/IN-0001-solar-sim · Added: 2026-10-31
 
 ## What and why
 
@@ -52,7 +52,7 @@ maximizing self consumption of solar captured power. Written in lean4 using late
 ## Acceptance checks
 
 Acceptance-File: tests/acceptance/IN-0001.acceptance.lean
-Acceptance-Locked: none
+Acceptance-Locked: 36a6e76
 Acceptance-Passed: none
 
 ## Notes
