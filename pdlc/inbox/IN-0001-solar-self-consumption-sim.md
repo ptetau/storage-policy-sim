@@ -1,6 +1,6 @@
 # IN-0001 · Solar self-consumption simulator
 
-Status: ready · Ticket: none · Branch: pdlc/IN-0001-solar-sim · Added: 2026-10-31
+Status: building · Ticket: none · Branch: pdlc/IN-0001-solar-sim · Added: 2026-10-31
 
 ## What and why
 

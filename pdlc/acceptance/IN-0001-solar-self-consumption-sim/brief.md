@@ -5,7 +5,7 @@ Write the acceptance checks of this intent, only in the file on its line `Accept
 This brief holds each input of the checks. Read another file only when this brief names
 it, for example an existing check file to match its style.
 
-Made at: a340263fe885a7bbe13a21c6901515e64b245757
+Made at: 8dec4b61ac1dd986aba1b54e0e0154850b1d954b
 
 ## The intent
 
@@ -69,6 +69,8 @@ Acceptance-Passed: none
 - JOB-simulate.R3 (compare strategies): Does `sim compare` take `--strategy` or `--monthly`? → no, each gives `UNKNOWN_OPTION` (assumed).
 - CAP-scenario.R1 (seasonal sun): What if a latitude or a size is out of range? → JOB-simulate.R5 (bad command line) refuses it before the simulation (assumed).
 - DES-lean-checks (Lean check files): How does a Lean check file run and report? → a Lean script with a name filter and a count line (assumed).
+- JOB-simulate.R1 (run one strategy): was "`--flex`: 3", now "`--flex`: 3, or the `--load` value when that is less" (assumed).
+- JOB-simulate.R5 (bad command line): How does a range show? → `(<lowest> to <highest>)` as in the table (assumed).
 
 ## Handoff
 
@@ -655,6 +657,7 @@ CH-0003 (simulation) to compare values.
   `strategy self-consumption-% self-sufficiency-% import-kWh export-kWh` and one row for each
   strategy of `Strategy.all`. Each row has five fields split by spaces: the name, then one
   decimal each of `selfConsumption`, `selfSufficiency`, `importKwh` and `exportKwh`.
+- The `--flex` default is 3, or the `--load` value when that is less.
 - The options are `--strategy`, `--days`, `--seed`, `--lat`, `--pv`, `--battery`, `--power`,
   `--load` and `--flex`, each with one value, and `--monthly` with no value. The defaults
   and the ranges are in JOB-simulate.R1 (run one strategy) and R5 (bad command line).
@@ -667,7 +670,9 @@ CH-0003 (simulation) to compare values.
   - `BAD_NUMBER`: the option, a space, and the value as typed, for example
     `error: BAD_NUMBER: --days abc`.
   - `OUT_OF_RANGE`: the option, the value as typed, and the range in brackets, for example
-    `error: OUT_OF_RANGE: --days 0 (1 to 3650)`. The `--flex` range is `(0 to <the --load
+    `error: OUT_OF_RANGE: --days 0 (1 to 3650)`. Each range is written as in the table of
+    JOB-simulate.R5 (bad command line): `(1 to 3650)`, `(0 to 4294967295)`, `(-90 to 90)`,
+    `(0 to 100)`, `(0 to 200)`, `(0 to 100)`, `(0.1 to 1000)`. The `--flex` range is `(0 to <the --load
     value as typed>)`.
   - `UNKNOWN_STRATEGY`: the name and the list, for example
     `error: UNKNOWN_STRATEGY: wild (none, greedy, evening, shift)`.
@@ -1074,7 +1079,7 @@ The options and their defaults are these (assumed):
 - `--days`: 365. `--seed`: 1.
 - `--lat`: -41.3 (degrees). `--pv`: 5 (kW of panels).
 - `--battery`: 10 (kWh). `--power`: 5 (kW of the battery).
-- `--load`: 20 (kWh each day). `--flex`: 3 (kWh of the daily load that can move).
+- `--load`: 20 (kWh each day). `--flex`: 3 (kWh of the daily load that can move), or the `--load` value when that is less.
 
 - Given no options, when the person runs `sim run`, then it prints the 11 lines in order and exits with 0.
 - Given no options, when the person runs `sim run`, then the first three lines are `strategy          greedy`, `days              365` and `seed              1`.
@@ -1144,6 +1149,9 @@ the person typed it (assumed). Any other word is an unknown option (assumed). Th
 | `--power` | 0 | 100 |
 | `--load` | 0.1 | 1000 |
 | `--flex` | 0 | the `--load` value |
+
+The range in an `OUT_OF_RANGE` line is `(<lowest> to <highest>)`, written as in this table,
+for example `(-90 to 90)` and `(0.1 to 1000)` (assumed).
 
 - Given no arguments, when the person runs `sim`, then the first line on stdout is `usage: sim run [options] | sim compare [options]`. The exit code is 0.
 - Given `help`, when the person runs `sim help`, then it prints the same usage and exits with 0.
@@ -1351,4 +1359,4 @@ checks yet keeps its checks in `tests/`.
 
 ## The check files that exist now
 
-None.
+- tests/acceptance/IN-0001.acceptance.lean
