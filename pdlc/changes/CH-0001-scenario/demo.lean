@@ -74,7 +74,7 @@ def run : String → IO Unit
     let a := scenario (site 45) 7 365
     let b := scenario (site 45) 7 365
     let same := (a.zip b).all fun (x, y) => x.sky == y.sky && x.pvKwh == y.pvKwh && x.baseLoadKwh == y.baseLoadKwh
-    say s!"seed 7, two runs of 365 days\nhours: {a.size} and {b.size}\nthe same hours: {same}"
+    say s!"latitude 45, seed 7, two runs of 365 days\nhours: {a.size} and {b.size}\nthe same hours: {same}"
   | "r2-2" => do
     let a := scenario (site 45) 7 365
     let b := scenario (site 45) 8 365
@@ -130,7 +130,10 @@ def run : String → IO Unit
     say s!"3 kWh of flexible load, day 0\nby hour: {(dayHours a 0).toList.map (fun h => f3 h.flexKwh)}\neach of the 365 days: 1 kWh at 18:00, 19:00 and 20:00, else 0: {ok}"
   | "r3-7" => do
     let a := scenario (site 45 5 0) 7 365
-    say s!"0 kWh of flexible load, 365 days\nlargest flexible load of an hour: {a.foldl (fun m h => max m h.flexKwh) 0} kWh"
+    let lo := a.foldl (fun m h => min m h.flexKwh) 1000
+    let hi := a.foldl (fun m h => max m h.flexKwh) (-1000)
+    let zero := a.all (·.flexKwh == 0)
+    say s!"0 kWh of flexible load, 365 days\nlowest flexible load of an hour: {f3 lo} kWh\nhighest flexible load of an hour: {f3 hi} kWh\neach of the {a.size} hours has 0 kWh: {zero}"
   | "r3-8" => do
     let a := scenario (site 45) 7 365
     let b := scenario (site 45) 8 365
