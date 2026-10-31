@@ -2,7 +2,49 @@
 
 Judge only what is in this packet. Write your result next to it, in result.md.
 
-Made at: ed7074e8f1d7a75853dd644e1dd18f71f86dcf2d
+Made at: 7cc8c6b82b917635f2f8add001a95b5edddc93a7
+
+## Re-review
+
+Earlier review: f143658
+
+An earlier review of this remit judged the checks locked at f143658. Judge only these two things:
+
+1. Each earlier problem below. If the problem is not fixed, list it again under "Problems".
+2. The changes since the earlier review, in the diff below. List a new problem only
+   where a changed line causes the problem.
+
+Do not raise a new problem on material that did not change. This rule also applies
+to a problem that the earlier review missed.
+Write a "Wrong versions" line only for each check that changed. If no check
+changed, write "none" under "Wrong versions".
+
+### Earlier problems
+
+- tests/CAP-strategies.lean:192 · The three sunniest hours of `sunDay` are 11:00, 12:00 and 13:00, and these hours are next to each other. Thus, a wrong `shift` that takes the best window of three hours in a row also passes. The windows of `sunDay` sum to 9 (10:00 to 12:00), 10.5 (11:00 to 13:00) and 9 (12:00 to 14:00), so the window rule also picks 11:00 to 13:00. No other R5 check catches this version: the 4.5 kWh check uses `sunDay` too, `flatSun` gives the same result to both rules, and the no-sun and 0 kWh checks do not depend on the rule. Add a check with three top hours that are not next to each other, for example sun 4 at 09:00, 1 at 10:00 to 12:00, and 3.5 and 3 at 14:00 and 15:00. Then the result must be 1 kWh at 09:00, 14:00 and 15:00. · CAP-strategies.R5 ("the three hours with the most solar output"), and the remit rule that each check fails on a plausible wrong version (the trap "examples that also fit a wrong rule")
+
+### Changes since the earlier review
+
+````
+diff --git a/tests/CAP-strategies.lean b/tests/CAP-strategies.lean
+index a2abff8..c113046 100644
+--- a/tests/CAP-strategies.lean
++++ b/tests/CAP-strategies.lean
+@@ -193,6 +193,13 @@ def checks : List Check := [
+     run := do
+       return badDay (Strategy.placeFlex Strategy.shift sunDay defaultFlex)
+         (mkDay [(11, 1), (12, 1), (13, 1)]) },
++  -- The three sunniest hours are not next to each other. A version that takes the best
++  -- window of three hours in a row gives 13:00 to 15:00 or 14:00 to 16:00, and fails here.
++  { name := "CAP-strategies.R5 3 kWh with the most sun at 09:00, 14:00 and 15:00 gives each 1 kWh",
++    run := do
++      let pv := mkDay [(9, 4), (10, 1), (11, 1), (12, 1), (14, 3.5), (15, 3)]
++      return badDay (Strategy.placeFlex Strategy.shift pv defaultFlex)
++        (mkDay [(9, 1), (14, 1), (15, 1)]) },
+   -- Equal parts: a version that always puts 1 kWh in each hour fails here.
+   { name := "CAP-strategies.R5 4.5 kWh at other default hours gives 1.5 kWh at 11:00, 12:00 and 13:00",
+     run := do
+````
 
 # Remit: tests
 
@@ -99,7 +141,7 @@ Write "Wrong versions" for the acceptance checks in the same way as for other ch
 
 Intent: IN-0001 · Scope: CAP-strategies · Status: testing · Ticket: none · Branch: pdlc/CH-0002-strategies · Base: pdlc/CH-0001-scenario
 
-Tests-Locked: f143658
+Tests-Locked: 91d1e6b
 
 ## Delivers
 
@@ -491,10 +533,10 @@ port.
 ````
 diff --git a/tests/CAP-strategies.lean b/tests/CAP-strategies.lean
 new file mode 100644
-index 0000000..a2abff8
+index 0000000..c113046
 --- /dev/null
 +++ b/tests/CAP-strategies.lean
-@@ -0,0 +1,228 @@
+@@ -0,0 +1,235 @@
 +/-
 +Component checks of CAP-strategies (battery and load strategies), for CH-0002 (battery and
 +load strategies).
@@ -690,6 +732,13 @@ index 0000000..a2abff8
 +    run := do
 +      return badDay (Strategy.placeFlex Strategy.shift sunDay defaultFlex)
 +        (mkDay [(11, 1), (12, 1), (13, 1)]) },
++  -- The three sunniest hours are not next to each other. A version that takes the best
++  -- window of three hours in a row gives 13:00 to 15:00 or 14:00 to 16:00, and fails here.
++  { name := "CAP-strategies.R5 3 kWh with the most sun at 09:00, 14:00 and 15:00 gives each 1 kWh",
++    run := do
++      let pv := mkDay [(9, 4), (10, 1), (11, 1), (12, 1), (14, 3.5), (15, 3)]
++      return badDay (Strategy.placeFlex Strategy.shift pv defaultFlex)
++        (mkDay [(9, 1), (14, 1), (15, 1)]) },
 +  -- Equal parts: a version that always puts 1 kWh in each hour fails here.
 +  { name := "CAP-strategies.R5 4.5 kWh at other default hours gives 1.5 kWh at 11:00, 12:00 and 13:00",
 +    run := do
@@ -923,6 +972,13 @@ def checks : List Check := [
     run := do
       return badDay (Strategy.placeFlex Strategy.shift sunDay defaultFlex)
         (mkDay [(11, 1), (12, 1), (13, 1)]) },
+  -- The three sunniest hours are not next to each other. A version that takes the best
+  -- window of three hours in a row gives 13:00 to 15:00 or 14:00 to 16:00, and fails here.
+  { name := "CAP-strategies.R5 3 kWh with the most sun at 09:00, 14:00 and 15:00 gives each 1 kWh",
+    run := do
+      let pv := mkDay [(9, 4), (10, 1), (11, 1), (12, 1), (14, 3.5), (15, 3)]
+      return badDay (Strategy.placeFlex Strategy.shift pv defaultFlex)
+        (mkDay [(9, 1), (14, 1), (15, 1)]) },
   -- Equal parts: a version that always puts 1 kWh in each hour fails here.
   { name := "CAP-strategies.R5 4.5 kWh at other default hours gives 1.5 kWh at 11:00, 12:00 and 13:00",
     run := do
