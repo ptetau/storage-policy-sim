@@ -1,0 +1,50 @@
+# IN-0000 · Short name
+
+Status: new · Ticket: none · Branch: none · Added: YYYY-MM-DD
+
+The pdlc scripts read each header field. Thus, a header field holds only its bare value.
+Do not add a name in brackets, and do not add backticks. For example, write
+`Branch: pdlc/IN-0001-reset`, not `Branch: pdlc/IN-0001-reset (the intent branch)`.
+
+## What and why
+
+Write what you want to be true, and why, in your own words. A few sentences are
+sufficient.
+
+## Requirements
+
+Intake writes this section. The section lists the requirements that this intent added or
+changed.
+
+- none yet
+
+## Changes
+
+The change stage writes this section. The section lists the changes that deliver this
+intent, in order.
+
+- none yet
+
+## Acceptance checks
+
+Acceptance-File: none
+Acceptance-Locked: none
+Acceptance-Passed: none
+
+The acceptance stage writes the path of the file and the lock. The `verify` stage of the
+last change writes the commit at which the checks passed. Each line holds only a bare
+value: a path, a commit hash, or `none`.
+
+## Notes
+
+This section holds the decisions and answers from intake, ready, and change, with the
+newest last. Write one line for each entry, in one of these forms:
+
+- `<requirement>: <question> → <answer> (assumed)`
+- `<ID>: was "<old>", now "<new>"`
+- `README: "<old line>" → <requirement>`
+
+## Handoff
+
+Each intent stage (intake, ready, change) writes this section for the next stage. Use the
+handoff template, with its sections as `###` headings. Replace this section each time.
