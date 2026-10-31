@@ -1,6 +1,6 @@
 # CH-0001 · Seasonal sun, daily weather and household load
 
-Intent: IN-0001 · Scope: CAP-scenario · Status: planned · Ticket: none · Branch: none · Base: main
+Intent: IN-0001 · Scope: CAP-scenario · Status: testing · Ticket: none · Branch: pdlc/CH-0001-scenario · Base: main
 
 Tests-Locked: none
 
