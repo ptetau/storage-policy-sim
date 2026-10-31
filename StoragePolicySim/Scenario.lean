@@ -146,15 +146,15 @@ private def defaultFlex (site : Site) (hour : Nat) : Float :=
 /-- The `24 × days` hours of a run, in order of day, then hour. The same arguments give the
 same array. -/
 def scenario (site : Site) (seed days : Nat) : Array Hour := Id.run do
-  let sky := skies site.latitude seed days
+  let daySkies := skies site.latitude seed days
   let mut out : Array Hour := Array.mkEmpty (24 * days)
   for d in [0:days] do
     let doy := d % daysInYear
-    let s := sky[d]!
+    let sky := daySkies[d]!
     for h in [0:24] do
       out := out.push {
-        day := d, dayOfYear := doy, hour := h, sky := s,
-        pvKwh := pvOutput site doy h s,
+        day := d, dayOfYear := doy, hour := h, sky := sky,
+        pvKwh := pvOutput site doy h sky,
         baseLoadKwh := baseLoad site doy h,
         flexKwh := defaultFlex site h }
   return out
