@@ -2,7 +2,7 @@
 
 Intent: IN-0001 · Scope: CAP-scenario · Status: testing · Ticket: none · Branch: pdlc/CH-0001-scenario · Base: main
 
-Tests-Locked: none
+Tests-Locked: 0185f3e
 
 ## Delivers
 
