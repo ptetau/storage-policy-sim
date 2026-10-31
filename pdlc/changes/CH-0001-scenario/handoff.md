@@ -1,11 +1,11 @@
-# Handoff · CH-0001 · verify → build
+# Handoff · CH-0001 · build → verify
 
-Time: 2026-10-31T23:28:12+00:00
+Time: 2026-10-31T23:28:55+00:00
 
 ## Done
 
-- Verify round 1 failed on quality and specification. Security, privacy and compliance passed. This is round 2 of 2 of CH-0001 (scenario).
-- The specification problem was old wording in the summary of CAP-scenario (sun, weather and load). Verify fixed the words on this branch.
+- The builder renamed the array of the day skies to `daySkies`, and the sky of one day to `sky`, in `scenario`.
+- All 34 checks of `tests/CAP-scenario.lean` pass. No check changed since the lock.
 
 ## Decided on defaults
 
@@ -13,16 +13,16 @@ Time: 2026-10-31T23:28:12+00:00
 
 ## Open
 
-- StoragePolicySim/Scenario.lean:149 · In `scenario`, the name `sky` holds the array of the skies of all days, but the name tells of one sky. Two lines later, `s` holds the one sky of the day. Rename the array to `skyOfDay` or `daySkies`, and rename `s` to `sky`. · Remit rule "Names tell what things are and what they do."
+- none
 
 ## Look here
 
-- `pdlc/changes/CH-0001-scenario/review/quality/result.md`
+- `StoragePolicySim/Scenario.lean`
 
 ## Don't redo
 
-- The checks, and the other code of `StoragePolicySim/Scenario.lean`.
+- The checks, and the code that verify round 1 passed.
 
 ## Next: do this first
 
-Rename the two names in `scenario`, run all checks, and send the change to verify again.
+Make the re-review packets with `make_packets.py CH-0001 --verify`.
