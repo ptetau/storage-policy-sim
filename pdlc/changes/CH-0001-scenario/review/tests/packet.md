@@ -2,44 +2,7 @@
 
 Judge only what is in this packet. Write your result next to it, in result.md.
 
-Made at: 9b40a79d6f20cdd5fa22569cf342433d1e1b4e94
-
-## Re-review
-
-Earlier review: 0185f3e
-
-An earlier review of this remit judged the checks locked at 0185f3e. Judge only these two things:
-
-1. Each earlier problem below. If the problem is not fixed, list it again under "Problems".
-2. The changes since the earlier review, in the diff below. List a new problem only
-   where a changed line causes the problem.
-
-Do not raise a new problem on material that did not change. This rule also applies
-to a problem that the earlier review missed.
-Write a "Wrong versions" line only for each check that changed. If no check
-changed, write "none" under "Wrong versions".
-
-### Earlier problems
-
-none
-
-### Changes since the earlier review
-
-````
-diff --git a/tests/CAP-scenario.lean b/tests/CAP-scenario.lean
-index cb90ab0..c67da5a 100644
---- a/tests/CAP-scenario.lean
-+++ b/tests/CAP-scenario.lean
-@@ -295,7 +295,7 @@ def checks : List Check := [
- 
- def main (args : List String) : IO UInt32 := do
-   let sel := match args with
--    | f :: _ => checks.filter (fun c => c.name.startsWith (f ++ " "))
-+    | f :: _ => checks.filter (fun (c : Check) => c.name.startsWith (f ++ " "))
-     | [] => checks
-   let mut failed := 0
-   for c in sel do
-````
+Made at: bb95de49d5658af7f27da99df48b969d62c7e516
 
 # Remit: tests
 
@@ -134,7 +97,7 @@ Write "Wrong versions" for the acceptance checks in the same way as for other ch
 ````
 # CH-0001 · Seasonal sun, daily weather and household load
 
-Intent: IN-0001 · Scope: CAP-scenario · Status: building · Ticket: none · Branch: pdlc/CH-0001-scenario · Base: main
+Intent: IN-0001 · Scope: CAP-scenario · Status: in review · Ticket: none · Branch: pdlc/CH-0001-scenario · Base: main
 
 Tests-Locked: 5de000a
 
@@ -231,19 +194,19 @@ so no entry has an error code.
 
 ## Steps
 
-### Step 1 · Seasonal sun · [ ]
+### Step 1 · Seasonal sun · [x]
 
 - Requirement: CAP-scenario.R1
 - Check: the checks named `CAP-scenario.R1 …` in `tests/CAP-scenario.lean`
 - Done when: the checks pass
 
-### Step 2 · Daily weather · [ ]
+### Step 2 · Daily weather · [x]
 
 - Requirement: CAP-scenario.R2
 - Check: the checks named `CAP-scenario.R2 …` in `tests/CAP-scenario.lean`
 - Done when: the checks pass
 
-### Step 3 · Household load · [ ]
+### Step 3 · Household load · [x]
 
 - Requirement: CAP-scenario.R3
 - Check: the checks named `CAP-scenario.R3 …` in `tests/CAP-scenario.lean`
@@ -259,6 +222,13 @@ none
 - The builder found that `tests/CAP-scenario.lean` does not compile. `fun c => c.name` needs the type `Check` in Lean 4.35.0. The check goes back to the test writer, round 1 of 2.
 - `lake build` writes `lake-manifest.json`. The file goes into "Files" (assumed), so that the build is the same each time.
 - After the fix, the 34 checks of `tests/CAP-scenario.lean` pass on the code of the builder. App code exists after a send-back, so a pass is permitted.
+- Build: the 34 checks of `tests/CAP-scenario.lean` pass. No check changed since the lock `5de000a`.
+- Verify round 1: quality and specification failed. The follow-ups of security (a cap on days, and large seeds) need no intent, because JOB-simulate.R5 (bad command line) limits `--days` and `--seed`.
+- Verify returned the change to build, because two local names in `scenario` were not clear.
+- The builder renamed the array of the day skies to `daySkies`, and the sky of one day to `sky`. The 34 checks pass.
+- Verify round 2: specification failed on the words of three log lines. Verify corrected the words, and no code changed.
+- Verify round 3: specification failed, because two log lines did not agree on the count of names. The user chose to correct the words and review again.
+- Verify round 4: each remit passed. The change is `in review`.
 ````
 
 ## The spec it covers: title and summary
@@ -270,7 +240,7 @@ Status: active
 
 ## What it is for
 
-CAP-scenario (sun, weather and load) makes the world that a strategy must deal with, one hour at a time. It gives
+CAP-scenario (sun, weather and load) makes the conditions that a strategy must handle, one hour at a time. It gives
 the solar output of each hour from the season and the sun height, and a daily sky from a
 seeded weather model. It also gives the household load of each hour, with a seasonal base
 load and a flexible load that a strategy can move.
@@ -287,7 +257,7 @@ load and a flexible load that a strategy can move.
 
 ### CAP-scenario.R1 · Seasonal sun
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 The output of an hour is the panel power, times the sine of the sun height, times the sky
 factor (assumed). The sun height uses the latitude, the day of the year, and the middle of
@@ -309,7 +279,7 @@ unless the line says otherwise.
 
 ### CAP-scenario.R2 · Daily weather
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 A seed and a number of days give one sky for each day, and the same hours each time. The
 scenario starts on 1 January and gives the hours in order of day, then hour.
@@ -336,7 +306,7 @@ a negative latitude (assumed). After day 364, the day of the year starts again a
 
 ### CAP-scenario.R3 · Household load
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 The daily load includes the flexible load. The base load is the daily load less the flexible
 load, spread over the hours by a fixed profile (assumed).
