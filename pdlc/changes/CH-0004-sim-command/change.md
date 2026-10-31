@@ -113,6 +113,7 @@ CH-0003 (simulation) to compare values.
   `strategy self-consumption-% self-sufficiency-% import-kWh export-kWh` and one row for each
   strategy of `Strategy.all`. Each row has five fields split by spaces: the name, then one
   decimal each of `selfConsumption`, `selfSufficiency`, `importKwh` and `exportKwh`.
+- The `--flex` default is 3, or the `--load` value when that is less.
 - The options are `--strategy`, `--days`, `--seed`, `--lat`, `--pv`, `--battery`, `--power`,
   `--load` and `--flex`, each with one value, and `--monthly` with no value. The defaults
   and the ranges are in JOB-simulate.R1 (run one strategy) and R5 (bad command line).
@@ -125,7 +126,9 @@ CH-0003 (simulation) to compare values.
   - `BAD_NUMBER`: the option, a space, and the value as typed, for example
     `error: BAD_NUMBER: --days abc`.
   - `OUT_OF_RANGE`: the option, the value as typed, and the range in brackets, for example
-    `error: OUT_OF_RANGE: --days 0 (1 to 3650)`. The `--flex` range is `(0 to <the --load
+    `error: OUT_OF_RANGE: --days 0 (1 to 3650)`. Each range is written as in the table of
+    JOB-simulate.R5 (bad command line): `(1 to 3650)`, `(0 to 4294967295)`, `(-90 to 90)`,
+    `(0 to 100)`, `(0 to 200)`, `(0 to 100)`, `(0.1 to 1000)`. The `--flex` range is `(0 to <the --load
     value as typed>)`.
   - `UNKNOWN_STRATEGY`: the name and the list, for example
     `error: UNKNOWN_STRATEGY: wild (none, greedy, evening, shift)`.

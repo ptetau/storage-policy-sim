@@ -55,6 +55,8 @@ Acceptance-Passed: none
 - JOB-simulate.R3 (compare strategies): Does `sim compare` take `--strategy` or `--monthly`? → no, each gives `UNKNOWN_OPTION` (assumed).
 - CAP-scenario.R1 (seasonal sun): What if a latitude or a size is out of range? → JOB-simulate.R5 (bad command line) refuses it before the simulation (assumed).
 - DES-lean-checks (Lean check files): How does a Lean check file run and report? → a Lean script with a name filter and a count line (assumed).
+- JOB-simulate.R1 (run one strategy): was "`--flex`: 3", now "`--flex`: 3, or the `--load` value when that is less" (assumed).
+- JOB-simulate.R5 (bad command line): How does a range show? → `(<lowest> to <highest>)` as in the table (assumed).
 
 ## Handoff
 

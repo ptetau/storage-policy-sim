@@ -39,7 +39,7 @@ The options and their defaults are these (assumed):
 - `--days`: 365. `--seed`: 1.
 - `--lat`: -41.3 (degrees). `--pv`: 5 (kW of panels).
 - `--battery`: 10 (kWh). `--power`: 5 (kW of the battery).
-- `--load`: 20 (kWh each day). `--flex`: 3 (kWh of the daily load that can move).
+- `--load`: 20 (kWh each day). `--flex`: 3 (kWh of the daily load that can move), or the `--load` value when that is less.
 
 - Given no options, when the person runs `sim run`, then it prints the 11 lines in order and exits with 0.
 - Given no options, when the person runs `sim run`, then the first three lines are `strategy          greedy`, `days              365` and `seed              1`.
@@ -109,6 +109,9 @@ the person typed it (assumed). Any other word is an unknown option (assumed). Th
 | `--power` | 0 | 100 |
 | `--load` | 0.1 | 1000 |
 | `--flex` | 0 | the `--load` value |
+
+The range in an `OUT_OF_RANGE` line is `(<lowest> to <highest>)`, written as in this table,
+for example `(-90 to 90)` and `(0.1 to 1000)` (assumed).
 
 - Given no arguments, when the person runs `sim`, then the first line on stdout is `usage: sim run [options] | sim compare [options]`. The exit code is 0.
 - Given `help`, when the person runs `sim help`, then it prints the same usage and exits with 0.
