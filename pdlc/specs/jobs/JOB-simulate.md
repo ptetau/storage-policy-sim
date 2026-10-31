@@ -8,11 +8,13 @@ A person who plans a home solar system runs `sim` in a terminal. They run one st
 seasons and weather with `sim run`, and see the self-consumption and self-sufficiency.
 They add `--monthly` to see each month. They compare all strategies on the same weather
 with `sim compare`. The same `--seed` gives the same weather, so that each change of an
-option is a fair test.
+option is a fair test. They see the simulated Solcast forecast of a fetch with `sim forecast`.
+They set the fetches each day, the forecast error and the longitude with `--fetches`,
+`--forecast-error` and `--lon`.
 
 ## Relies on
 
-- Capabilities: CAP-scenario (sun, weather and load), CAP-strategies (battery and load strategies), CAP-simulation (hourly energy flows)
+- Capabilities: CAP-scenario (sun, weather and load), CAP-strategies (battery and load strategies), CAP-simulation (hourly energy flows), CAP-forecast (simulated Solcast forecasts)
 - Design: DES-errors (error codes), DES-writing-style (writing rules)
 
 ## Code map
@@ -88,7 +90,7 @@ The seed sets the weather. The same options and seed give the same output each t
 
 ### JOB-simulate.R5 · Bad command line
 
-Status: ready · Intents: IN-0001
+Status: proposed · Intents: IN-0001, IN-0002
 
 A bad command line prints one error line on stderr, prints nothing on stdout, and exits
 with 2 (assumed). The line is `error: <code>: <detail>` (assumed). `sim`, `sim help` and
@@ -113,7 +115,7 @@ the person typed it (assumed). Any other word is an unknown option (assumed). Th
 The range in an `OUT_OF_RANGE` line is `(<lowest> to <highest>)`, written as in this table,
 for example `(-90 to 90)` and `(0.1 to 1000)` (assumed).
 
-- Given no arguments, when the person runs `sim`, then the first line on stdout is `usage: sim run [options] | sim compare [options]`. The exit code is 0.
+- Given no arguments, when the person runs `sim`, then the first line on stdout is `usage: sim run [options] | sim compare [options] | sim forecast [options]`. The exit code is 0.
 - Given `help`, when the person runs `sim help`, then it prints the same usage and exits with 0.
 - Given `--help`, when the person runs `sim --help`, then it prints the same usage and exits with 0.
 - Given the command `fly`, when the person runs `sim fly`, then stderr is `error: UNKNOWN_COMMAND: fly`. The exit code is 2.
@@ -143,3 +145,47 @@ for example `(-90 to 90)` and `(0.1 to 1000)` (assumed).
 - Given the extra word `now`, when the person runs `sim run now`, then stderr is `error: UNKNOWN_OPTION: now`. The exit code is 2.
 - Given `--days 10 --days 20`, when the person runs `sim run`, then the `days` line shows 20.
 - Given each error above, when the person runs the command, then stdout is empty.
+
+### JOB-simulate.R6 · Forecast options
+
+Status: proposed · Intents: IN-0002
+
+`sim run` and `sim compare` take `--fetches` (fetches each day), `--forecast-error` (the error
+scale) and `--lon` (degrees, east is positive). The defaults are 10, 1 and 174.8 (assumed).
+The ranges are `--fetches` 1 to 10, whole numbers only, `--forecast-error` 0 to 5, and `--lon`
+-180 to 180 (assumed). The output lines do not change.
+
+- Given no forecast options, when the person runs `sim run --strategy shift`, then the output equals `sim run --strategy shift --fetches 10 --forecast-error 1`.
+- Given `--strategy shift --lat 45`, when the person runs with `--forecast-error 0` and with `--forecast-error 3`, then the two `solar` values are the same.
+- Given `--fetches 10` and `--fetches 1`, when the person runs `sim run`, then each exits with 0.
+- Given `--fetches 0`, when the person runs `sim run`, then stderr is `error: OUT_OF_RANGE: --fetches 0 (1 to 10)`. The exit code is 2.
+- Given `--fetches 11`, when the person runs `sim run`, then stderr is `error: OUT_OF_RANGE: --fetches 11 (1 to 10)`. The exit code is 2.
+- Given `--fetches 2.5`, when the person runs `sim run`, then stderr is `error: BAD_NUMBER: --fetches 2.5`. The exit code is 2.
+- Given `--forecast-error 5` and `--forecast-error 0`, when the person runs `sim run`, then each exits with 0.
+- Given `--forecast-error 5.1`, when the person runs `sim run`, then stderr is `error: OUT_OF_RANGE: --forecast-error 5.1 (0 to 5)`. The exit code is 2.
+- Given `--lon 180` and `--lon -180`, when the person runs `sim run`, then each exits with 0.
+- Given `--lon 180.1`, when the person runs `sim run`, then stderr is `error: OUT_OF_RANGE: --lon 180.1 (-180 to 180)`. The exit code is 2.
+- Given `--fetches`, `--forecast-error` and `--lon` in `sim compare`, when the person runs it, then it exits with 0.
+
+### JOB-simulate.R7 · Forecast command
+
+Status: proposed · Intents: IN-0002
+
+`sim forecast` prints on stdout the Solcast JSON of CAP-forecast (simulated Solcast
+forecasts) for one fetch, then a line break, and exits with 0. `--hour` gives the hour of the
+run, with the default 0 (assumed). The range of `--hour` is 0 to 24 × days less 1, whole
+numbers only (assumed).
+
+`sim forecast` takes each option of `sim run` except `--strategy`, `--monthly`, `--battery`
+and `--power` (assumed).
+
+- Given no options, when the person runs `sim forecast`, then stdout starts with `{"forecasts":[{"pv_estimate":` and has 96 periods.
+- Given no options, when the person runs `sim forecast`, then the first `period_end` is `2024-12-31T13:00:00.0000000Z`.
+- Given `--lon 0`, when the person runs `sim forecast`, then the first `period_end` is `2025-01-01T00:30:00.0000000Z`.
+- Given `--hour 8759`, when the person runs `sim forecast`, then the JSON has 2 periods.
+- Given `--hour 8760`, when the person runs `sim forecast`, then stderr is `error: OUT_OF_RANGE: --hour 8760 (0 to 8759)`. The exit code is 2.
+- Given `--days 2 --hour 48`, when the person runs `sim forecast`, then stderr is `error: OUT_OF_RANGE: --hour 48 (0 to 47)`. The exit code is 2.
+- Given `--forecast-error 0 --lat 45 --hour 4116`, when the person runs `sim forecast`, then each `pv_estimate10` and `pv_estimate90` equals its `pv_estimate`.
+- Given `--seed 3 --hour 4116`, when the person runs `sim forecast` two times, then the two outputs are the same.
+- Given `--strategy greedy`, when the person runs `sim forecast`, then stderr is `error: UNKNOWN_OPTION: --strategy`. The exit code is 2.
+- Given `--battery 5`, when the person runs `sim forecast`, then stderr is `error: UNKNOWN_OPTION: --battery`. The exit code is 2.

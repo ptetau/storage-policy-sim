@@ -7,7 +7,8 @@ Status: active
 CAP-simulation (hourly energy flows) runs one strategy over a scenario, hour by hour, with
 a battery. It gives the energy flows of each hour, the totals, and the totals of each
 month. The totals include the self-consumption and the self-sufficiency, so that a caller
-can compare strategies on the same weather.
+can compare strategies on the same weather. Each strategy sees the latest simulated Solcast
+forecast, with a count of fetches each day and an error scale.
 
 ## Code map
 
@@ -91,3 +92,19 @@ daily load, 3 kWh of it flexible. The seed is 7, and each run is 365 days.
 - Given a battery of 10 kWh with 5 kW of power, when `none` and `greedy` run, then `greedy` has the higher self-consumption.
 - Given a battery of 10 kWh with 5 kW of power, when `evening` and `greedy` run, then `evening` has a self-consumption no higher than `greedy`.
 - Given a battery of 0 kWh, when `none` and `shift` run, then `shift` has the higher self-consumption.
+
+### CAP-simulation.R6 · Forecast in the run
+
+Status: proposed · Intents: IN-0002
+
+The run gets a count of fetches each day and an error scale. At each hour, the strategy gets
+the forecast of the latest fetch at or before that hour. The flexible load of each day uses
+the forecast of the fetch at 00:00 of that day. The forecast does not change the weather.
+
+In these lines, the site is at latitude 45 with 5 kW of panels. The battery holds 10 kWh with
+5 kW of power, the seed is 7, and each run is 365 days with 10 fetches a day.
+
+- Given an error scale of 0, when `shift` runs, then the flexible load of each sunny day is in its three sunniest hours.
+- Given an error scale of 1, when `shift` runs, then at least one day has its flexible load outside its three sunniest hours.
+- Given error scales of 0 and 3, when `greedy` runs with each, then the two runs have the same totals.
+- Given error scales of 0 and 3, when `shift` runs with each, then the solar totals are the same.

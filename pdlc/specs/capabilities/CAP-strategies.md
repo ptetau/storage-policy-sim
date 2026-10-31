@@ -6,14 +6,16 @@ Status: active
 
 CAP-strategies (battery and load strategies) holds the rules that the simulation compares.
 Each strategy has a name. For each hour, a strategy asks the battery to charge or to
-discharge. For each day, a strategy also places the flexible load.
+discharge. For each day, a strategy also places the flexible load. Each strategy gets the latest
+simulated Solcast forecast of CAP-forecast (simulated Solcast forecasts), so that a strategy
+can plan by the forecast.
 
 The four strategies are these:
 
 - `none`: no battery use.
 - `greedy`: battery use at any hour.
 - `evening`: discharge only in the evening.
-- `shift`: greedy battery use, and the flexible load in the sunniest hours.
+- `shift`: greedy battery use, and the flexible load in the sunniest hours of the forecast.
 
 ## Code map
 
@@ -75,15 +77,31 @@ default hours.
 
 ### CAP-strategies.R5 · Load shift into sun
 
-Status: ready · Intents: IN-0001
+Status: proposed · Intents: IN-0001, IN-0002
 
 The `shift` strategy uses the battery as `greedy` does. It also moves the flexible load of
-each day, in equal parts, to the three hours with the most solar output (assumed). A tie
-goes to the earlier hour (assumed). A day with no solar output keeps its default hours.
+each day, in equal parts, to the three hours with the most forecast solar energy (assumed).
+The forecast solar energy of an hour is the sum of the estimates of its two periods, times
+0.5 hours. A tie goes to the earlier hour (assumed). A day with no forecast sun keeps its
+default hours. An hour with no period in the forecast has no forecast sun.
 
 - Given a surplus of 2 kWh at 12:00, when `shift` decides, then it asks to charge 2 kWh and to discharge 0 kWh.
 - Given a shortfall of 1.5 kWh at 03:00, when `shift` decides, then it asks to discharge 1.5 kWh.
-- Given 3 kWh of flexible load and the most sun at 13:00, 11:00 and 12:00, when `shift` places the day, then each gets 1 kWh.
-- Given equal sun from 10:00 to 14:00, when `shift` places 3 kWh of flexible load, then 10:00, 11:00 and 12:00 get 1 kWh each.
-- Given 3 kWh of flexible load and no sun, when `shift` places the day, then the flexible load stays at 18:00, 19:00 and 20:00.
-- Given 0 kWh of flexible load and sun at 12:00, when `shift` places the day, then each hour has 0 kWh of flexible load.
+- Given the most forecast sun at 13:00, 11:00 and 12:00, when `shift` places 3 kWh of flexible load, then each gets 1 kWh.
+- Given equal forecast sun from 10:00 to 14:00, when `shift` places 3 kWh of flexible load, then 10:00, 11:00 and 12:00 get 1 kWh each.
+- Given 3 kWh of flexible load and no forecast sun, when `shift` places the day, then the flexible load stays at 18:00, 19:00 and 20:00.
+- Given 0 kWh of flexible load and forecast sun at 12:00, when `shift` places the day, then each hour has 0 kWh of flexible load.
+- Given forecast sun only from 09:00 to 11:00, when `shift` places 3 kWh, then these hours get 1 kWh each. The actual sun does not count.
+- Given an empty forecast, when `shift` places 3 kWh of flexible load, then the flexible load stays at 18:00, 19:00 and 20:00.
+
+### CAP-strategies.R6 · Forecast for strategies
+
+Status: proposed · Intents: IN-0002
+
+Each strategy gets the latest forecast when it decides an hour, and when it places a day.
+The strategies `none`, `greedy` and `evening` do not change what they ask for any forecast. In
+these lines, the forecast has 5 kW in each period.
+
+- Given a forecast of 5 kW, when `greedy` decides a shortfall of 1.5 kWh at 03:00, then it asks to discharge 1.5 kWh.
+- Given a forecast of 5 kW, when `evening` decides a shortfall of 1.5 kWh at 13:00, then it asks to discharge 0 kWh.
+- Given a forecast of 5 kW, when `none` places 1 kWh at 18:00, 19:00 and 20:00, then the flexible load does not change.
