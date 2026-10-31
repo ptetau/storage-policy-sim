@@ -2,7 +2,7 @@
 
 Intent: IN-0001 · Scope: CAP-strategies · Status: testing · Ticket: none · Branch: pdlc/CH-0002-strategies · Base: pdlc/CH-0001-scenario
 
-Tests-Locked: f143658
+Tests-Locked: 91d1e6b
 
 ## Delivers
 
