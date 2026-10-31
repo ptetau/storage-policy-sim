@@ -2,7 +2,7 @@
 
 Intent: IN-0001 · Scope: CAP-scenario · Status: in review · Ticket: none · Branch: pdlc/CH-0001-scenario · Base: main
 
-Tests-Locked: 5de000a
+Tests-Locked: 6feecd6
 
 ## Delivers
 
@@ -132,3 +132,4 @@ none
 - Verify round 2: specification failed on the words of three log lines. Verify corrected the words, and no code changed.
 - Verify round 3: specification failed, because two log lines did not agree on the count of names. The user chose to correct the words and review again.
 - Verify round 4: each remit passed. The change is `in review`.
+- The tests review found a `Float` compared with `==`. The test writer used a tolerance, and the 34 checks pass.
