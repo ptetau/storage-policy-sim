@@ -541,13 +541,16 @@ def checks : List Check := [
       let res := simulate (site 45) (bat 5 2) Strategy.greedy 7 365
       let bad := res.hours.toList.find? (fun h =>
         h.flow.chargeKwh > 2 + 1e-9 || h.flow.dischargeKwh > 2 + 1e-9)
-      -- The discharge cap must bind in at least one hour. Else a version with no cap on the
-      -- discharge also passes.
-      let capped := res.hours.any (fun h => near h.flow.dischargeKwh 2 1e-6)
+      -- The two hours below make each cap bind with no need for the load profile. Thus a
+      -- version with no cap on the charge or on the discharge fails.
+      let dis := stepHour (bat 5 2) 5 Strategy.greedy 19 0 3
+      let chg := stepHour (bat 5 2) 0 Strategy.greedy 12 3 0
       return if res.hours.size != 8760 then some s!"{res.hours.size} hours"
         else match bad with
           | some h => some s!"day {h.hour.day} hour {h.hour.hour}: charge {h.flow.chargeKwh}, discharge {h.flow.dischargeKwh}"
-          | none => if capped then none else some "no hour discharges 2 kWh" },
+          | none =>
+            (flowIs dis [("discharge with a 3 kWh shortfall", dis.dischargeKwh, 2)]) <|>
+            (flowIs chg [("charge with a 3 kWh surplus", chg.chargeKwh, 2)]) },
   { name := "CAP-simulation.R2 a 5 kWh battery holds 0 to 5 kWh each hour",
     run := do
       let res := simulate (site 45) (bat 5 2) Strategy.greedy 7 365

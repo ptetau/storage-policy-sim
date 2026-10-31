@@ -5,7 +5,7 @@ Write the acceptance checks of this intent, only in the file on its line `Accept
 This brief holds each input of the checks. Read another file only when this brief names
 it, for example an existing check file to match its style.
 
-Made at: 90be743df35754adf09f42536c8cbbee2cbf2cee
+Made at: 38be4ea2410f09401c2f8bc2ebcc144e09cf8905
 
 ## The intent
 
@@ -52,7 +52,7 @@ maximizing self consumption of solar captured power. Written in lean4 using late
 ## Acceptance checks
 
 Acceptance-File: tests/acceptance/IN-0001.acceptance.lean
-Acceptance-Locked: 67970d4
+Acceptance-Locked: a404bbe
 Acceptance-Passed: none
 
 ## Notes
@@ -115,9 +115,9 @@ Start CH-0001 (scenario) from `pdlc/IN-0001-solar-sim`. Its component checks go 
 ````
 # CH-0001 · Seasonal sun, daily weather and household load
 
-Intent: IN-0001 · Scope: CAP-scenario · Status: building · Ticket: none · Branch: pdlc/CH-0001-scenario · Base: main
+Intent: IN-0001 · Scope: CAP-scenario · Status: in review · Ticket: none · Branch: pdlc/CH-0001-scenario · Base: main
 
-Tests-Locked: 0185f3e
+Tests-Locked: 6feecd6
 
 ## Delivers
 
@@ -212,19 +212,19 @@ so no entry has an error code.
 
 ## Steps
 
-### Step 1 · Seasonal sun · [ ]
+### Step 1 · Seasonal sun · [x]
 
 - Requirement: CAP-scenario.R1
 - Check: the checks named `CAP-scenario.R1 …` in `tests/CAP-scenario.lean`
 - Done when: the checks pass
 
-### Step 2 · Daily weather · [ ]
+### Step 2 · Daily weather · [x]
 
 - Requirement: CAP-scenario.R2
 - Check: the checks named `CAP-scenario.R2 …` in `tests/CAP-scenario.lean`
 - Done when: the checks pass
 
-### Step 3 · Household load · [ ]
+### Step 3 · Household load · [x]
 
 - Requirement: CAP-scenario.R3
 - Check: the checks named `CAP-scenario.R3 …` in `tests/CAP-scenario.lean`
@@ -239,6 +239,15 @@ none
 - Planned as the first change of IN-0001 (solar self-consumption simulator), because each other change uses its hours.
 - The builder found that `tests/CAP-scenario.lean` does not compile. `fun c => c.name` needs the type `Check` in Lean 4.35.0. The check goes back to the test writer, round 1 of 2.
 - `lake build` writes `lake-manifest.json`. The file goes into "Files" (assumed), so that the build is the same each time.
+- After the fix, the 34 checks of `tests/CAP-scenario.lean` pass on the code of the builder. App code exists after a send-back, so a pass is permitted.
+- Build: the 34 checks of `tests/CAP-scenario.lean` pass. No check changed since the lock `5de000a`.
+- Verify round 1: quality and specification failed. The follow-ups of security (a cap on days, and large seeds) need no intent, because JOB-simulate.R5 (bad command line) limits `--days` and `--seed`.
+- Verify returned the change to build, because two local names in `scenario` were not clear.
+- The builder renamed the array of the day skies to `daySkies`, and the sky of one day to `sky`. The 34 checks pass.
+- Verify round 2: specification failed on the words of three log lines. Verify corrected the words, and no code changed.
+- Verify round 3: specification failed, because two log lines did not agree on the count of names. The user chose to correct the words and review again.
+- Verify round 4: each remit passed. The change is `in review`.
+- The tests review found a `Float` compared with `==`. The test writer used a tolerance, and the 34 checks pass.
 ````
 
 ### pdlc/changes/CH-0002-strategies/change.md
@@ -755,7 +764,7 @@ Status: active
 
 ## What it is for
 
-CAP-scenario (sun, weather and load) makes the world that a strategy must deal with, one hour at a time. It gives
+CAP-scenario (sun, weather and load) makes the conditions that a strategy must handle, one hour at a time. It gives
 the solar output of each hour from the season and the sun height, and a daily sky from a
 seeded weather model. It also gives the household load of each hour, with a seasonal base
 load and a flexible load that a strategy can move.
@@ -771,7 +780,7 @@ load and a flexible load that a strategy can move.
 
 ### CAP-scenario.R1 · Seasonal sun
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 The output of an hour is the panel power, times the sine of the sun height, times the sky
 factor (assumed). The sun height uses the latitude, the day of the year, and the middle of
@@ -793,7 +802,7 @@ unless the line says otherwise.
 
 ### CAP-scenario.R2 · Daily weather
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 A seed and a number of days give one sky for each day, and the same hours each time. The
 scenario starts on 1 January and gives the hours in order of day, then hour.
@@ -820,7 +829,7 @@ a negative latitude (assumed). After day 364, the day of the year starts again a
 
 ### CAP-scenario.R3 · Household load
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 The daily load includes the flexible load. The base load is the daily load less the flexible
 load, spread over the hours by a fixed profile (assumed).
