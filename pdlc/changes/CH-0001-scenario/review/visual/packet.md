@@ -2,7 +2,28 @@
 
 Judge only what is in this packet. Write your result next to it, in result.md.
 
-Made at: 1fac2c40adba5bee2783b85f321ba86da9c15706
+Made at: a9488be0181d681ec21f019e6d86c3bb915b112b
+
+## Re-review
+
+Earlier review: 1fac2c40adba5bee2783b85f321ba86da9c15706
+
+An earlier review of this remit judged this change at 1fac2c40adba. Judge only these two things:
+
+1. Each earlier problem below. If the problem is not fixed, list it again under "Problems".
+2. The changes since the earlier review, in the diff below. List a new problem only
+   where a changed line causes the problem.
+
+Do not raise a new problem on material that did not change. This rule also applies
+to a problem that the earlier review missed.
+
+### Earlier problems
+
+- 26.png · The caption claims "0 kWh in each hour", but the frame shows only "largest flexible load of an hour: 0.000000 kWh". A largest value of 0 does not show that no hour is below 0, so the frame shows less than its caption claims. Print the lowest and the highest value, or the largest absolute value, as frame 06 does for R1 (seasonal sun). · CAP-scenario.R3 (household load): "Given 0 kWh of flexible load, when the scenario runs 365 days, then each hour has 0 kWh of flexible load." · script
+
+### Changes since the earlier review
+
+Nothing changed.
 
 # Remit: visual
 
@@ -418,31 +439,31 @@ unless the line says otherwise.
 
 Read each frame:
 
-- pdlc/changes/CH-0001-scenario/frames/01.png
-- pdlc/changes/CH-0001-scenario/frames/02.png
-- pdlc/changes/CH-0001-scenario/frames/03.png
-- pdlc/changes/CH-0001-scenario/frames/04.png
-- pdlc/changes/CH-0001-scenario/frames/05.png
-- pdlc/changes/CH-0001-scenario/frames/06.png
-- pdlc/changes/CH-0001-scenario/frames/07.png
-- pdlc/changes/CH-0001-scenario/frames/08.png
-- pdlc/changes/CH-0001-scenario/frames/09.png
+- pdlc/changes/CH-0001-scenario/frames/01.png (unchanged since the earlier review)
+- pdlc/changes/CH-0001-scenario/frames/02.png (unchanged since the earlier review)
+- pdlc/changes/CH-0001-scenario/frames/03.png (unchanged since the earlier review)
+- pdlc/changes/CH-0001-scenario/frames/04.png (unchanged since the earlier review)
+- pdlc/changes/CH-0001-scenario/frames/05.png (unchanged since the earlier review)
+- pdlc/changes/CH-0001-scenario/frames/06.png (unchanged since the earlier review)
+- pdlc/changes/CH-0001-scenario/frames/07.png (unchanged since the earlier review)
+- pdlc/changes/CH-0001-scenario/frames/08.png (unchanged since the earlier review)
+- pdlc/changes/CH-0001-scenario/frames/09.png (unchanged since the earlier review)
 - pdlc/changes/CH-0001-scenario/frames/10.png
 - pdlc/changes/CH-0001-scenario/frames/11.png
 - pdlc/changes/CH-0001-scenario/frames/12.png
 - pdlc/changes/CH-0001-scenario/frames/13.png
 - pdlc/changes/CH-0001-scenario/frames/14.png
 - pdlc/changes/CH-0001-scenario/frames/15.png
-- pdlc/changes/CH-0001-scenario/frames/16.png
-- pdlc/changes/CH-0001-scenario/frames/17.png
-- pdlc/changes/CH-0001-scenario/frames/18.png
-- pdlc/changes/CH-0001-scenario/frames/19.png
-- pdlc/changes/CH-0001-scenario/frames/20.png
-- pdlc/changes/CH-0001-scenario/frames/21.png
-- pdlc/changes/CH-0001-scenario/frames/22.png
-- pdlc/changes/CH-0001-scenario/frames/23.png
-- pdlc/changes/CH-0001-scenario/frames/24.png
-- pdlc/changes/CH-0001-scenario/frames/25.png
+- pdlc/changes/CH-0001-scenario/frames/16.png (unchanged since the earlier review)
+- pdlc/changes/CH-0001-scenario/frames/17.png (unchanged since the earlier review)
+- pdlc/changes/CH-0001-scenario/frames/18.png (unchanged since the earlier review)
+- pdlc/changes/CH-0001-scenario/frames/19.png (unchanged since the earlier review)
+- pdlc/changes/CH-0001-scenario/frames/20.png (unchanged since the earlier review)
+- pdlc/changes/CH-0001-scenario/frames/21.png (unchanged since the earlier review)
+- pdlc/changes/CH-0001-scenario/frames/22.png (unchanged since the earlier review)
+- pdlc/changes/CH-0001-scenario/frames/23.png (unchanged since the earlier review)
+- pdlc/changes/CH-0001-scenario/frames/24.png (unchanged since the earlier review)
+- pdlc/changes/CH-0001-scenario/frames/25.png (unchanged since the earlier review)
 - pdlc/changes/CH-0001-scenario/frames/26.png
 - pdlc/changes/CH-0001-scenario/frames/27.png
 - pdlc/changes/CH-0001-scenario/frames/28.png
