@@ -1,13 +1,13 @@
-# Handoff · CH-0001 · tests → build
+# Handoff · CH-0001 · build → verify
 
 Time: 2026-10-31T23:26:26+00:00
 
 ## Done
 
-- The builder reported that `tests/CAP-scenario.lean` did not compile on Lean 4.35.0. This report is round 1 of 2 of CH-0001 (scenario).
-- The test writer gave the name filter its type. The tests lock is now `5de000a`, and the re-review passed.
-- The acceptance file had the same fault. The acceptance lock is now `a404bbe`, and its re-review passed.
-- The file holds 34 checks, not 36.
+- The builder wrote `StoragePolicySim/Scenario.lean`, `lakefile.toml`, `lean-toolchain` and `lake-manifest.json`.
+- All 34 checks of `tests/CAP-scenario.lean` pass with the "all" command of `pdlc/config.md`. No check changed since the lock `5de000a`.
+- The weather uses a seeded SplitMix64 generator. The base load profile has its peaks at 07:00 and 19:00.
+- CAP-scenario.R1 (seasonal sun), R2 (daily weather) and R3 (household load) are now `built`.
 
 ## Decided on defaults
 
@@ -19,13 +19,13 @@ Time: 2026-10-31T23:26:26+00:00
 
 ## Look here
 
+- `StoragePolicySim/Scenario.lean`
 - `tests/CAP-scenario.lean`
-- The code of the builder, not yet committed: `StoragePolicySim/Scenario.lean`, `lakefile.toml`, `lean-toolchain` and `lake-manifest.json`.
 
 ## Don't redo
 
-- The checks, their lock, and the acceptance lock.
+- The code and the checks.
 
 ## Next: do this first
 
-Run all checks on the code of the builder. Commit the code when the 34 checks pass.
+Run all checks, then make the review packets with `make_packets.py CH-0001 --verify`.
