@@ -1,6 +1,6 @@
 # CH-0002 · Battery and load strategies
 
-Intent: IN-0001 · Scope: CAP-strategies · Status: testing · Ticket: none · Branch: pdlc/CH-0002-strategies · Base: pdlc/CH-0001-scenario
+Intent: IN-0001 · Scope: CAP-strategies · Status: building · Ticket: none · Branch: pdlc/CH-0002-strategies · Base: pdlc/CH-0001-scenario
 
 Tests-Locked: 91d1e6b
 
@@ -132,3 +132,4 @@ none
 ## Progress log
 
 - Planned after CH-0001 (scenario), so that the simulation can use both. The strategies do not need the scenario.
+- The first tests review found that a three-hour window passed the check of R5 (load shift into sun). The test writer added a check with hours apart, round 1 of 2.
