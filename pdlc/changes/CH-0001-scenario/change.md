@@ -126,6 +126,7 @@ none
 - `lake build` writes `lake-manifest.json`. The file goes into "Files" (assumed), so that the build is the same each time.
 - After the fix, the 34 checks of `tests/CAP-scenario.lean` pass on the code of the builder. App code exists after a send-back, so a pass is permitted.
 - Build: the 34 checks of `tests/CAP-scenario.lean` pass. No check changed since the lock `5de000a`.
-- Verify round 1: quality and specification failed. The follow-ups of security (a cap on days, and large seeds) need no intent, because JOB-simulate.R5 (bad command line) has these ranges.
-- Send back to build for one name in `scenario`.
-- Build after round 1: the names of `scenario` are fixed, and the 34 checks pass.
+- Verify round 1: quality and specification failed. The follow-ups of security (a cap on days, and large seeds) need no intent, because JOB-simulate.R5 (bad command line) limits `--days` and `--seed`.
+- Verify returned the change to build, because one name in `scenario` was not clear.
+- The builder renamed the two names in `scenario`, and the 34 checks pass.
+- Verify round 2: specification failed on the words of three log lines. Verify corrected the words, and no code changed.
