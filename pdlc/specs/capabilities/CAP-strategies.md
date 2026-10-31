@@ -77,7 +77,7 @@ default hours.
 
 ### CAP-strategies.R5 · Load shift into sun
 
-Status: proposed · Intents: IN-0001, IN-0002
+Status: ready · Intents: IN-0001, IN-0002
 
 The `shift` strategy uses the battery as `greedy` does. It also moves the flexible load of
 each day, in equal parts, to the three hours with the most forecast solar energy (assumed).
@@ -96,7 +96,7 @@ default hours. An hour with no period in the forecast has no forecast sun.
 
 ### CAP-strategies.R6 · Forecast for strategies
 
-Status: proposed · Intents: IN-0002
+Status: ready · Intents: IN-0002
 
 Each strategy gets the latest forecast when it decides an hour, and when it places a day.
 The strategies `none`, `greedy` and `evening` do not change what they ask for any forecast. In

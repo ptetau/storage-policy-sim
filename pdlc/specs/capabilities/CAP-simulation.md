@@ -95,7 +95,7 @@ daily load, 3 kWh of it flexible. The seed is 7, and each run is 365 days.
 
 ### CAP-simulation.R6 · Forecast in the run
 
-Status: proposed · Intents: IN-0002
+Status: ready · Intents: IN-0002
 
 The run gets a count of fetches each day and an error scale. At each hour, the strategy gets
 the forecast of the latest fetch at or before that hour. The flexible load of each day uses

@@ -90,7 +90,7 @@ The seed sets the weather. The same options and seed give the same output each t
 
 ### JOB-simulate.R5 · Bad command line
 
-Status: proposed · Intents: IN-0001, IN-0002
+Status: ready · Intents: IN-0001, IN-0002
 
 A bad command line prints one error line on stderr, prints nothing on stdout, and exits
 with 2 (assumed). The line is `error: <code>: <detail>` (assumed). `sim`, `sim help` and
@@ -148,7 +148,7 @@ for example `(-90 to 90)` and `(0.1 to 1000)` (assumed).
 
 ### JOB-simulate.R6 · Forecast options
 
-Status: proposed · Intents: IN-0002
+Status: ready · Intents: IN-0002
 
 `sim run` and `sim compare` take `--fetches` (fetches each day), `--forecast-error` (the error
 scale) and `--lon` (degrees, east is positive). The defaults are 10, 1 and 174.8 (assumed).
@@ -169,7 +169,7 @@ The ranges are `--fetches` 1 to 10, whole numbers only, `--forecast-error` 0 to 
 
 ### JOB-simulate.R7 · Forecast command
 
-Status: proposed · Intents: IN-0002
+Status: ready · Intents: IN-0002
 
 `sim forecast` prints on stdout the Solcast JSON of CAP-forecast (simulated Solcast
 forecasts) for one fetch, then a line break, and exits with 0. `--hour` gives the hour of the
@@ -187,5 +187,10 @@ and `--power` (assumed).
 - Given `--days 2 --hour 48`, when the person runs `sim forecast`, then stderr is `error: OUT_OF_RANGE: --hour 48 (0 to 47)`. The exit code is 2.
 - Given `--forecast-error 0 --lat 45 --hour 4116`, when the person runs `sim forecast`, then each `pv_estimate10` and `pv_estimate90` equals its `pv_estimate`.
 - Given `--seed 3 --hour 4116`, when the person runs `sim forecast` two times, then the two outputs are the same.
+- Given `--hour abc`, when the person runs `sim forecast`, then stderr is `error: BAD_NUMBER: --hour abc`. The exit code is 2.
+- Given `--hour 2.5`, when the person runs `sim forecast`, then stderr is `error: BAD_NUMBER: --hour 2.5`. The exit code is 2.
+- Given `--hour -1`, when the person runs `sim forecast`, then stderr is `error: OUT_OF_RANGE: --hour -1 (0 to 8759)`. The exit code is 2.
+- Given `--hour` with no value, when the person runs `sim forecast`, then stderr is `error: MISSING_VALUE: --hour`. The exit code is 2.
+- Given `--hour 3`, when the person runs `sim run`, then stderr is `error: UNKNOWN_OPTION: --hour`. The exit code is 2.
 - Given `--strategy greedy`, when the person runs `sim forecast`, then stderr is `error: UNKNOWN_OPTION: --strategy`. The exit code is 2.
 - Given `--battery 5`, when the person runs `sim forecast`, then stderr is `error: UNKNOWN_OPTION: --battery`. The exit code is 2.

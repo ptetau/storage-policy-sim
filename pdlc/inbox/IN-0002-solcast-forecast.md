@@ -1,6 +1,6 @@
 # IN-0002 · Simulated Solcast forecast for strategies
 
-Status: specifying · Ticket: none · Branch: pdlc/IN-0002-solcast-forecast · Added: 2026-10-31
+Status: ready · Ticket: none · Branch: pdlc/IN-0002-solcast-forecast · Added: 2026-10-31
 
 ## What and why
 
@@ -41,39 +41,35 @@ Acceptance-Passed: none
 - CAP-strategies.R5 (load shift into sun): was "the three hours with the most solar output", now "the three hours with the most forecast solar energy".
 - JOB-simulate.R5 (bad command line): was "usage: sim run [options] | sim compare [options]", now "usage: sim run [options] | sim compare [options] | sim forecast [options]".
 - CAP-strategies.R5 (load shift into sun): IN-0001 (simulator) also has this requirement open. IN-0002 wins where they differ, and its changes come after the changes of IN-0001 (assumed).
+- JOB-simulate.R7 (forecast command): What do bad `--hour` values give? → the codes of R5 (bad command line), and `sim run --hour` gives `UNKNOWN_OPTION` (assumed).
 
 ## Handoff
 
-### Handoff · IN-0002 · intake → ready
+### Handoff · IN-0002 · ready → change
 
-Time: 2026-10-31T23:16:27+00:00
+Time: 2026-10-31T23:16:57+00:00
 
 ### Done
 
-- Intake added CAP-forecast (simulated Solcast forecasts) with four requirements.
-- Intake changed CAP-strategies.R5 (load shift into sun), so that `shift` places the load by the forecast. CAP-strategies.R6 (forecast for strategies) is new.
-- Intake added CAP-simulation.R6 (forecast in the run), and JOB-simulate.R6 (forecast options) and R7 (forecast command).
-- Intake changed the usage line of JOB-simulate.R5 (bad command line).
+- Ready added five lines on the bad forms of `--hour` to JOB-simulate.R7 (forecast command).
+- Each of the ten requirements of IN-0002 (Solcast forecast) is now `ready`. Ready found no contradiction.
 
 ### Decided on defaults
 
-- CAP-forecast.R1 (forecast periods): How far ahead? → 48 hours of 30-minute periods (assumed).
-- CAP-forecast.R3 (fetch limit): How many fetches? → 1 to 10 each day (assumed).
-- CAP-strategies.R5 (load shift into sun): How do two open intents fit? → IN-0002 wins, and its changes come after IN-0001 (assumed).
+- JOB-simulate.R7 (forecast command): What do bad `--hour` values give? → the codes of R5 (bad command line), and `sim run --hour` gives `UNKNOWN_OPTION` (assumed).
 
 ### Open
 
-- Each unmerged change of IN-0001 (simulator) covers CAP-strategies.R5 (load shift into sun) and JOB-simulate.R5 (bad command line). The changes of IN-0002 (Solcast forecast) for those specs stack after them.
+- none
 
 ### Look here
 
 - `pdlc/specs/capabilities/CAP-forecast.md`
-- R5 (load shift into sun) and R6 (forecast for strategies) in `pdlc/specs/capabilities/CAP-strategies.md`
 
 ### Don't redo
 
-- The Solcast field names `pv_estimate`, `pv_estimate10`, `pv_estimate90`, `period_end` and `period`.
+- The requirements of IN-0002 (Solcast forecast).
 
 ### Next: do this first
 
-Make the forecast error lines exact, and settle the bad forms of `--hour`.
+Plan CAP-forecast (simulated Solcast forecasts) first. Then plan the changes of CAP-strategies (strategies), CAP-simulation (energy flows) and JOB-simulate (the command), after the changes of IN-0001 (simulator).

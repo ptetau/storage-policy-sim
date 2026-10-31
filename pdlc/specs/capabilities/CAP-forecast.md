@@ -20,7 +20,7 @@ of fetches. The forecast can show as Solcast JSON, with UTC times from the longi
 
 ### CAP-forecast.R1 · Forecast periods
 
-Status: proposed · Intents: IN-0002
+Status: ready · Intents: IN-0002
 
 A fetch at the start of hour `h` of a run gives the periods of the next 48 hours (assumed).
 Each period is 30 minutes long, and ends 30, 60, and up to 2880 minutes after the fetch. A
@@ -41,7 +41,7 @@ In these lines, the site is at latitude 45 with 5 kW of panels. The seed is 7, t
 
 ### CAP-forecast.R2 · Forecast error
 
-Status: proposed · Intents: IN-0002
+Status: ready · Intents: IN-0002
 
 The estimate is the actual power, times 1 plus the error scale times a spread times a random
 number from a normal curve (assumed). The spread is 0.05 plus 0.10 for each 24 hours of lead
@@ -61,7 +61,7 @@ error of a set of periods is the mean of the absolute differences from the actua
 
 ### CAP-forecast.R3 · Fetch limit
 
-Status: proposed · Intents: IN-0002
+Status: ready · Intents: IN-0002
 
 A day has from 1 to 10 fetches, because a Solcast hobbyist account has 10 calls each day
 (assumed). Fetch `i` of `n` is at hour `i × 24 / n` of each day, rounded down (assumed). At
@@ -75,7 +75,7 @@ each hour, a strategy sees the forecast of the latest fetch at or before that ho
 
 ### CAP-forecast.R4 · Solcast JSON
 
-Status: proposed · Intents: IN-0002
+Status: ready · Intents: IN-0002
 
 A forecast shows as the JSON of the Solcast hobbyist rooftop forecast reply. The text is
 `{"forecasts":[` and the periods, split by commas, then `]}`, with no spaces or line breaks
