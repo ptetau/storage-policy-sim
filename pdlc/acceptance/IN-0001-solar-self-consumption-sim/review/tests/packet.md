@@ -2,12 +2,61 @@
 
 Judge only what is in this packet. Write your result next to it, in result.md.
 
-Made at: bb95de49d5658af7f27da99df48b969d62c7e516
+Made at: 3c0ec15fb0abbfa82b6a730b4660597ef79cfddd
 
-Acceptance-Locked: a404bbe
+Acceptance-Locked: 6cc1154
 
 These are the acceptance checks of an intent. Judge them by the section "Acceptance
 checks of an intent" of the remit below, and by its "Wrong versions".
+
+## Re-review
+
+Earlier review: a404bbe
+
+An earlier review of this remit judged the checks locked at a404bbe. Judge only these two things:
+
+1. Each earlier problem below. If the problem is not fixed, list it again under "Problems".
+2. The changes since the earlier review, in the diff below. List a new problem only
+   where a changed line causes the problem.
+
+Do not raise a new problem on material that did not change. This rule also applies
+to a problem that the earlier review missed.
+Write a "Wrong versions" line only for each check that changed. If no check
+changed, write "none" under "Wrong versions".
+
+### Earlier problems
+
+- tests/acceptance/IN-0001.acceptance.lean:1713 · The check "CAP-simulation.R2 a battery with 2 kW of power charges and discharges 2 kWh or less" passes only if at least one hour of the seed-7 run discharges exactly 2 kWh (`capped`). The acceptance line does not ask for such an hour. Whether one exists depends on the hourly load profile of CAP-scenario.R3 (household load), and the spec does not fix that profile ("a fixed profile (assumed)" with a morning and an evening peak). The packet does not hold the profile. Thus a correct app with a mild evening peak (for example, no hour with a shortfall over 2 kWh while 2.1 kWh or more is stored) fails this check. The handoff lists this dependency as "Open". Fix: keep the run-wide bound on every hour, and prove that the discharge cap binds through the Interface without the profile, for example `stepHour (bat 5 2) 5 Strategy.greedy 19 0 3` gives `dischargeKwh` 2. Then drop the `capped` condition, or keep it only as a second check that does not depend on the profile. · Remit rule "A correct app passes each check"; the packet does not give the load profile that the check needs.
+
+### Changes since the earlier review
+
+````
+diff --git a/tests/acceptance/IN-0001.acceptance.lean b/tests/acceptance/IN-0001.acceptance.lean
+index 6833666..c26c3d6 100644
+--- a/tests/acceptance/IN-0001.acceptance.lean
++++ b/tests/acceptance/IN-0001.acceptance.lean
+@@ -541,13 +541,16 @@ def checks : List Check := [
+       let res := simulate (site 45) (bat 5 2) Strategy.greedy 7 365
+       let bad := res.hours.toList.find? (fun h =>
+         h.flow.chargeKwh > 2 + 1e-9 || h.flow.dischargeKwh > 2 + 1e-9)
+-      -- The discharge cap must bind in at least one hour. Else a version with no cap on the
+-      -- discharge also passes.
+-      let capped := res.hours.any (fun h => near h.flow.dischargeKwh 2 1e-6)
++      -- The two hours below make each cap bind with no need for the load profile. Thus a
++      -- version with no cap on the charge or on the discharge fails.
++      let dis := stepHour (bat 5 2) 5 Strategy.greedy 19 0 3
++      let chg := stepHour (bat 5 2) 0 Strategy.greedy 12 3 0
+       return if res.hours.size != 8760 then some s!"{res.hours.size} hours"
+         else match bad with
+           | some h => some s!"day {h.hour.day} hour {h.hour.hour}: charge {h.flow.chargeKwh}, discharge {h.flow.dischargeKwh}"
+-          | none => if capped then none else some "no hour discharges 2 kWh" },
++          | none =>
++            (flowIs dis [("discharge with a 3 kWh shortfall", dis.dischargeKwh, 2)]) <|>
++            (flowIs chg [("charge with a 3 kWh surplus", chg.chargeKwh, 2)]) },
+   { name := "CAP-simulation.R2 a 5 kWh battery holds 0 to 5 kWh each hour",
+     run := do
+       let res := simulate (site 45) (bat 5 2) Strategy.greedy 7 365
+````
 
 # Remit: tests
 
@@ -140,7 +189,7 @@ maximizing self consumption of solar captured power. Written in lean4 using late
 ## Acceptance checks
 
 Acceptance-File: tests/acceptance/IN-0001.acceptance.lean
-Acceptance-Locked: a404bbe
+Acceptance-Locked: 6cc1154
 Acceptance-Passed: none
 
 ## Notes
@@ -1715,13 +1764,16 @@ def checks : List Check := [
       let res := simulate (site 45) (bat 5 2) Strategy.greedy 7 365
       let bad := res.hours.toList.find? (fun h =>
         h.flow.chargeKwh > 2 + 1e-9 || h.flow.dischargeKwh > 2 + 1e-9)
-      -- The discharge cap must bind in at least one hour. Else a version with no cap on the
-      -- discharge also passes.
-      let capped := res.hours.any (fun h => near h.flow.dischargeKwh 2 1e-6)
+      -- The two hours below make each cap bind with no need for the load profile. Thus a
+      -- version with no cap on the charge or on the discharge fails.
+      let dis := stepHour (bat 5 2) 5 Strategy.greedy 19 0 3
+      let chg := stepHour (bat 5 2) 0 Strategy.greedy 12 3 0
       return if res.hours.size != 8760 then some s!"{res.hours.size} hours"
         else match bad with
           | some h => some s!"day {h.hour.day} hour {h.hour.hour}: charge {h.flow.chargeKwh}, discharge {h.flow.dischargeKwh}"
-          | none => if capped then none else some "no hour discharges 2 kWh" },
+          | none =>
+            (flowIs dis [("discharge with a 3 kWh shortfall", dis.dischargeKwh, 2)]) <|>
+            (flowIs chg [("charge with a 3 kWh surplus", chg.chargeKwh, 2)]) },
   { name := "CAP-simulation.R2 a 5 kWh battery holds 0 to 5 kWh each hour",
     run := do
       let res := simulate (site 45) (bat 5 2) Strategy.greedy 7 365
