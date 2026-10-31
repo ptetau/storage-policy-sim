@@ -1,16 +1,14 @@
-Result: fail
+Result: pass
 
 Remit: specification
 
-Problems:
-- pdlc/changes/CH-0001-scenario/change.md:131 · The line "The builder renamed the two names in `scenario`, and the 34 checks pass." gives a fact that does not agree with line 130. Line 130 says that "one name in `scenario` was not clear". Line 131 then says "the two names", and no noun in the same list item tells the reader which two names. The reader cannot tell if the builder renamed one name or two names. Write, for example, "The builder renamed `<old>` to `<new>` and `<old>` to `<new>` in `scenario`, and the 34 checks pass." Or, if only one name changed, write "one name". · DES-writing-style rule 4.1 (give accurate facts) and the local-references rule (a short noun must refer to a noun in the same paragraph)
+Problems: none
 
 Follow-ups: none
 
 Notes:
-- Earlier problem at change.md:130 (imperative "Send back to build") is fixed. Line 130 now reads "Verify returned the change to build, because one name in `scenario` was not clear." The sentence has a subject, uses the active voice, and has no phrasal verb.
-- Earlier problem at change.md:131 (passive "the names of `scenario` are fixed") is fixed. The new line uses the active voice with the builder as the subject, and does not use "fixed". The new line causes the new problem above.
-- Earlier problem at change.md:129 ("these ranges" with no referent) is fixed. Line 129 now says that JOB-simulate.R5 (bad command line) "limits `--days` and `--seed`".
-- Line 132 ("Verify round 2: specification failed on the words of three log lines. Verify corrected the words, and no code changed.") follows the writing rules.
-- The writing check gave no findings for the changed lines.
-- The code, "Files", and the spec did not change since the earlier review. Thus, this review did not judge them again.
+- The earlier problem (the log lines gave a different count of renamed names) is fixed. Line 199 of `change.md` now says "two local names". Line 200 names the two new names, `daySkies` and `sky`. The two lines agree with each other.
+- The code agrees with line 200 of `change.md`. In `scenario`, `daySkies` holds the array of the day skies, and `sky` holds the sky of one day.
+- The new line 202 of `change.md` (verify round 3) gives an accurate fact. The earlier review failed because two log lines did not agree on the count of names. The line obeys the writing rules.
+- The writing check gave no findings on the lines that changed. No false alarm needs a reason.
+- This re-review judged only the earlier problem and the changed lines of `change.md`. No code changed since the earlier review.

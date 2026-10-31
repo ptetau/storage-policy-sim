@@ -2,13 +2,13 @@
 
 Judge only what is in this packet. Write your result next to it, in result.md.
 
-Made at: 2e0923967d5c1cc77d18cbe4e369157ba384becf
+Made at: 34ad70bb7a00d8ccdf32a04dc29a3924ea6a0878
 
 ## Re-review
 
-Earlier review: 42472e83700cd25f596f4f6c08a7e316d0790c06
+Earlier review: 2e0923967d5c1cc77d18cbe4e369157ba384becf
 
-An earlier review of this remit judged this change at 42472e83700c. Judge only these two things:
+An earlier review of this remit judged this change at 2e0923967d5c. Judge only these two things:
 
 1. Each earlier problem below. If the problem is not fixed, list it again under "Problems".
 2. The changes since the earlier review, in the diff below. List a new problem only
@@ -19,28 +19,25 @@ to a problem that the earlier review missed.
 
 ### Earlier problems
 
-- pdlc/changes/CH-0001-scenario/change.md:130 · The progress-log line "Send back to build for one name in `scenario`." is an imperative with no subject in descriptive text. "Send back" is also a phrasal verb. Write, for example, "The verify step sent the change back to build to change one name in `scenario`." · DES-writing-style rules 4.2 (do not omit subjects), Part 1 section 6 (no imperative in descriptive text) and 9.3 (do not use phrasal verbs)
-- pdlc/changes/CH-0001-scenario/change.md:131 · The clause "the names of `scenario` are fixed" uses the passive voice, but the agent is known (the builder). The word "fixed" can also mean "constant". Write, for example, "the builder corrected the names in `scenario`, and the 34 checks pass." · DES-writing-style rules 3.6 (use the active voice) and 9.2 (use each word correctly)
-- pdlc/changes/CH-0001-scenario/change.md:129 · The noun "these ranges" refers to no noun in the same paragraph. The paragraph names "a cap on days" and "large seeds", not ranges. Write, for example, "because JOB-simulate.R5 (bad command line) limits the days and the seed." · DES-writing-style local-references rule (a short noun must refer to a noun in the same paragraph)
+- pdlc/changes/CH-0001-scenario/change.md:131 · The line "The builder renamed the two names in `scenario`, and the 34 checks pass." gives a fact that does not agree with line 130. Line 130 says that "one name in `scenario` was not clear". Line 131 then says "the two names", and no noun in the same list item tells the reader which two names. The reader cannot tell if the builder renamed one name or two names. Write, for example, "The builder renamed `<old>` to `<new>` and `<old>` to `<new>` in `scenario`, and the 34 checks pass." Or, if only one name changed, write "one name". · DES-writing-style rule 4.1 (give accurate facts) and the local-references rule (a short noun must refer to a noun in the same paragraph)
 
 ### Changes since the earlier review
 
 ````
 diff --git a/pdlc/changes/CH-0001-scenario/change.md b/pdlc/changes/CH-0001-scenario/change.md
-index 2ea89a0..d763b7a 100644
+index d763b7a..bf11cbb 100644
 --- a/pdlc/changes/CH-0001-scenario/change.md
 +++ b/pdlc/changes/CH-0001-scenario/change.md
-@@ -126,6 +126,7 @@ none
- - `lake build` writes `lake-manifest.json`. The file goes into "Files" (assumed), so that the build is the same each time.
+@@ -127,6 +127,7 @@ none
  - After the fix, the 34 checks of `tests/CAP-scenario.lean` pass on the code of the builder. App code exists after a send-back, so a pass is permitted.
  - Build: the 34 checks of `tests/CAP-scenario.lean` pass. No check changed since the lock `5de000a`.
--- Verify round 1: quality and specification failed. The follow-ups of security (a cap on days, and large seeds) need no intent, because JOB-simulate.R5 (bad command line) has these ranges.
--- Send back to build for one name in `scenario`.
--- Build after round 1: the names of `scenario` are fixed, and the 34 checks pass.
-+- Verify round 1: quality and specification failed. The follow-ups of security (a cap on days, and large seeds) need no intent, because JOB-simulate.R5 (bad command line) limits `--days` and `--seed`.
-+- Verify returned the change to build, because one name in `scenario` was not clear.
-+- The builder renamed the two names in `scenario`, and the 34 checks pass.
-+- Verify round 2: specification failed on the words of three log lines. Verify corrected the words, and no code changed.
+ - Verify round 1: quality and specification failed. The follow-ups of security (a cap on days, and large seeds) need no intent, because JOB-simulate.R5 (bad command line) limits `--days` and `--seed`.
+-- Verify returned the change to build, because one name in `scenario` was not clear.
+-- The builder renamed the two names in `scenario`, and the 34 checks pass.
++- Verify returned the change to build, because two local names in `scenario` were not clear.
++- The builder renamed the array of the day skies to `daySkies`, and the sky of one day to `sky`. The 34 checks pass.
+ - Verify round 2: specification failed on the words of three log lines. Verify corrected the words, and no code changed.
++- Verify round 3: specification failed, because two log lines did not agree on the count of names. The user chose to correct the words and review again.
 ````
 
 # Remit: specification
@@ -199,9 +196,10 @@ none
 - After the fix, the 34 checks of `tests/CAP-scenario.lean` pass on the code of the builder. App code exists after a send-back, so a pass is permitted.
 - Build: the 34 checks of `tests/CAP-scenario.lean` pass. No check changed since the lock `5de000a`.
 - Verify round 1: quality and specification failed. The follow-ups of security (a cap on days, and large seeds) need no intent, because JOB-simulate.R5 (bad command line) limits `--days` and `--seed`.
-- Verify returned the change to build, because one name in `scenario` was not clear.
-- The builder renamed the two names in `scenario`, and the 34 checks pass.
+- Verify returned the change to build, because two local names in `scenario` were not clear.
+- The builder renamed the array of the day skies to `daySkies`, and the sky of one day to `sky`. The 34 checks pass.
 - Verify round 2: specification failed on the words of three log lines. Verify corrected the words, and no code changed.
+- Verify round 3: specification failed, because two log lines did not agree on the count of names. The user chose to correct the words and review again.
 ````
 
 ## The spec it covers: title and summary
@@ -1160,7 +1158,7 @@ leanprover/lean4:v4.35.0
 
 ## Writing check
 
-`pdlc/bin/check_writing.py --since 42472e83700cd25f596f4f6c08a7e316d0790c06` on pdlc/changes/CH-0001-scenario/change.md, pdlc/specs/capabilities/CAP-scenario.md, pdlc/specs/design/DES-lean-checks.md, pdlc/specs/jobs/JOB-simulate.md:
+`pdlc/bin/check_writing.py --since 2e0923967d5c1cc77d18cbe4e369157ba384becf` on pdlc/changes/CH-0001-scenario/change.md, pdlc/specs/capabilities/CAP-scenario.md, pdlc/specs/design/DES-lean-checks.md, pdlc/specs/jobs/JOB-simulate.md:
 
 ````
 No findings.
