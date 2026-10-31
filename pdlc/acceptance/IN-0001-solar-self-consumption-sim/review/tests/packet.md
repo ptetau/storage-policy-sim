@@ -2,12 +2,55 @@
 
 Judge only what is in this packet. Write your result next to it, in result.md.
 
-Made at: 7c803f4609cce2f74468a989532c0fbd7cb37777
+Made at: 45f5be7beb5ff0c787f2c9104f6f8fbc45d57ae4
 
-Acceptance-Locked: 36a6e76
+Acceptance-Locked: 67970d4
 
 These are the acceptance checks of an intent. Judge them by the section "Acceptance
 checks of an intent" of the remit below, and by its "Wrong versions".
+
+## Re-review
+
+Earlier review: 36a6e76
+
+An earlier review of this remit judged the checks locked at 36a6e76. Judge only these two things:
+
+1. Each earlier problem below. If the problem is not fixed, list it again under "Problems".
+2. The changes since the earlier review, in the diff below. List a new problem only
+   where a changed line causes the problem.
+
+Do not raise a new problem on material that did not change. This rule also applies
+to a problem that the earlier review missed.
+Write a "Wrong versions" line only for each check that changed. If no check
+changed, write "none" under "Wrong versions".
+
+### Earlier problems
+
+- tests/acceptance/IN-0001.acceptance.lean:539 · The check "CAP-simulation.R2 a battery with 2 kW of power charges and discharges 2 kWh or less" never shows that a shortfall reaches the 2 kWh cap. A plausible wrong version limits the charge by the power but not the discharge. That version passes if no hour of the run has a shortfall over 2 kWh while the battery holds over 2.1 kWh. The packet does not give the load profile, so no value in the packet catches that version. Fix: also expect that at least one hour discharges 2 kWh (within 1e-6), so that the discharge cap must bind. · CAP-simulation.R2 (battery limits), line 1: "no hour charges or discharges over 2 kWh", and the remit rule "Each check can fail".
+
+### Changes since the earlier review
+
+````
+diff --git a/tests/acceptance/IN-0001.acceptance.lean b/tests/acceptance/IN-0001.acceptance.lean
+index 1753319..17a7776 100644
+--- a/tests/acceptance/IN-0001.acceptance.lean
++++ b/tests/acceptance/IN-0001.acceptance.lean
+@@ -541,10 +541,13 @@ def checks : List Check := [
+       let res := simulate (site 45) (bat 5 2) Strategy.greedy 7 365
+       let bad := res.hours.toList.find? (fun h =>
+         h.flow.chargeKwh > 2 + 1e-9 || h.flow.dischargeKwh > 2 + 1e-9)
++      -- The discharge cap must bind in at least one hour. Else a version with no cap on the
++      -- discharge also passes.
++      let capped := res.hours.any (fun h => near h.flow.dischargeKwh 2 1e-6)
+       return if res.hours.size != 8760 then some s!"{res.hours.size} hours"
+         else match bad with
+           | some h => some s!"day {h.hour.day} hour {h.hour.hour}: charge {h.flow.chargeKwh}, discharge {h.flow.dischargeKwh}"
+-          | none => none },
++          | none => if capped then none else some "no hour discharges 2 kWh" },
+   { name := "CAP-simulation.R2 a 5 kWh battery holds 0 to 5 kWh each hour",
+     run := do
+       let res := simulate (site 45) (bat 5 2) Strategy.greedy 7 365
+````
 
 # Remit: tests
 
@@ -140,7 +183,7 @@ maximizing self consumption of solar captured power. Written in lean4 using late
 ## Acceptance checks
 
 Acceptance-File: tests/acceptance/IN-0001.acceptance.lean
-Acceptance-Locked: 36a6e76
+Acceptance-Locked: 67970d4
 Acceptance-Passed: none
 
 ## Notes
@@ -1718,10 +1761,13 @@ def checks : List Check := [
       let res := simulate (site 45) (bat 5 2) Strategy.greedy 7 365
       let bad := res.hours.toList.find? (fun h =>
         h.flow.chargeKwh > 2 + 1e-9 || h.flow.dischargeKwh > 2 + 1e-9)
+      -- The discharge cap must bind in at least one hour. Else a version with no cap on the
+      -- discharge also passes.
+      let capped := res.hours.any (fun h => near h.flow.dischargeKwh 2 1e-6)
       return if res.hours.size != 8760 then some s!"{res.hours.size} hours"
         else match bad with
           | some h => some s!"day {h.hour.day} hour {h.hour.hour}: charge {h.flow.chargeKwh}, discharge {h.flow.dischargeKwh}"
-          | none => none },
+          | none => if capped then none else some "no hour discharges 2 kWh" },
   { name := "CAP-simulation.R2 a 5 kWh battery holds 0 to 5 kWh each hour",
     run := do
       let res := simulate (site 45) (bat 5 2) Strategy.greedy 7 365
