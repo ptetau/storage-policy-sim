@@ -2,7 +2,77 @@
 
 Judge only what is in this packet. Write your result next to it, in result.md.
 
-Made at: 4c713c02812200de87d0a7841fe33ea7fb39b399
+Made at: 42472e83700cd25f596f4f6c08a7e316d0790c06
+
+## Re-review
+
+Earlier review: 4c713c02812200de87d0a7841fe33ea7fb39b399
+
+An earlier review of this remit judged this change at 4c713c028122. Judge only these two things:
+
+1. Each earlier problem below. If the problem is not fixed, list it again under "Problems".
+2. The changes since the earlier review, in the diff below. List a new problem only
+   where a changed line causes the problem.
+
+Do not raise a new problem on material that did not change. This rule also applies
+to a problem that the earlier review missed.
+
+### Earlier problems
+
+- pdlc/specs/capabilities/CAP-scenario.md:"What it is for", first sentence · The sentence "makes the world that a strategy must deal with" uses the phrasal verb "deal with". Write, for example, "makes the world that a strategy must manage, one hour at a time." · DES-writing-style rule 9.3 (do not use phrasal verbs)
+
+### Changes since the earlier review
+
+````
+diff --git a/StoragePolicySim/Scenario.lean b/StoragePolicySim/Scenario.lean
+index a3922c0..7e53e09 100644
+--- a/StoragePolicySim/Scenario.lean
++++ b/StoragePolicySim/Scenario.lean
+@@ -146,15 +146,15 @@ private def defaultFlex (site : Site) (hour : Nat) : Float :=
+ /-- The `24 × days` hours of a run, in order of day, then hour. The same arguments give the
+ same array. -/
+ def scenario (site : Site) (seed days : Nat) : Array Hour := Id.run do
+-  let sky := skies site.latitude seed days
++  let daySkies := skies site.latitude seed days
+   let mut out : Array Hour := Array.mkEmpty (24 * days)
+   for d in [0:days] do
+     let doy := d % daysInYear
+-    let s := sky[d]!
++    let sky := daySkies[d]!
+     for h in [0:24] do
+       out := out.push {
+-        day := d, dayOfYear := doy, hour := h, sky := s,
+-        pvKwh := pvOutput site doy h s,
++        day := d, dayOfYear := doy, hour := h, sky := sky,
++        pvKwh := pvOutput site doy h sky,
+         baseLoadKwh := baseLoad site doy h,
+         flexKwh := defaultFlex site h }
+   return out
+diff --git a/pdlc/changes/CH-0001-scenario/change.md b/pdlc/changes/CH-0001-scenario/change.md
+index 99875d3..2ea89a0 100644
+--- a/pdlc/changes/CH-0001-scenario/change.md
++++ b/pdlc/changes/CH-0001-scenario/change.md
+@@ -126,3 +126,6 @@ none
+ - `lake build` writes `lake-manifest.json`. The file goes into "Files" (assumed), so that the build is the same each time.
+ - After the fix, the 34 checks of `tests/CAP-scenario.lean` pass on the code of the builder. App code exists after a send-back, so a pass is permitted.
+ - Build: the 34 checks of `tests/CAP-scenario.lean` pass. No check changed since the lock `5de000a`.
++- Verify round 1: quality and specification failed. The follow-ups of security (a cap on days, and large seeds) need no intent, because JOB-simulate.R5 (bad command line) has these ranges.
++- Send back to build for one name in `scenario`.
++- Build after round 1: the names of `scenario` are fixed, and the 34 checks pass.
+diff --git a/pdlc/specs/capabilities/CAP-scenario.md b/pdlc/specs/capabilities/CAP-scenario.md
+index ed95266..0e3e694 100644
+--- a/pdlc/specs/capabilities/CAP-scenario.md
++++ b/pdlc/specs/capabilities/CAP-scenario.md
+@@ -4,7 +4,7 @@ Status: active
+ 
+ ## What it is for
+ 
+-CAP-scenario (sun, weather and load) makes the world that a strategy must deal with, one hour at a time. It gives
++CAP-scenario (sun, weather and load) makes the conditions that a strategy must handle, one hour at a time. It gives
+ the solar output of each hour from the season and the sun height, and a daily sky from a
+ seeded weather model. It also gives the household load of each hour, with a seasonal base
+ load and a flexible load that a strategy can move.
+````
 
 # Remit: specification
 
@@ -159,6 +229,9 @@ none
 - `lake build` writes `lake-manifest.json`. The file goes into "Files" (assumed), so that the build is the same each time.
 - After the fix, the 34 checks of `tests/CAP-scenario.lean` pass on the code of the builder. App code exists after a send-back, so a pass is permitted.
 - Build: the 34 checks of `tests/CAP-scenario.lean` pass. No check changed since the lock `5de000a`.
+- Verify round 1: quality and specification failed. The follow-ups of security (a cap on days, and large seeds) need no intent, because JOB-simulate.R5 (bad command line) has these ranges.
+- Send back to build for one name in `scenario`.
+- Build after round 1: the names of `scenario` are fixed, and the 34 checks pass.
 ````
 
 ## The spec it covers: title and summary
@@ -170,7 +243,7 @@ Status: active
 
 ## What it is for
 
-CAP-scenario (sun, weather and load) makes the world that a strategy must deal with, one hour at a time. It gives
+CAP-scenario (sun, weather and load) makes the conditions that a strategy must handle, one hour at a time. It gives
 the solar output of each hour from the season and the sun height, and a daily sky from a
 seeded weather model. It also gives the household load of each hour, with a seasonal base
 load and a flexible load that a strategy can move.
@@ -719,7 +792,7 @@ port.
 ````
 diff --git a/StoragePolicySim/Scenario.lean b/StoragePolicySim/Scenario.lean
 new file mode 100644
-index 0000000..a3922c0
+index 0000000..7e53e09
 --- /dev/null
 +++ b/StoragePolicySim/Scenario.lean
 @@ -0,0 +1,162 @@
@@ -871,15 +944,15 @@ index 0000000..a3922c0
 +/-- The `24 × days` hours of a run, in order of day, then hour. The same arguments give the
 +same array. -/
 +def scenario (site : Site) (seed days : Nat) : Array Hour := Id.run do
-+  let sky := skies site.latitude seed days
++  let daySkies := skies site.latitude seed days
 +  let mut out : Array Hour := Array.mkEmpty (24 * days)
 +  for d in [0:days] do
 +    let doy := d % daysInYear
-+    let s := sky[d]!
++    let sky := daySkies[d]!
 +    for h in [0:24] do
 +      out := out.push {
-+        day := d, dayOfYear := doy, hour := h, sky := s,
-+        pvKwh := pvOutput site doy h s,
++        day := d, dayOfYear := doy, hour := h, sky := sky,
++        pvKwh := pvOutput site doy h sky,
 +        baseLoadKwh := baseLoad site doy h,
 +        flexKwh := defaultFlex site h }
 +  return out
@@ -1070,15 +1143,15 @@ private def defaultFlex (site : Site) (hour : Nat) : Float :=
 /-- The `24 × days` hours of a run, in order of day, then hour. The same arguments give the
 same array. -/
 def scenario (site : Site) (seed days : Nat) : Array Hour := Id.run do
-  let sky := skies site.latitude seed days
+  let daySkies := skies site.latitude seed days
   let mut out : Array Hour := Array.mkEmpty (24 * days)
   for d in [0:days] do
     let doy := d % daysInYear
-    let s := sky[d]!
+    let sky := daySkies[d]!
     for h in [0:24] do
       out := out.push {
-        day := d, dayOfYear := doy, hour := h, sky := s,
-        pvKwh := pvOutput site doy h s,
+        day := d, dayOfYear := doy, hour := h, sky := sky,
+        pvKwh := pvOutput site doy h sky,
         baseLoadKwh := baseLoad site doy h,
         flexKwh := defaultFlex site h }
   return out
@@ -1117,7 +1190,7 @@ leanprover/lean4:v4.35.0
 
 ## Writing check
 
-`pdlc/bin/check_writing.py --since main` on pdlc/changes/CH-0001-scenario/change.md, pdlc/specs/capabilities/CAP-scenario.md, pdlc/specs/design/DES-lean-checks.md, pdlc/specs/jobs/JOB-simulate.md:
+`pdlc/bin/check_writing.py --since 4c713c02812200de87d0a7841fe33ea7fb39b399` on pdlc/changes/CH-0001-scenario/change.md, pdlc/specs/capabilities/CAP-scenario.md, pdlc/specs/design/DES-lean-checks.md, pdlc/specs/jobs/JOB-simulate.md:
 
 ````
 No findings.

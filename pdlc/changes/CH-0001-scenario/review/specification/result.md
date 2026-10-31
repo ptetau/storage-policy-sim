@@ -3,19 +3,14 @@ Result: fail
 Remit: specification
 
 Problems:
-- pdlc/specs/capabilities/CAP-scenario.md:"What it is for", first sentence · The sentence "makes the world that a strategy must deal with" uses the phrasal verb "deal with". Write, for example, "makes the world that a strategy must manage, one hour at a time." · DES-writing-style rule 9.3 (do not use phrasal verbs)
+- pdlc/changes/CH-0001-scenario/change.md:130 · The progress-log line "Send back to build for one name in `scenario`." is an imperative with no subject in descriptive text. "Send back" is also a phrasal verb. Write, for example, "The verify step sent the change back to build to change one name in `scenario`." · DES-writing-style rules 4.2 (do not omit subjects), Part 1 section 6 (no imperative in descriptive text) and 9.3 (do not use phrasal verbs)
+- pdlc/changes/CH-0001-scenario/change.md:131 · The clause "the names of `scenario` are fixed" uses the passive voice, but the agent is known (the builder). The word "fixed" can also mean "constant". Write, for example, "the builder corrected the names in `scenario`, and the 34 checks pass." · DES-writing-style rules 3.6 (use the active voice) and 9.2 (use each word correctly)
+- pdlc/changes/CH-0001-scenario/change.md:129 · The noun "these ranges" refers to no noun in the same paragraph. The paragraph names "a cap on days" and "large seeds", not ranges. Write, for example, "because JOB-simulate.R5 (bad command line) limits the days and the seed." · DES-writing-style local-references rule (a short noun must refer to a noun in the same paragraph)
 
-Follow-ups:
-none
+Follow-ups: none
 
 Notes:
-- The code meets each acceptance line of CAP-scenario.R1 (seasonal sun), CAP-scenario.R2 (daily weather) and CAP-scenario.R3 (household load). I calculated these values by hand:
-  - R1 at 12:00: latitude 45 gives a sine of 0.924 on day 171 and 0.362 on day 354 (ratio 2.55). Latitude -41 gives 0.948 on day 354 and 0.426 on day 171 (ratio 2.23). At latitude 0, the declination is +23.44 and -23.44 degrees, so the two outputs are equal. At 00:00 on day 171, the sine is less than 0, so the output is 0.
-  - R3: the hourly profile adds up to 1000. The seasonal factor adds up to 365 over a year. Thus, the total load is 17 × 365 + 3 × 365 = 7300 kWh. The base load of day 15 is 1.49996 times the base load of day 197. The profile gives 85 at 19:00, 30 at 13:00, 55 at 07:00 and 20 at 03:00.
-  - R2: the weather keeps the previous sky with a chance of 0.6, and uses the chances of the half of the year that the spec gives. The skies come only from the seed, so two runs with the same seed give the same hours. The load does not read the seed.
-- The code matches the Interface: `Sky`, `Sky.factor`, `Site`, `Hour`, `pvOutput` and `scenario`, with the listed fields and derived instances. `pvOutput` reads only `latitude` and `pvKw`.
-- `daysInYear` is public, but the Interface does not list `daysInYear`. This is not a change in behaviour. Usually, a helper constant is `private`. Think about making it `private`, or add it to the Interface.
-- The diff changes only the four entries of "Files". The packet does not show the diffs of the spec files. The writing check lists `pdlc/specs/jobs/JOB-simulate.md` as changed since main. I cannot see if that change belongs to this change (scope CAP-scenario) or to intake. Make sure that this change edits only the specs of its scope.
-- "Files" lists no README. Thus, the rule about how the README tells you to run the checks does not apply.
-- The Writing check gave no findings. I found one break that the linter does not find (the problem above).
-- Field comments such as "Degrees. South is negative." and "The kW of the panels." are short labels. I did not count them as breaks of rule 4.2 (do not omit words). The Interface uses the same wording.
+- The earlier problem is fixed. CAP-scenario.md line 7 now reads "makes the conditions that a strategy must handle, one hour at a time". The phrasal verb "deal with" is gone. The packet does not contain the STE dictionary, so this review cannot confirm that "handle" is an approved verb.
+- The code change in `scenario` only renames two local names (`sky` to `daySkies`, and `s` to `sky`). The behaviour does not change, and the code still meets CAP-scenario.R1 (seasonal sun), R2 (daily weather) and R3 (household load).
+- The writing check gave no findings. The three problems above are rules that a script cannot measure.
+- The claim on change.md line 129 that JOB-simulate.R5 (bad command line) limits the days and the seed is not in this packet. This review cannot confirm the claim.
