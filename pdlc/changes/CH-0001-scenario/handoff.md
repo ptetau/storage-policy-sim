@@ -1,30 +1,31 @@
 # Handoff · CH-0001 · tests → build
 
-Time: 2026-10-31T23:21:28+00:00
+Time: 2026-10-31T23:26:26+00:00
 
 ## Done
 
-- The test writer wrote 36 checks in `tests/CAP-scenario.lean`, for R1 (seasonal sun), R2 (daily weather) and R3 (household load).
-- The checks failed before any code, because the library and `lakefile.toml` do not exist yet.
-- The lock is `0185f3e`. The tests review passed with no problem.
+- The builder reported that `tests/CAP-scenario.lean` did not compile on Lean 4.35.0. This report is round 1 of 2 of CH-0001 (scenario).
+- The test writer gave the name filter its type. The tests lock is now `5de000a`, and the re-review passed.
+- The acceptance file had the same fault. The acceptance lock is now `a404bbe`, and its re-review passed.
+- The file holds 34 checks, not 36.
 
 ## Decided on defaults
 
-- none
+- CH-0001 (scenario): Does `lake-manifest.json` go into "Files"? → yes, so that each build is the same (assumed).
 
 ## Open
 
-- The acceptance check of CAP-simulation.R2 (battery limits) needs an hour that discharges 2 kWh, from a 5 kWh battery with 2 kW. The evening load profile must give a shortfall above 2 kWh in some hours.
+- none
 
 ## Look here
 
 - `tests/CAP-scenario.lean`
-- The "Interface" of `pdlc/changes/CH-0001-scenario/change.md`
+- The code of the builder, not yet committed: `StoragePolicySim/Scenario.lean`, `lakefile.toml`, `lean-toolchain` and `lake-manifest.json`.
 
 ## Don't redo
 
-- The checks and their lock.
+- The checks, their lock, and the acceptance lock.
 
 ## Next: do this first
 
-Create `lakefile.toml` with the library `StoragePolicySim` and its modules, and `lean-toolchain` with `leanprover/lean4:v4.35.0`. Then write `StoragePolicySim/Scenario.lean`.
+Run all checks on the code of the builder. Commit the code when the 34 checks pass.
