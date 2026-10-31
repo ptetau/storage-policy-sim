@@ -118,9 +118,9 @@ def checks : List Check := [
   { name := "CAP-scenario.R1 the sky factors are 1.0, 0.5 and 0.15",
     run := do
       return firstFail [
-        (Sky.factor Sky.sunny == 1.0, s!"sunny {Sky.factor Sky.sunny}"),
-        (Sky.factor Sky.cloudy == 0.5, s!"cloudy {Sky.factor Sky.cloudy}"),
-        (Sky.factor Sky.overcast == 0.15, s!"overcast {Sky.factor Sky.overcast}")] },
+        (near (Sky.factor Sky.sunny) 1.0 1e-9, s!"sunny {Sky.factor Sky.sunny}"),
+        (near (Sky.factor Sky.cloudy) 0.5 1e-9, s!"cloudy {Sky.factor Sky.cloudy}"),
+        (near (Sky.factor Sky.overcast) 0.15 1e-9, s!"overcast {Sky.factor Sky.overcast}")] },
   { name := "CAP-scenario.R1 0 kW of panels gives 0 kWh at 12:00 of day 171",
     run := do
       let v := noon (site 45 (pv := 0)) 171 Sky.sunny

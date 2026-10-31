@@ -5,7 +5,7 @@ Write the component checks of this change, only in the files under its "Check fi
 This brief holds each input of the checks. Read another file only when this brief names
 it, for example an existing check file to match its style.
 
-Made at: 90be743df35754adf09f42536c8cbbee2cbf2cee
+Made at: 69eedfc32ca61e307a3e1600bfd53579df25a897
 
 ## The change spec
 
@@ -14,9 +14,9 @@ Path: pdlc/changes/CH-0001-scenario/change.md
 ````
 # CH-0001 · Seasonal sun, daily weather and household load
 
-Intent: IN-0001 · Scope: CAP-scenario · Status: building · Ticket: none · Branch: pdlc/CH-0001-scenario · Base: main
+Intent: IN-0001 · Scope: CAP-scenario · Status: in review · Ticket: none · Branch: pdlc/CH-0001-scenario · Base: main
 
-Tests-Locked: 0185f3e
+Tests-Locked: 5de000a
 
 ## Delivers
 
@@ -111,19 +111,19 @@ so no entry has an error code.
 
 ## Steps
 
-### Step 1 · Seasonal sun · [ ]
+### Step 1 · Seasonal sun · [x]
 
 - Requirement: CAP-scenario.R1
 - Check: the checks named `CAP-scenario.R1 …` in `tests/CAP-scenario.lean`
 - Done when: the checks pass
 
-### Step 2 · Daily weather · [ ]
+### Step 2 · Daily weather · [x]
 
 - Requirement: CAP-scenario.R2
 - Check: the checks named `CAP-scenario.R2 …` in `tests/CAP-scenario.lean`
 - Done when: the checks pass
 
-### Step 3 · Household load · [ ]
+### Step 3 · Household load · [x]
 
 - Requirement: CAP-scenario.R3
 - Check: the checks named `CAP-scenario.R3 …` in `tests/CAP-scenario.lean`
@@ -138,20 +138,30 @@ none
 - Planned as the first change of IN-0001 (solar self-consumption simulator), because each other change uses its hours.
 - The builder found that `tests/CAP-scenario.lean` does not compile. `fun c => c.name` needs the type `Check` in Lean 4.35.0. The check goes back to the test writer, round 1 of 2.
 - `lake build` writes `lake-manifest.json`. The file goes into "Files" (assumed), so that the build is the same each time.
+- After the fix, the 34 checks of `tests/CAP-scenario.lean` pass on the code of the builder. App code exists after a send-back, so a pass is permitted.
+- Build: the 34 checks of `tests/CAP-scenario.lean` pass. No check changed since the lock `5de000a`.
+- Verify round 1: quality and specification failed. The follow-ups of security (a cap on days, and large seeds) need no intent, because JOB-simulate.R5 (bad command line) limits `--days` and `--seed`.
+- Verify returned the change to build, because two local names in `scenario` were not clear.
+- The builder renamed the array of the day skies to `daySkies`, and the sky of one day to `sky`. The 34 checks pass.
+- Verify round 2: specification failed on the words of three log lines. Verify corrected the words, and no code changed.
+- Verify round 3: specification failed, because two log lines did not agree on the count of names. The user chose to correct the words and review again.
+- Verify round 4: each remit passed. The change is `in review`.
 ````
 
 ## The handoff
 
 ````
-# Handoff · CH-0001 · tests → build
+# Handoff · CH-0001 · verify → show
 
-Time: 2026-10-31T23:21:28+00:00
+Time: 2026-10-31T23:39:18+00:00
 
 ## Done
 
-- The test writer wrote 36 checks in `tests/CAP-scenario.lean`, for R1 (seasonal sun), R2 (daily weather) and R3 (household load).
-- The checks failed before any code, because the library and `lakefile.toml` do not exist yet.
-- The lock is `0185f3e`. The tests review passed with no problem.
+- All 34 checks of `tests/CAP-scenario.lean` pass, and no check changed since the lock.
+- Each remit passed: tests, specification, security, quality and privacy. Compliance does not apply.
+- CAP-scenario.R1 (seasonal sun), R2 (daily weather) and R3 (household load) are `verified`.
+- The run acceptance step is for the last change, CH-0004 (sim command). A failure now is expected.
+- Verify filed no new intent.
 
 ## Decided on defaults
 
@@ -159,20 +169,19 @@ Time: 2026-10-31T23:21:28+00:00
 
 ## Open
 
-- The acceptance check of CAP-simulation.R2 (battery limits) needs an hour that discharges 2 kWh, from a 5 kWh battery with 2 kW. The evening load profile must give a shortfall above 2 kWh in some hours.
+- none
 
 ## Look here
 
-- `tests/CAP-scenario.lean`
-- The "Interface" of `pdlc/changes/CH-0001-scenario/change.md`
+- `pdlc/changes/CH-0001-scenario/review/`
 
 ## Don't redo
 
-- The checks and their lock.
+- The code, the checks and the reviews.
 
 ## Next: do this first
 
-Create `lakefile.toml` with the library `StoragePolicySim` and its modules, and `lean-toolchain` with `leanprover/lean4:v4.35.0`. Then write `StoragePolicySim/Scenario.lean`.
+Record the GIF in a terminal, with a short Lean script that calls `pvOutput` and `scenario`.
 ````
 
 ## The specs
@@ -186,7 +195,7 @@ Status: active
 
 ## What it is for
 
-CAP-scenario (sun, weather and load) makes the world that a strategy must deal with, one hour at a time. It gives
+CAP-scenario (sun, weather and load) makes the conditions that a strategy must handle, one hour at a time. It gives
 the solar output of each hour from the season and the sun height, and a daily sky from a
 seeded weather model. It also gives the household load of each hour, with a seasonal base
 load and a flexible load that a strategy can move.
@@ -202,7 +211,7 @@ load and a flexible load that a strategy can move.
 
 ### CAP-scenario.R1 · Seasonal sun
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 The output of an hour is the panel power, times the sine of the sun height, times the sky
 factor (assumed). The sun height uses the latitude, the day of the year, and the middle of
@@ -224,7 +233,7 @@ unless the line says otherwise.
 
 ### CAP-scenario.R2 · Daily weather
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 A seed and a number of days give one sky for each day, and the same hours each time. The
 scenario starts on 1 January and gives the hours in order of day, then hour.
@@ -251,7 +260,7 @@ a negative latitude (assumed). After day 364, the day of the year starts again a
 
 ### CAP-scenario.R3 · Household load
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 The daily load includes the flexible load. The base load is the daily load less the flexible
 load, spread over the hours by a fixed profile (assumed).
