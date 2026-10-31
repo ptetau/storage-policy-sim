@@ -1,0 +1,7 @@
+name = "storage-policy-sim"
+version = "0.1.0"
+defaultTargets = ["StoragePolicySim"]
+
+[[lean_lib]]
+name = "StoragePolicySim"
+globs = ["StoragePolicySim.+"]
