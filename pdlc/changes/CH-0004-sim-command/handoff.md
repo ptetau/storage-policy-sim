@@ -1,11 +1,13 @@
-# Handoff · CH-0004 · build → verify
+# Handoff · CH-0004 · verify → show
 
-Time: 2026-11-01T01:46:14+00:00
+Time: 2026-11-01T01:47:07+00:00
 
 ## Done
 
-- The builder fixed the three problems of verify round 1: the `UNKNOWN_COMMAND` row of the README, the comment of `CommandLine.whole`, and the width of the usage.
-- All 190 checks and the 154 acceptance checks pass. No check changed since the lock.
+- All 190 checks pass, and no check changed since the lock.
+- The acceptance file of IN-0001 (simulator) passes: 154 checks, 0 failed. The pass commit is `9bc6ba9`.
+- Each remit passed: tests, specification, security, quality and privacy. Compliance does not apply.
+- JOB-simulate.R1 (run one strategy) to R5 (bad command line) are `verified`. Verify filed IN-0006 (polish of the sim command) for approval.
 
 ## Decided on defaults
 
@@ -17,12 +19,12 @@ Time: 2026-11-01T01:46:14+00:00
 
 ## Look here
 
-- `Main.lean`, `README.md`
+- `pdlc/changes/CH-0004-sim-command/review/`
 
 ## Don't redo
 
-- The checks, and the reviews that passed.
+- The code, the checks and the reviews.
 
 ## Next: do this first
 
-Make the re-review packets with `make_packets.py CH-0004 --verify`.
+Record the GIF in a terminal, with the `sim` command.
