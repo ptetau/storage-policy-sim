@@ -51,8 +51,8 @@ def stepHour (battery : Battery) (socKwh : Float) (strategy : Strategy) (hour : 
   let surplusKwh := pvKwh - directKwh
   let shortfallKwh := loadKwh - directKwh
   let request := strategy.decide hour surplusKwh shortfallKwh
-  let freeRoomKwh := (battery.capacityKwh - socKwh) / efficiency
-  let chargeKwh := limitTo request.chargeKwh surplusKwh (min battery.powerKw freeRoomKwh)
+  let chargeToFillKwh := (battery.capacityKwh - socKwh) / efficiency
+  let chargeKwh := limitTo request.chargeKwh surplusKwh (min battery.powerKw chargeToFillKwh)
   let storedAfterChargeKwh := socKwh + chargeKwh * efficiency
   let dischargeKwh := limitTo request.dischargeKwh shortfallKwh
     (min battery.powerKw (storedAfterChargeKwh * efficiency))
@@ -172,10 +172,10 @@ def simulate (site : Site) (battery : Battery) (strategy : Strategy) (seed days 
     let dayHours := scenarioHours.extract (24 * day) (24 * day + 24)
     let flexKwh := strategy.placeFlex (dayHours.map (·.pvKwh)) (dayHours.map (·.flexKwh))
     let month := monthOfDay (day % daysInYear)
-    if month != openMonth.month && openMonth.days > 0 then
+    if month != openMonth.month then
       months := months.push (openMonth.close socKwh)
       openMonth := { month }
-    openMonth := { openMonth with month, days := openMonth.days + 1 }
+    openMonth := { openMonth with days := openMonth.days + 1 }
     for k in [0:dayHours.size] do
       let hour := dayHours[k]!
       let loadKwh := hour.baseLoadKwh + flexKwh[k]!
