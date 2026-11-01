@@ -2,7 +2,216 @@
 
 Judge only what is in this packet. Write your result next to it, in result.md.
 
-Made at: addad468029cde6a1fd762b4f3545b19d942e700
+Made at: 01c3e07f838fca23b3359f8946ed9e329c61404d
+
+## Re-review
+
+Earlier review: addad468029cde6a1fd762b4f3545b19d942e700
+
+An earlier review of this remit judged this change at addad468029c. Judge only these two things:
+
+1. Each earlier problem below. If the problem is not fixed, list it again under "Problems".
+2. The changes since the earlier review, in the diff below. List a new problem only
+   where a changed line causes the problem.
+
+Do not raise a new problem on material that did not change. This rule also applies
+to a problem that the earlier review missed.
+
+### Earlier problems
+
+- 07 · The frame shows `days 3650`, but no exit code. The shell prints `/bin/sh: 1: Bad substitution` in place of `exit 0`, because `${PIPESTATUS[0]}` needs bash and the recording runs `/bin/sh`. Use `.lake/build/bin/sim run --days 3650 > /tmp/o.txt; echo "exit $?"; grep '^days' /tmp/o.txt` or a similar form without a pipe · JOB-simulate.R1 "Given `--days 3650` ... then it exits with 0 and the `days` line shows 3650"; rule "Each part of a caption is visible on screen" and rule "An error on screen is a problem" · script
+- 18 · The frame shows the usage line, but no exit code. The shell prints `/bin/sh: 1: Bad substitution` in place of `exit 0`, for the same `${PIPESTATUS[0]}` reason · JOB-simulate.R5 "Given no arguments, when the person runs `sim`, ... The exit code is 0"; rule "Each part of a caption is visible on screen" and rule "An error on screen is a problem" · script
+- 19 · The frame shows the usage line for `sim help`, but no exit code. The shell prints `/bin/sh: 1: Bad substitution` in place of `exit 0` · JOB-simulate.R5 "Given `help`, ... then it prints the same usage and exits with 0"; rule "Each part of a caption is visible on screen" and rule "An error on screen is a problem" · script
+- 20 · The frame shows the usage line for `sim --help`, but no exit code. The shell prints `/bin/sh: 1: Bad substitution` in place of `exit 0` · JOB-simulate.R5 "Given `--help`, ... then it prints the same usage and exits with 0"; rule "Each part of a caption is visible on screen" and rule "An error on screen is a problem" · script
+- 05 · The `library:` lines match the `sim run` values, but the screen does not show the options that `library.lean` passes to the library. Thus the frame does not show that the library ran with `shift`, 30 days, latitude 45 and seed 1. Print those inputs in the `library:` output, or show the call · JOB-simulate.R1 "The values equal CAP-simulation (hourly energy flows) results for these options"; rule "A frame that shows less than its caption claims is a problem, also when the claim is probably true" · script
+- 47 · The caption claims "each error above prints nothing on stdout", but the loop runs only 11 of the error cases. It leaves out `--days ""`, `--days 36.5`, `--pv 1e3`, `--pv .5`, `--pv 5.`, `--pv 5kW`, `--days 3651`, `--days 99999999999999999999`, `--seed 4294967296`, `--lat 90.1`, `--lat -90.1`, `--pv 100.1`, `--battery 200.1`, `--power 100.1`, `--load 0` and `--load 1000.1`. The error frames 25 to 41 merge stderr into stdout with `2>&1`, so no frame shows that these errors go to stderr with an empty stdout · JOB-simulate.R5 "Given each error above, when the person runs the command, then stdout is empty", and the "stderr is" part of each R5 error line; rule "A frame that shows less than its caption claims is a problem" · script
+
+### Changes since the earlier review
+
+````
+diff --git a/pdlc/changes/CH-0004-sim-command/visual.json b/pdlc/changes/CH-0004-sim-command/visual.json
+index e0e9c82..5964674 100644
+--- a/pdlc/changes/CH-0004-sim-command/visual.json
++++ b/pdlc/changes/CH-0004-sim-command/visual.json
+@@ -22,7 +22,7 @@
+     },
+     {
+       "caption": "JOB-simulate.R1 \u00b7 shift, 30 days, latitude 45: the values equal the library",
+-      "run": ".lake/build/bin/sim run --strategy shift --days 30 --lat 45 && lake env lean --run pdlc/changes/CH-0004-sim-command/library.lean"
++      "run": ".lake/build/bin/sim run --strategy shift --days 30 --lat 45 | tail -8 && lake env lean --run pdlc/changes/CH-0004-sim-command/library.lean"
+     },
+     {
+       "caption": "JOB-simulate.R1 \u00b7 none, no battery: export equals solar less self-used",
+@@ -30,7 +30,7 @@
+     },
+     {
+       "caption": "JOB-simulate.R1 \u00b7 --days 3650 exits with 0 and shows 3650 days",
+-      "run": ".lake/build/bin/sim run --days 3650 | grep '^days'; echo \"exit ${PIPESTATUS[0]}\""
++      "run": "out=$(.lake/build/bin/sim run --days 3650); code=$?; echo \"$out\" | grep '^days'; echo \"exit $code\""
+     },
+     {
+       "caption": "JOB-simulate.R2 \u00b7 --monthly: the header and 12 rows from Jan to Dec",
+@@ -62,7 +62,7 @@
+     },
+     {
+       "caption": "JOB-simulate.R3 \u00b7 sim compare --strategy greedy gives UNKNOWN_OPTION, exit 2",
+-      "run": ".lake/build/bin/sim compare --strategy greedy 2>&1; echo \"exit $?\""
++      "run": ".lake/build/bin/sim compare --strategy greedy 2>&1 >/dev/null; echo \"exit $?\""
+     },
+     {
+       "caption": "JOB-simulate.R4 \u00b7 --seed 5 two times gives the same output",
+@@ -74,43 +74,43 @@
+     },
+     {
+       "caption": "JOB-simulate.R5 \u00b7 sim prints the usage and exits with 0",
+-      "run": ".lake/build/bin/sim | head -1; echo \"exit ${PIPESTATUS[0]}\""
++      "run": "out=$(.lake/build/bin/sim); code=$?; echo \"$out\" | head -1; echo \"exit $code\""
+     },
+     {
+       "caption": "JOB-simulate.R5 \u00b7 sim help prints the same usage and exits with 0",
+-      "run": ".lake/build/bin/sim help | head -1; echo \"exit ${PIPESTATUS[0]}\""
++      "run": "out=$(.lake/build/bin/sim help); code=$?; echo \"$out\" | head -1; echo \"exit $code\""
+     },
+     {
+       "caption": "JOB-simulate.R5 \u00b7 sim --help prints the same usage and exits with 0",
+-      "run": ".lake/build/bin/sim --help | head -1; echo \"exit ${PIPESTATUS[0]}\""
++      "run": "out=$(.lake/build/bin/sim --help); code=$?; echo \"$out\" | head -1; echo \"exit $code\""
+     },
+     {
+       "caption": "JOB-simulate.R5 \u00b7 sim fly gives UNKNOWN_COMMAND, exit 2",
+-      "run": ".lake/build/bin/sim fly 2>&1; echo \"exit $?\""
++      "run": ".lake/build/bin/sim fly 2>&1 >/dev/null; echo \"exit $?\""
+     },
+     {
+       "caption": "JOB-simulate.R5 \u00b7 --colour red gives UNKNOWN_OPTION, exit 2",
+-      "run": ".lake/build/bin/sim run --colour red 2>&1; echo \"exit $?\""
++      "run": ".lake/build/bin/sim run --colour red 2>&1 >/dev/null; echo \"exit $?\""
+     },
+     {
+       "caption": "JOB-simulate.R5 \u00b7 --days with no value gives MISSING_VALUE, exit 2",
+-      "run": ".lake/build/bin/sim run --days 2>&1; echo \"exit $?\""
++      "run": ".lake/build/bin/sim run --days 2>&1 >/dev/null; echo \"exit $?\""
+     },
+     {
+       "caption": "JOB-simulate.R5 \u00b7 --days abc gives BAD_NUMBER, exit 2",
+-      "run": ".lake/build/bin/sim run --days abc 2>&1; echo \"exit $?\""
++      "run": ".lake/build/bin/sim run --days abc 2>&1 >/dev/null; echo \"exit $?\""
+     },
+     {
+       "caption": "JOB-simulate.R5 \u00b7 --days \"\" gives BAD_NUMBER, exit 2",
+-      "run": ".lake/build/bin/sim run --days \"\" 2>&1; echo \"exit $?\""
++      "run": ".lake/build/bin/sim run --days \"\" 2>&1 >/dev/null; echo \"exit $?\""
+     },
+     {
+       "caption": "JOB-simulate.R5 \u00b7 --days 36.5 gives BAD_NUMBER, exit 2",
+-      "run": ".lake/build/bin/sim run --days 36.5 2>&1; echo \"exit $?\""
++      "run": ".lake/build/bin/sim run --days 36.5 2>&1 >/dev/null; echo \"exit $?\""
+     },
+     {
+       "caption": "JOB-simulate.R5 \u00b7 --pv 1e3, .5, 5. and 5kW each give BAD_NUMBER, exit 2",
+-      "run": ".lake/build/bin/sim run --pv 1e3 2>&1; echo \"exit $?\"; .lake/build/bin/sim run --pv .5 2>&1; echo \"exit $?\"; .lake/build/bin/sim run --pv 5. 2>&1; echo \"exit $?\"; .lake/build/bin/sim run --pv 5kW 2>&1; echo \"exit $?\""
++      "run": ".lake/build/bin/sim run --pv 1e3 2>&1 >/dev/null; echo \"exit $?\"; .lake/build/bin/sim run --pv .5 2>&1 >/dev/null; echo \"exit $?\"; .lake/build/bin/sim run --pv 5. 2>&1 >/dev/null; echo \"exit $?\"; .lake/build/bin/sim run --pv 5kW 2>&1 >/dev/null; echo \"exit $?\""
+     },
+     {
+       "caption": "JOB-simulate.R5 \u00b7 --pv +3 exits with 0 and equals --pv 3",
+@@ -118,23 +118,23 @@
+     },
+     {
+       "caption": "JOB-simulate.R5 \u00b7 --days 0 gives OUT_OF_RANGE (1 to 3650), exit 2",
+-      "run": ".lake/build/bin/sim run --days 0 2>&1; echo \"exit $?\""
++      "run": ".lake/build/bin/sim run --days 0 2>&1 >/dev/null; echo \"exit $?\""
+     },
+     {
+       "caption": "JOB-simulate.R5 \u00b7 --days 3651 gives OUT_OF_RANGE (1 to 3650), exit 2",
+-      "run": ".lake/build/bin/sim run --days 3651 2>&1; echo \"exit $?\""
++      "run": ".lake/build/bin/sim run --days 3651 2>&1 >/dev/null; echo \"exit $?\""
+     },
+     {
+       "caption": "JOB-simulate.R5 \u00b7 --days 99999999999999999999 gives OUT_OF_RANGE, exit 2",
+-      "run": ".lake/build/bin/sim run --days 99999999999999999999 2>&1; echo \"exit $?\""
++      "run": ".lake/build/bin/sim run --days 99999999999999999999 2>&1 >/dev/null; echo \"exit $?\""
+     },
+     {
+       "caption": "JOB-simulate.R5 \u00b7 --seed -1 gives OUT_OF_RANGE (0 to 4294967295), exit 2",
+-      "run": ".lake/build/bin/sim run --seed -1 2>&1; echo \"exit $?\""
++      "run": ".lake/build/bin/sim run --seed -1 2>&1 >/dev/null; echo \"exit $?\""
+     },
+     {
+       "caption": "JOB-simulate.R5 \u00b7 --seed 4294967295 exits with 0, and 4294967296 is out of range",
+-      "run": ".lake/build/bin/sim run --seed 4294967295 >/dev/null; echo \"--seed 4294967295: exit $?\"; .lake/build/bin/sim run --seed 4294967296 2>&1; echo \"exit $?\""
++      "run": ".lake/build/bin/sim run --seed 4294967295 >/dev/null; echo \"--seed 4294967295: exit $?\"; .lake/build/bin/sim run --seed 4294967296 2>&1 >/dev/null; echo \"exit $?\""
+     },
+     {
+       "caption": "JOB-simulate.R5 \u00b7 --lat 90 and --lat -90 each exit with 0",
+@@ -142,31 +142,31 @@
+     },
+     {
+       "caption": "JOB-simulate.R5 \u00b7 --lat 90.1 and --lat -90.1 each give OUT_OF_RANGE, exit 2",
+-      "run": ".lake/build/bin/sim run --lat 90.1 2>&1; echo \"exit $?\"; .lake/build/bin/sim run --lat -90.1 2>&1; echo \"exit $?\""
++      "run": ".lake/build/bin/sim run --lat 90.1 2>&1 >/dev/null; echo \"exit $?\"; .lake/build/bin/sim run --lat -90.1 2>&1 >/dev/null; echo \"exit $?\""
+     },
+     {
+       "caption": "JOB-simulate.R5 \u00b7 --pv 100 exits with 0, and --pv 100.1 is out of range",
+-      "run": ".lake/build/bin/sim run --pv 100 >/dev/null; echo \"--pv 100: exit $?\"; .lake/build/bin/sim run --pv 100.1 2>&1; echo \"exit $?\""
++      "run": ".lake/build/bin/sim run --pv 100 >/dev/null; echo \"--pv 100: exit $?\"; .lake/build/bin/sim run --pv 100.1 2>&1 >/dev/null; echo \"exit $?\""
+     },
+     {
+       "caption": "JOB-simulate.R5 \u00b7 --pv -1 gives OUT_OF_RANGE (0 to 100), exit 2",
+-      "run": ".lake/build/bin/sim run --pv -1 2>&1; echo \"exit $?\""
++      "run": ".lake/build/bin/sim run --pv -1 2>&1 >/dev/null; echo \"exit $?\""
+     },
+     {
+       "caption": "JOB-simulate.R5 \u00b7 --battery 200 exits with 0, and 200.1 is out of range",
+-      "run": ".lake/build/bin/sim run --battery 200 >/dev/null; echo \"--battery 200: exit $?\"; .lake/build/bin/sim run --battery 200.1 2>&1; echo \"exit $?\""
++      "run": ".lake/build/bin/sim run --battery 200 >/dev/null; echo \"--battery 200: exit $?\"; .lake/build/bin/sim run --battery 200.1 2>&1 >/dev/null; echo \"exit $?\""
+     },
+     {
+       "caption": "JOB-simulate.R5 \u00b7 --power 100 exits with 0, and 100.1 is out of range",
+-      "run": ".lake/build/bin/sim run --power 100 >/dev/null; echo \"--power 100: exit $?\"; .lake/build/bin/sim run --power 100.1 2>&1; echo \"exit $?\""
++      "run": ".lake/build/bin/sim run --power 100 >/dev/null; echo \"--power 100: exit $?\"; .lake/build/bin/sim run --power 100.1 2>&1 >/dev/null; echo \"exit $?\""
+     },
+     {
+       "caption": "JOB-simulate.R5 \u00b7 --load 0.1 exits with 0, and --load 0 is out of range",
+-      "run": ".lake/build/bin/sim run --load 0.1 >/dev/null; echo \"--load 0.1: exit $?\"; .lake/build/bin/sim run --load 0 2>&1; echo \"exit $?\""
++      "run": ".lake/build/bin/sim run --load 0.1 >/dev/null; echo \"--load 0.1: exit $?\"; .lake/build/bin/sim run --load 0 2>&1 >/dev/null; echo \"exit $?\""
+     },
+     {
+       "caption": "JOB-simulate.R5 \u00b7 --load 1000 exits with 0, and 1000.1 is out of range",
+-      "run": ".lake/build/bin/sim run --load 1000 >/dev/null; echo \"--load 1000: exit $?\"; .lake/build/bin/sim run --load 1000.1 2>&1; echo \"exit $?\""
++      "run": ".lake/build/bin/sim run --load 1000 >/dev/null; echo \"--load 1000: exit $?\"; .lake/build/bin/sim run --load 1000.1 2>&1 >/dev/null; echo \"exit $?\""
+     },
+     {
+       "caption": "JOB-simulate.R5 \u00b7 --load 10 --flex 10 exits with 0",
+@@ -174,23 +174,23 @@
+     },
+     {
+       "caption": "JOB-simulate.R5 \u00b7 --load 10 --flex 10.5 gives OUT_OF_RANGE (0 to 10), exit 2",
+-      "run": ".lake/build/bin/sim run --load 10 --flex 10.5 2>&1; echo \"exit $?\""
++      "run": ".lake/build/bin/sim run --load 10 --flex 10.5 2>&1 >/dev/null; echo \"exit $?\""
+     },
+     {
+       "caption": "JOB-simulate.R5 \u00b7 --strategy wild gives UNKNOWN_STRATEGY, exit 2",
+-      "run": ".lake/build/bin/sim run --strategy wild 2>&1; echo \"exit $?\""
++      "run": ".lake/build/bin/sim run --strategy wild 2>&1 >/dev/null; echo \"exit $?\""
+     },
+     {
+       "caption": "JOB-simulate.R5 \u00b7 sim run now gives UNKNOWN_OPTION, exit 2",
+-      "run": ".lake/build/bin/sim run now 2>&1; echo \"exit $?\""
++      "run": ".lake/build/bin/sim run now 2>&1 >/dev/null; echo \"exit $?\""
+     },
+     {
+       "caption": "JOB-simulate.R5 \u00b7 --days 10 --days 20 shows 20 days",
+       "run": ".lake/build/bin/sim run --days 10 --days 20 | grep '^days'"
+     },
+     {
+-      "caption": "JOB-simulate.R5 \u00b7 each error above prints nothing on stdout",
+-      "run": "for a in 'fly' 'run --colour red' 'run --days' 'run --days abc' 'run --days 0' 'run --seed -1' 'run --pv -1' 'run --load 10 --flex 10.5' 'run --strategy wild' 'run now' 'compare --strategy greedy'; do printf '%-28s stdout bytes: ' \"$a\"; .lake/build/bin/sim $a 2>/dev/null | wc -c; done"
++      "caption": "JOB-simulate.R5 \u00b7 each of the 27 bad command lines prints nothing on stdout",
++      "run": "bash pdlc/changes/CH-0004-sim-command/errors.sh"
+     },
+     {
+       "caption": "CH-0004 \u00b7 all checks and the acceptance checks pass",
+````
 
 # Remit: visual
 
@@ -438,7 +647,7 @@ for example `(-90 to 90)` and `(0.1 to 1000)` (assumed).
     },
     {
       "caption": "JOB-simulate.R1 \u00b7 shift, 30 days, latitude 45: the values equal the library",
-      "run": ".lake/build/bin/sim run --strategy shift --days 30 --lat 45 && lake env lean --run pdlc/changes/CH-0004-sim-command/library.lean"
+      "run": ".lake/build/bin/sim run --strategy shift --days 30 --lat 45 | tail -8 && lake env lean --run pdlc/changes/CH-0004-sim-command/library.lean"
     },
     {
       "caption": "JOB-simulate.R1 \u00b7 none, no battery: export equals solar less self-used",
@@ -446,7 +655,7 @@ for example `(-90 to 90)` and `(0.1 to 1000)` (assumed).
     },
     {
       "caption": "JOB-simulate.R1 \u00b7 --days 3650 exits with 0 and shows 3650 days",
-      "run": ".lake/build/bin/sim run --days 3650 | grep '^days'; echo \"exit ${PIPESTATUS[0]}\""
+      "run": "out=$(.lake/build/bin/sim run --days 3650); code=$?; echo \"$out\" | grep '^days'; echo \"exit $code\""
     },
     {
       "caption": "JOB-simulate.R2 \u00b7 --monthly: the header and 12 rows from Jan to Dec",
@@ -478,7 +687,7 @@ for example `(-90 to 90)` and `(0.1 to 1000)` (assumed).
     },
     {
       "caption": "JOB-simulate.R3 \u00b7 sim compare --strategy greedy gives UNKNOWN_OPTION, exit 2",
-      "run": ".lake/build/bin/sim compare --strategy greedy 2>&1; echo \"exit $?\""
+      "run": ".lake/build/bin/sim compare --strategy greedy 2>&1 >/dev/null; echo \"exit $?\""
     },
     {
       "caption": "JOB-simulate.R4 \u00b7 --seed 5 two times gives the same output",
@@ -490,43 +699,43 @@ for example `(-90 to 90)` and `(0.1 to 1000)` (assumed).
     },
     {
       "caption": "JOB-simulate.R5 \u00b7 sim prints the usage and exits with 0",
-      "run": ".lake/build/bin/sim | head -1; echo \"exit ${PIPESTATUS[0]}\""
+      "run": "out=$(.lake/build/bin/sim); code=$?; echo \"$out\" | head -1; echo \"exit $code\""
     },
     {
       "caption": "JOB-simulate.R5 \u00b7 sim help prints the same usage and exits with 0",
-      "run": ".lake/build/bin/sim help | head -1; echo \"exit ${PIPESTATUS[0]}\""
+      "run": "out=$(.lake/build/bin/sim help); code=$?; echo \"$out\" | head -1; echo \"exit $code\""
     },
     {
       "caption": "JOB-simulate.R5 \u00b7 sim --help prints the same usage and exits with 0",
-      "run": ".lake/build/bin/sim --help | head -1; echo \"exit ${PIPESTATUS[0]}\""
+      "run": "out=$(.lake/build/bin/sim --help); code=$?; echo \"$out\" | head -1; echo \"exit $code\""
     },
     {
       "caption": "JOB-simulate.R5 \u00b7 sim fly gives UNKNOWN_COMMAND, exit 2",
-      "run": ".lake/build/bin/sim fly 2>&1; echo \"exit $?\""
+      "run": ".lake/build/bin/sim fly 2>&1 >/dev/null; echo \"exit $?\""
     },
     {
       "caption": "JOB-simulate.R5 \u00b7 --colour red gives UNKNOWN_OPTION, exit 2",
-      "run": ".lake/build/bin/sim run --colour red 2>&1; echo \"exit $?\""
+      "run": ".lake/build/bin/sim run --colour red 2>&1 >/dev/null; echo \"exit $?\""
     },
     {
       "caption": "JOB-simulate.R5 \u00b7 --days with no value gives MISSING_VALUE, exit 2",
-      "run": ".lake/build/bin/sim run --days 2>&1; echo \"exit $?\""
+      "run": ".lake/build/bin/sim run --days 2>&1 >/dev/null; echo \"exit $?\""
     },
     {
       "caption": "JOB-simulate.R5 \u00b7 --days abc gives BAD_NUMBER, exit 2",
-      "run": ".lake/build/bin/sim run --days abc 2>&1; echo \"exit $?\""
+      "run": ".lake/build/bin/sim run --days abc 2>&1 >/dev/null; echo \"exit $?\""
     },
     {
       "caption": "JOB-simulate.R5 \u00b7 --days \"\" gives BAD_NUMBER, exit 2",
-      "run": ".lake/build/bin/sim run --days \"\" 2>&1; echo \"exit $?\""
+      "run": ".lake/build/bin/sim run --days \"\" 2>&1 >/dev/null; echo \"exit $?\""
     },
     {
       "caption": "JOB-simulate.R5 \u00b7 --days 36.5 gives BAD_NUMBER, exit 2",
-      "run": ".lake/build/bin/sim run --days 36.5 2>&1; echo \"exit $?\""
+      "run": ".lake/build/bin/sim run --days 36.5 2>&1 >/dev/null; echo \"exit $?\""
     },
     {
       "caption": "JOB-simulate.R5 \u00b7 --pv 1e3, .5, 5. and 5kW each give BAD_NUMBER, exit 2",
-      "run": ".lake/build/bin/sim run --pv 1e3 2>&1; echo \"exit $?\"; .lake/build/bin/sim run --pv .5 2>&1; echo \"exit $?\"; .lake/build/bin/sim run --pv 5. 2>&1; echo \"exit $?\"; .lake/build/bin/sim run --pv 5kW 2>&1; echo \"exit $?\""
+      "run": ".lake/build/bin/sim run --pv 1e3 2>&1 >/dev/null; echo \"exit $?\"; .lake/build/bin/sim run --pv .5 2>&1 >/dev/null; echo \"exit $?\"; .lake/build/bin/sim run --pv 5. 2>&1 >/dev/null; echo \"exit $?\"; .lake/build/bin/sim run --pv 5kW 2>&1 >/dev/null; echo \"exit $?\""
     },
     {
       "caption": "JOB-simulate.R5 \u00b7 --pv +3 exits with 0 and equals --pv 3",
@@ -534,23 +743,23 @@ for example `(-90 to 90)` and `(0.1 to 1000)` (assumed).
     },
     {
       "caption": "JOB-simulate.R5 \u00b7 --days 0 gives OUT_OF_RANGE (1 to 3650), exit 2",
-      "run": ".lake/build/bin/sim run --days 0 2>&1; echo \"exit $?\""
+      "run": ".lake/build/bin/sim run --days 0 2>&1 >/dev/null; echo \"exit $?\""
     },
     {
       "caption": "JOB-simulate.R5 \u00b7 --days 3651 gives OUT_OF_RANGE (1 to 3650), exit 2",
-      "run": ".lake/build/bin/sim run --days 3651 2>&1; echo \"exit $?\""
+      "run": ".lake/build/bin/sim run --days 3651 2>&1 >/dev/null; echo \"exit $?\""
     },
     {
       "caption": "JOB-simulate.R5 \u00b7 --days 99999999999999999999 gives OUT_OF_RANGE, exit 2",
-      "run": ".lake/build/bin/sim run --days 99999999999999999999 2>&1; echo \"exit $?\""
+      "run": ".lake/build/bin/sim run --days 99999999999999999999 2>&1 >/dev/null; echo \"exit $?\""
     },
     {
       "caption": "JOB-simulate.R5 \u00b7 --seed -1 gives OUT_OF_RANGE (0 to 4294967295), exit 2",
-      "run": ".lake/build/bin/sim run --seed -1 2>&1; echo \"exit $?\""
+      "run": ".lake/build/bin/sim run --seed -1 2>&1 >/dev/null; echo \"exit $?\""
     },
     {
       "caption": "JOB-simulate.R5 \u00b7 --seed 4294967295 exits with 0, and 4294967296 is out of range",
-      "run": ".lake/build/bin/sim run --seed 4294967295 >/dev/null; echo \"--seed 4294967295: exit $?\"; .lake/build/bin/sim run --seed 4294967296 2>&1; echo \"exit $?\""
+      "run": ".lake/build/bin/sim run --seed 4294967295 >/dev/null; echo \"--seed 4294967295: exit $?\"; .lake/build/bin/sim run --seed 4294967296 2>&1 >/dev/null; echo \"exit $?\""
     },
     {
       "caption": "JOB-simulate.R5 \u00b7 --lat 90 and --lat -90 each exit with 0",
@@ -558,31 +767,31 @@ for example `(-90 to 90)` and `(0.1 to 1000)` (assumed).
     },
     {
       "caption": "JOB-simulate.R5 \u00b7 --lat 90.1 and --lat -90.1 each give OUT_OF_RANGE, exit 2",
-      "run": ".lake/build/bin/sim run --lat 90.1 2>&1; echo \"exit $?\"; .lake/build/bin/sim run --lat -90.1 2>&1; echo \"exit $?\""
+      "run": ".lake/build/bin/sim run --lat 90.1 2>&1 >/dev/null; echo \"exit $?\"; .lake/build/bin/sim run --lat -90.1 2>&1 >/dev/null; echo \"exit $?\""
     },
     {
       "caption": "JOB-simulate.R5 \u00b7 --pv 100 exits with 0, and --pv 100.1 is out of range",
-      "run": ".lake/build/bin/sim run --pv 100 >/dev/null; echo \"--pv 100: exit $?\"; .lake/build/bin/sim run --pv 100.1 2>&1; echo \"exit $?\""
+      "run": ".lake/build/bin/sim run --pv 100 >/dev/null; echo \"--pv 100: exit $?\"; .lake/build/bin/sim run --pv 100.1 2>&1 >/dev/null; echo \"exit $?\""
     },
     {
       "caption": "JOB-simulate.R5 \u00b7 --pv -1 gives OUT_OF_RANGE (0 to 100), exit 2",
-      "run": ".lake/build/bin/sim run --pv -1 2>&1; echo \"exit $?\""
+      "run": ".lake/build/bin/sim run --pv -1 2>&1 >/dev/null; echo \"exit $?\""
     },
     {
       "caption": "JOB-simulate.R5 \u00b7 --battery 200 exits with 0, and 200.1 is out of range",
-      "run": ".lake/build/bin/sim run --battery 200 >/dev/null; echo \"--battery 200: exit $?\"; .lake/build/bin/sim run --battery 200.1 2>&1; echo \"exit $?\""
+      "run": ".lake/build/bin/sim run --battery 200 >/dev/null; echo \"--battery 200: exit $?\"; .lake/build/bin/sim run --battery 200.1 2>&1 >/dev/null; echo \"exit $?\""
     },
     {
       "caption": "JOB-simulate.R5 \u00b7 --power 100 exits with 0, and 100.1 is out of range",
-      "run": ".lake/build/bin/sim run --power 100 >/dev/null; echo \"--power 100: exit $?\"; .lake/build/bin/sim run --power 100.1 2>&1; echo \"exit $?\""
+      "run": ".lake/build/bin/sim run --power 100 >/dev/null; echo \"--power 100: exit $?\"; .lake/build/bin/sim run --power 100.1 2>&1 >/dev/null; echo \"exit $?\""
     },
     {
       "caption": "JOB-simulate.R5 \u00b7 --load 0.1 exits with 0, and --load 0 is out of range",
-      "run": ".lake/build/bin/sim run --load 0.1 >/dev/null; echo \"--load 0.1: exit $?\"; .lake/build/bin/sim run --load 0 2>&1; echo \"exit $?\""
+      "run": ".lake/build/bin/sim run --load 0.1 >/dev/null; echo \"--load 0.1: exit $?\"; .lake/build/bin/sim run --load 0 2>&1 >/dev/null; echo \"exit $?\""
     },
     {
       "caption": "JOB-simulate.R5 \u00b7 --load 1000 exits with 0, and 1000.1 is out of range",
-      "run": ".lake/build/bin/sim run --load 1000 >/dev/null; echo \"--load 1000: exit $?\"; .lake/build/bin/sim run --load 1000.1 2>&1; echo \"exit $?\""
+      "run": ".lake/build/bin/sim run --load 1000 >/dev/null; echo \"--load 1000: exit $?\"; .lake/build/bin/sim run --load 1000.1 2>&1 >/dev/null; echo \"exit $?\""
     },
     {
       "caption": "JOB-simulate.R5 \u00b7 --load 10 --flex 10 exits with 0",
@@ -590,23 +799,23 @@ for example `(-90 to 90)` and `(0.1 to 1000)` (assumed).
     },
     {
       "caption": "JOB-simulate.R5 \u00b7 --load 10 --flex 10.5 gives OUT_OF_RANGE (0 to 10), exit 2",
-      "run": ".lake/build/bin/sim run --load 10 --flex 10.5 2>&1; echo \"exit $?\""
+      "run": ".lake/build/bin/sim run --load 10 --flex 10.5 2>&1 >/dev/null; echo \"exit $?\""
     },
     {
       "caption": "JOB-simulate.R5 \u00b7 --strategy wild gives UNKNOWN_STRATEGY, exit 2",
-      "run": ".lake/build/bin/sim run --strategy wild 2>&1; echo \"exit $?\""
+      "run": ".lake/build/bin/sim run --strategy wild 2>&1 >/dev/null; echo \"exit $?\""
     },
     {
       "caption": "JOB-simulate.R5 \u00b7 sim run now gives UNKNOWN_OPTION, exit 2",
-      "run": ".lake/build/bin/sim run now 2>&1; echo \"exit $?\""
+      "run": ".lake/build/bin/sim run now 2>&1 >/dev/null; echo \"exit $?\""
     },
     {
       "caption": "JOB-simulate.R5 \u00b7 --days 10 --days 20 shows 20 days",
       "run": ".lake/build/bin/sim run --days 10 --days 20 | grep '^days'"
     },
     {
-      "caption": "JOB-simulate.R5 \u00b7 each error above prints nothing on stdout",
-      "run": "for a in 'fly' 'run --colour red' 'run --days' 'run --days abc' 'run --days 0' 'run --seed -1' 'run --pv -1' 'run --load 10 --flex 10.5' 'run --strategy wild' 'run now' 'compare --strategy greedy'; do printf '%-28s stdout bytes: ' \"$a\"; .lake/build/bin/sim $a 2>/dev/null | wc -c; done"
+      "caption": "JOB-simulate.R5 \u00b7 each of the 27 bad command lines prints nothing on stdout",
+      "run": "bash pdlc/changes/CH-0004-sim-command/errors.sh"
     },
     {
       "caption": "CH-0004 \u00b7 all checks and the acceptance checks pass",
@@ -620,10 +829,10 @@ for example `(-90 to 90)` and `(0.1 to 1000)` (assumed).
 
 Read each frame:
 
-- pdlc/changes/CH-0004-sim-command/frames/01.png
-- pdlc/changes/CH-0004-sim-command/frames/02.png
-- pdlc/changes/CH-0004-sim-command/frames/03.png
-- pdlc/changes/CH-0004-sim-command/frames/04.png
+- pdlc/changes/CH-0004-sim-command/frames/01.png (unchanged since the earlier review)
+- pdlc/changes/CH-0004-sim-command/frames/02.png (unchanged since the earlier review)
+- pdlc/changes/CH-0004-sim-command/frames/03.png (unchanged since the earlier review)
+- pdlc/changes/CH-0004-sim-command/frames/04.png (unchanged since the earlier review)
 - pdlc/changes/CH-0004-sim-command/frames/05.png
 - pdlc/changes/CH-0004-sim-command/frames/06.png
 - pdlc/changes/CH-0004-sim-command/frames/07.png
