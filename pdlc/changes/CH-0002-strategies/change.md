@@ -132,9 +132,10 @@ none
 ## Progress log
 
 - The change comes after CH-0001 (scenario). CH-0003 (simulation) needs the scenario and the strategies. The strategies do not need the scenario.
-- The first tests review found that a wrong `shift` with three hours in a row passed the checks of R5 (load shift into sun). This review is round 1 of 2.
-- The test writer added a check whose three sunniest hours are not next to each other. The re-review passed.
+- The first tests review failed, because a wrong `shift` that takes three hours in a row passed the checks of R5 (load shift into sun).
+- The test writer then added a check whose three sunniest hours are not next to each other. The second tests review passed.
 - Build: the 35 checks of `tests/CAP-strategies.lean` and the 34 checks of `tests/CAP-scenario.lean` pass. No check changed since the lock `91d1e6b`.
-- Verify round 1 failed on quality and specification. This failure is round 2 of 2.
-- The quality review asked for DES-writing-style (writing rules). `make_packets.py` gives that spec only to the specification review, by design. The quality remit judges the design specs in its packet, so no code changes.
-- Verify corrected the words of two log lines for the specification review. Verify filed IN-0005 (guards on strategy inputs) for approval. IN-0004 (shift on a day with little sun) covers the other follow-up.
+- The first verify failed on the quality review and the specification review.
+- The quality review asked for DES-writing-style (writing rules). `make_packets.py` gives that spec only to the specification review. The quality remit does not judge writing, so the builder changed no code.
+- Verify filed IN-0005 (guards on strategy inputs) for approval. IN-0004 (shift on a day with little sun) already covers the follow-up about days with little sun.
+- The user decided that a failure only on the words of pdlc records is not a round in this project.
