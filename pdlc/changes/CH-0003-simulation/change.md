@@ -2,7 +2,7 @@
 
 Intent: IN-0001 · Scope: CAP-simulation · Status: testing · Ticket: none · Branch: pdlc/CH-0003-simulation · Base: pdlc/CH-0002-strategies
 
-Tests-Locked: none
+Tests-Locked: ba51e5b
 
 ## Delivers
 
