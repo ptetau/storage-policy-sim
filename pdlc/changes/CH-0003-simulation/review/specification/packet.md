@@ -2,13 +2,13 @@
 
 Judge only what is in this packet. Write your result next to it, in result.md.
 
-Made at: d319606219d6f2af3ee86de3e71e8d17bec7fc51
+Made at: 8736378ef0d2cf1882cf38a48055eaf6d31b0534
 
 ## Re-review
 
-Earlier review: 879c56afeef00af4a20e82080a7c170029f80f76
+Earlier review: d319606219d6f2af3ee86de3e71e8d17bec7fc51
 
-An earlier review of this remit judged this change at 879c56afeef0. Judge only these two things:
+An earlier review of this remit judged this change at d319606219d6. Judge only these two things:
 
 1. Each earlier problem below. If the problem is not fixed, list it again under "Problems".
 2. The changes since the earlier review, in the diff below. List a new problem only
@@ -19,40 +19,31 @@ to a problem that the earlier review missed.
 
 ### Earlier problems
 
-none
+- StoragePolicySim/Simulation.lean:48 · The new descriptive sentence in the doc comment of `stepHour` has 27 words: "The stored energy after the hour stays from 0 to the capacity, so that a rounding error of the floats cannot move it out of this range." · DES-writing-style rule 6.3 (a maximum of 25 words in each descriptive sentence). A possible fix is two sentences: "The stored energy after the hour stays from 0 to the capacity. Thus, a rounding error of the floats cannot move the stored energy out of this range."
 
 ### Changes since the earlier review
 
 ````
-diff --git a/StoragePolicySim/Simulation.lean b/StoragePolicySim/Simulation.lean
-index fb26bb3..e6544c2 100644
---- a/StoragePolicySim/Simulation.lean
-+++ b/StoragePolicySim/Simulation.lean
-@@ -44,7 +44,9 @@ private def limitTo (a b c : Float) : Float :=
- /-- The flows of one hour. `socKwh` is the energy in the battery before the hour. The
- battery takes what the strategy asks, up to the surplus, the power and the free room. The
- battery gives what the strategy asks, up to the shortfall, the power and the stored energy.
--The power limit applies to the energy in, and to the energy out after the loss. -/
-+The power limit applies to the energy in, and to the energy out after the loss. The
-+stored energy after the hour stays from 0 to the capacity, so that a rounding error of the
-+floats cannot move it out of this range. -/
- def stepHour (battery : Battery) (socKwh : Float) (strategy : Strategy) (hour : Nat)
-     (pvKwh loadKwh : Float) : Flow :=
-   let directKwh := min pvKwh loadKwh
-@@ -61,7 +63,7 @@ def stepHour (battery : Battery) (socKwh : Float) (strategy : Strategy) (hour :
-     exportKwh := surplusKwh - chargeKwh,
-     importKwh := shortfallKwh - dischargeKwh,
-     lossKwh := chargeKwh - chargeKwh * efficiency + takenOutKwh - dischargeKwh,
--    socKwh := storedAfterChargeKwh - takenOutKwh }
-+    socKwh := max 0 (min battery.capacityKwh (storedAfterChargeKwh - takenOutKwh)) }
+diff --git a/pdlc/specs/design/DES-writing-style.md b/pdlc/specs/design/DES-writing-style.md
+index 422bf02..9a5413a 100644
+--- a/pdlc/specs/design/DES-writing-style.md
++++ b/pdlc/specs/design/DES-writing-style.md
+@@ -1,6 +1,10 @@
+ # DES-writing-style · How pdlc writes
  
- /-- One hour of a run. -/
- structure HourResult where
+-Status: agreed · Default: yes · Ask at init: yes
++Status: agreed · Default: no · Ask at init: yes
++
++In this project, these rules are a guideline, not a hard rule, for now. A review notes a
++break of a rule, but the break does not fail the review. The user decided this on
++2026-11-01, and https://github.com/ptetau/pskills/issues/24 tracks the rules in pdlc.
+ 
+ ## Rule
 ````
 
 # Remit: specification
 
-Default: yes
+Default: no
 
 You judge if the code does what the spec says. You do not see the checks.
 
@@ -66,11 +57,11 @@ You judge if the code does what the spec says. You do not see the checks.
   its requirements, and a README in "Files" show the behaviour as it is now. They include
   what the change adds. Nothing that the change removes or changes still shows the old
   way. The README says how to run the checks, and names any seam that a user can set.
-- The spec text, the README text, and the code comments in the change follow the writing
-  rules (`DES-writing-style`, in the packet). Each break of a rule is a problem. Give the
-  line and the rule.
-- Each finding under "Writing check" in the packet is a problem, unless you judge the
-  finding to be a false alarm. For each false alarm, say why under "Notes".
+- In this project, the writing rules (`DES-writing-style`, in the packet) are a guideline,
+  not a hard rule. A break of a writing rule, or a finding under "Writing check", goes under
+  "Notes" with its line and rule. It is not a problem, and it does not fail the review.
+- A text that is wrong or unclear about what the code does is still a problem. Examples are
+  a wrong fact, a wrong number, and a sentence with two possible meanings.
 - On a re-review, the writing check covers only the lines that changed since the earlier
   review.
 
@@ -597,7 +588,11 @@ the check exact. A named code also gives callers a stable value to handle.
 ````
 # DES-writing-style · How pdlc writes
 
-Status: agreed · Default: yes · Ask at init: yes
+Status: agreed · Default: no · Ask at init: yes
+
+In this project, these rules are a guideline, not a hard rule, for now. A review notes a
+break of a rule, but the break does not fail the review. The user decided this on
+2026-11-01, and https://github.com/ptetau/pskills/issues/24 tracks the rules in pdlc.
 
 ## Rule
 
@@ -1409,7 +1404,7 @@ end StoragePolicySim
 
 ## Writing check
 
-`pdlc/bin/check_writing.py --since 879c56afeef00af4a20e82080a7c170029f80f76` on pdlc/changes/CH-0003-simulation/change.md, pdlc/specs/capabilities/CAP-simulation.md:
+`pdlc/bin/check_writing.py --since d319606219d6f2af3ee86de3e71e8d17bec7fc51` on pdlc/changes/CH-0003-simulation/change.md, pdlc/specs/capabilities/CAP-simulation.md, pdlc/specs/design/DES-writing-style.md:
 
 ````
 No findings.
