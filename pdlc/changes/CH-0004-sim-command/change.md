@@ -200,3 +200,4 @@ none
 
 - Planned last, because the command uses CH-0001 (scenario), CH-0002 (strategies) and CH-0003 (simulation).
 - Build: all 190 checks and the 154 acceptance checks pass. No check changed since the lock `a7fe93a`.
+- The first verify failed on specification and quality. The change went back to build.
