@@ -1,6 +1,6 @@
 # CH-0002 · Battery and load strategies
 
-Intent: IN-0001 · Scope: CAP-strategies · Status: building · Ticket: none · Branch: pdlc/CH-0002-strategies · Base: pdlc/CH-0001-scenario
+Intent: IN-0001 · Scope: CAP-strategies · Status: in review · Ticket: none · Branch: pdlc/CH-0002-strategies · Base: pdlc/CH-0001-scenario
 
 Tests-Locked: 91d1e6b
 
