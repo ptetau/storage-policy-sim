@@ -102,17 +102,21 @@ A check imports `StoragePolicySim.Simulation`, which also gives the items of CH-
 The checks can also use these items of earlier changes, in the namespace `StoragePolicySim`:
 
 - From CH-0001 (scenario), in `StoragePolicySim/Scenario.lean`:
-  - `inductive Sky | sunny | cloudy | overcast`.
-  - `structure Site` with `latitude`, `pvKw`, `dailyLoadKwh` and `flexKwh`, each a `Float`.
-  - `structure Hour` with `day`, `dayOfYear` and `hour` (each a `Nat`), `sky : Sky`, and
+  - `inductive Sky | sunny | cloudy | overcast` with `BEq`, `Repr` and `Inhabited`.
+  - `structure Site` with `Repr` and `Inhabited`, and the fields `latitude`, `pvKw`,
+    `dailyLoadKwh` and `flexKwh`, each a `Float`.
+  - `structure Hour` with `Repr` and `Inhabited`. Its fields are `day`, `dayOfYear` and
+    `hour` (each a `Nat`), `sky : Sky`, and
     `pvKwh`, `baseLoadKwh` and `flexKwh` (each a `Float`).
   - `pvOutput (site : Site) (dayOfYear hour : Nat) (sky : Sky) : Float`.
   - `scenario (site : Site) (seed days : Nat) : Array Hour`.
 - From CH-0002 (strategies), in `StoragePolicySim/Strategy.lean`:
-  - `inductive Strategy | none | greedy | evening | shift`, written in full, for example
+  - `inductive Strategy | none | greedy | evening | shift` with `BEq`, `Repr` and
+    `Inhabited`. Each value is written in full, for example
     `Strategy.none`.
   - `Strategy.all : List Strategy` and `Strategy.name : Strategy → String`.
-  - `structure Request` with `chargeKwh : Float` and `dischargeKwh : Float`.
+  - `structure Request` with `Repr`, and the fields `chargeKwh : Float` and
+    `dischargeKwh : Float`.
   - `Strategy.decide (s : Strategy) (hour : Nat) (surplusKwh shortfallKwh : Float) : Request`.
   - `Strategy.placeFlex (s : Strategy) (pvKwh flexKwh : Array Float) : Array Float`, with
     24 items in each array.
@@ -170,3 +174,4 @@ none
 
 - Planned after CH-0001 (scenario) and CH-0002 (strategies), because the simulation uses both.
 - The first tests review could not see the items of CH-0001 (scenario) and CH-0002 (strategies). The skill listed these items under "Interface". The checks did not change.
+- The second tests review could not see the derived instances of these items. The skill added them. The checks did not change.
