@@ -1,6 +1,6 @@
 # CH-0003 · Hourly energy flows and results
 
-Intent: IN-0001 · Scope: CAP-simulation · Status: in review · Ticket: none · Branch: pdlc/CH-0003-simulation · Base: pdlc/CH-0002-strategies
+Intent: IN-0001 · Scope: CAP-simulation · Status: building · Ticket: none · Branch: pdlc/CH-0003-simulation · Base: pdlc/CH-0002-strategies
 
 Tests-Locked: ba51e5b
 

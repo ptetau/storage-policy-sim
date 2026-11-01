@@ -1,0 +1,116 @@
+{
+  "kind": "terminal",
+  "title": "CH-0003 \u00b7 Hourly energy flows and results",
+  "width": 1100,
+  "height": 640,
+  "steps": [
+    {
+      "caption": "CAP-simulation \u00b7 setup: build the library",
+      "run": "lake build 2>&1 | tail -1"
+    },
+    {
+      "caption": "CAP-simulation.R1 \u00b7 empty battery, 3 kWh solar, 1 kWh load: 1 direct, 2 charge, holds 1.9",
+      "run": "lake env lean --run pdlc/changes/CH-0003-simulation/demo.lean r1-1"
+    },
+    {
+      "caption": "CAP-simulation.R1 \u00b7 full battery: 0 kWh charges and 2 kWh is export",
+      "run": "lake env lean --run pdlc/changes/CH-0003-simulation/demo.lean r1-2"
+    },
+    {
+      "caption": "CAP-simulation.R1 \u00b7 9.05 kWh stored, 2 kWh surplus: 1 charges, 1 export, holds 10",
+      "run": "lake env lean --run pdlc/changes/CH-0003-simulation/demo.lean r1-3"
+    },
+    {
+      "caption": "CAP-simulation.R1 \u00b7 2 kW of power, 3 kWh surplus: 2 kWh charges and 1 kWh is export",
+      "run": "lake env lean --run pdlc/changes/CH-0003-simulation/demo.lean r1-4"
+    },
+    {
+      "caption": "CAP-simulation.R1 \u00b7 1.9 kWh stored, 2 kWh shortfall: gives 1.805, import 0.195",
+      "run": "lake env lean --run pdlc/changes/CH-0003-simulation/demo.lean r1-5"
+    },
+    {
+      "caption": "CAP-simulation.R1 \u00b7 none with 1.9 kWh stored: 2 kWh export, still holds 1.9",
+      "run": "lake env lean --run pdlc/changes/CH-0003-simulation/demo.lean r1-6"
+    },
+    {
+      "caption": "CAP-simulation.R1 \u00b7 greedy, seed 7: the first hour imports its full load",
+      "run": "lake env lean --run pdlc/changes/CH-0003-simulation/demo.lean r1-7"
+    },
+    {
+      "caption": "CAP-simulation.R2 \u00b7 5 kWh / 2 kW battery: no hour charges or discharges over 2 kWh",
+      "run": "lake env lean --run pdlc/changes/CH-0003-simulation/demo.lean r2-1"
+    },
+    {
+      "caption": "CAP-simulation.R2 \u00b7 5 kWh / 2 kW battery: holds 0 to 5 kWh each hour",
+      "run": "lake env lean --run pdlc/changes/CH-0003-simulation/demo.lean r2-2"
+    },
+    {
+      "caption": "CAP-simulation.R2 \u00b7 solar + import = load + export + losses + stored, within 0.01 kWh",
+      "run": "lake env lean --run pdlc/changes/CH-0003-simulation/demo.lean r2-3"
+    },
+    {
+      "caption": "CAP-simulation.R2 \u00b7 0 kWh battery: greedy and none have the same totals",
+      "run": "lake env lean --run pdlc/changes/CH-0003-simulation/demo.lean r2-4"
+    },
+    {
+      "caption": "CAP-simulation.R3 \u00b7 each total of none equals the sum of its hours",
+      "run": "lake env lean --run pdlc/changes/CH-0003-simulation/demo.lean r3-1"
+    },
+    {
+      "caption": "CAP-simulation.R3 \u00b7 self-consumption is 100 \u00d7 (solar - export) / solar",
+      "run": "lake env lean --run pdlc/changes/CH-0003-simulation/demo.lean r3-2"
+    },
+    {
+      "caption": "CAP-simulation.R3 \u00b7 self-sufficiency is 100 \u00d7 (load - import) / load",
+      "run": "lake env lean --run pdlc/changes/CH-0003-simulation/demo.lean r3-3"
+    },
+    {
+      "caption": "CAP-simulation.R3 \u00b7 0 kW of panels: 0% self-consumption and 0% self-sufficiency",
+      "run": "lake env lean --run pdlc/changes/CH-0003-simulation/demo.lean r3-4"
+    },
+    {
+      "caption": "CAP-simulation.R3 \u00b7 0 days: each total 0, each ratio 0%, no months",
+      "run": "lake env lean --run pdlc/changes/CH-0003-simulation/demo.lean r3-5"
+    },
+    {
+      "caption": "CAP-simulation.R4 \u00b7 365 days: 12 months with 31, 28, 31, ... 31 days",
+      "run": "lake env lean --run pdlc/changes/CH-0003-simulation/demo.lean r4-1"
+    },
+    {
+      "caption": "CAP-simulation.R4 \u00b7 the 12 monthly solar totals add up to the solar total",
+      "run": "lake env lean --run pdlc/changes/CH-0003-simulation/demo.lean r4-2"
+    },
+    {
+      "caption": "CAP-simulation.R4 \u00b7 400 days: 14 months, the last is February with 4 days",
+      "run": "lake env lean --run pdlc/changes/CH-0003-simulation/demo.lean r4-3"
+    },
+    {
+      "caption": "CAP-simulation.R4 \u00b7 10 days: one month, January with 10 days",
+      "run": "lake env lean --run pdlc/changes/CH-0003-simulation/demo.lean r4-4"
+    },
+    {
+      "caption": "CAP-simulation.R4 \u00b7 latitude 45: July has over twice the solar of December",
+      "run": "lake env lean --run pdlc/changes/CH-0003-simulation/demo.lean r4-5"
+    },
+    {
+      "caption": "CAP-simulation.R4 \u00b7 latitude 45: July self-sufficiency is more than January",
+      "run": "lake env lean --run pdlc/changes/CH-0003-simulation/demo.lean r4-6"
+    },
+    {
+      "caption": "CAP-simulation.R5 \u00b7 10 kWh battery: greedy has a higher self-consumption than none",
+      "run": "lake env lean --run pdlc/changes/CH-0003-simulation/demo.lean r5-1"
+    },
+    {
+      "caption": "CAP-simulation.R5 \u00b7 10 kWh battery: evening is no higher than greedy",
+      "run": "lake env lean --run pdlc/changes/CH-0003-simulation/demo.lean r5-2"
+    },
+    {
+      "caption": "CAP-simulation.R5 \u00b7 0 kWh battery: shift has a higher self-consumption than none",
+      "run": "lake env lean --run pdlc/changes/CH-0003-simulation/demo.lean r5-3"
+    },
+    {
+      "caption": "CH-0003 \u00b7 all checks pass",
+      "run": "for f in tests/*.lean; do lake env lean --run \"$f\" || exit 1; done"
+    }
+  ]
+}
