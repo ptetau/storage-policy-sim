@@ -57,6 +57,7 @@ Acceptance-Passed: none
 - DES-lean-checks (Lean check files): How does a Lean check file run and report? → a Lean script with a name filter and a count line (assumed).
 - JOB-simulate.R1 (run one strategy): was "`--flex`: 3", now "`--flex`: 3, or the `--load` value when that is less" (assumed).
 - JOB-simulate.R5 (bad command line): How does a range show? → `(<lowest> to <highest>)` as in the table (assumed).
+- IN-0001 (simulator): Does a review that fails only on the words of pdlc records count as a round? → no, in this project. The skill fixes the words and reviews again. The user decided this, and https://github.com/ptetau/pskills/issues/24 tracks a fix in pdlc.
 
 ## Handoff
 
