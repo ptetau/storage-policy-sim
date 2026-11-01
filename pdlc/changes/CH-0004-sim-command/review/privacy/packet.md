@@ -2,7 +2,73 @@
 
 Judge only what is in this packet. Write your result next to it, in result.md.
 
-Made at: 9655884e4aae2f5c2163328c86f096299ead7f2f
+Made at: 144199141d891c6f17d32089e56b55f2914cfc0a
+
+## Re-review
+
+Earlier review: 9655884e4aae2f5c2163328c86f096299ead7f2f
+
+An earlier review of this remit judged this change at 9655884e4aae. Judge only these two things:
+
+1. Each earlier problem below. If the problem is not fixed, list it again under "Problems".
+2. The changes since the earlier review, in the diff below. List a new problem only
+   where a changed line causes the problem.
+
+Do not raise a new problem on material that did not change. This rule also applies
+to a problem that the earlier review missed.
+
+### Earlier problems
+
+none
+
+### Changes since the earlier review
+
+````
+diff --git a/Main.lean b/Main.lean
+index 52c28b9..edf25e6 100644
+--- a/Main.lean
++++ b/Main.lean
+@@ -219,8 +219,8 @@ def CommandLine.site (commandLine : CommandLine) : Site :=
+ def CommandLine.battery (commandLine : CommandLine) : Battery :=
+   { capacityKwh := commandLine.number batteryOption, powerKw := commandLine.number powerOption }
+ 
+-/-- The value of a whole-number option. The range step makes sure that the value is whole and
+-not negative. -/
++/-- The value of a whole-number option. The reading step makes sure that the value is whole,
++and the range step makes sure that it is not negative. -/
+ def CommandLine.whole (commandLine : CommandLine) (option : NumberOption) : Nat :=
+   (commandLine.number option).toUInt64.toNat
+ 
+@@ -287,9 +287,13 @@ def output (command : Command) (commandLine : CommandLine) : List String :=
+ 
+ /-! ## The command -/
+ 
+-/-- A line of the usage: the option and its value, spaces to column 21, and the meaning. -/
++/-- The width of the option, its value and its spaces in a line of the usage. -/
++def usageOptionWidth : Nat := 18
++
++/-- A line of the usage: two spaces, the option and its value, spaces to fill
++`usageOptionWidth`, and the meaning. -/
+ def usageLine (option meaning : String) : String :=
+-  "  " ++ option ++ "".pushn ' ' (labelWidth - option.length) ++ meaning
++  "  " ++ option ++ "".pushn ' ' (usageOptionWidth - option.length) ++ meaning
+ 
+ def usage : List String :=
+   let numberLine (option : NumberOption) :=
+diff --git a/README.md b/README.md
+index 0dec1a8..4411123 100644
+--- a/README.md
++++ b/README.md
+@@ -68,7 +68,7 @@ The line is `error: <code>: <detail>`, for example `error: OUT_OF_RANGE: --days
+ 
+ | Code | Cause |
+ |---|---|
+-| `UNKNOWN_COMMAND` | The first word is not `run`, `compare` or `help` |
++| `UNKNOWN_COMMAND` | The first word is not `run`, `compare`, `help` or `--help` |
+ | `UNKNOWN_OPTION` | The command does not take the word |
+ | `MISSING_VALUE` | An option that needs a value comes last |
+ | `BAD_NUMBER` | A value is not a number of the right form |
+````
 
 # Remit: privacy
 
@@ -223,6 +289,7 @@ none
 
 - Planned last, because the command uses CH-0001 (scenario), CH-0002 (strategies) and CH-0003 (simulation).
 - Build: all 190 checks and the 154 acceptance checks pass. No check changed since the lock `a7fe93a`.
+- The first verify failed on specification and quality. The change went back to build.
 ````
 
 ## The spec it covers: title and summary
@@ -830,10 +897,10 @@ port.
 ````
 diff --git a/Main.lean b/Main.lean
 new file mode 100644
-index 0000000..52c28b9
+index 0000000..edf25e6
 --- /dev/null
 +++ b/Main.lean
-@@ -0,0 +1,331 @@
+@@ -0,0 +1,335 @@
 +/-
 +The `sim` command. `sim run` simulates one strategy, and `sim compare` simulates each
 +strategy on the same weather. JOB-simulate (simulate a year of solar) gives the rules.
@@ -1055,8 +1122,8 @@ index 0000000..52c28b9
 +def CommandLine.battery (commandLine : CommandLine) : Battery :=
 +  { capacityKwh := commandLine.number batteryOption, powerKw := commandLine.number powerOption }
 +
-+/-- The value of a whole-number option. The range step makes sure that the value is whole and
-+not negative. -/
++/-- The value of a whole-number option. The reading step makes sure that the value is whole,
++and the range step makes sure that it is not negative. -/
 +def CommandLine.whole (commandLine : CommandLine) (option : NumberOption) : Nat :=
 +  (commandLine.number option).toUInt64.toNat
 +
@@ -1123,9 +1190,13 @@ index 0000000..52c28b9
 +
 +/-! ## The command -/
 +
-+/-- A line of the usage: the option and its value, spaces to column 21, and the meaning. -/
++/-- The width of the option, its value and its spaces in a line of the usage. -/
++def usageOptionWidth : Nat := 18
++
++/-- A line of the usage: two spaces, the option and its value, spaces to fill
++`usageOptionWidth`, and the meaning. -/
 +def usageLine (option meaning : String) : String :=
-+  "  " ++ option ++ "".pushn ' ' (labelWidth - option.length) ++ meaning
++  "  " ++ option ++ "".pushn ' ' (usageOptionWidth - option.length) ++ meaning
 +
 +def usage : List String :=
 +  let numberLine (option : NumberOption) :=
@@ -1167,7 +1238,7 @@ index 0000000..52c28b9
 +    return 2
 diff --git a/README.md b/README.md
 new file mode 100644
-index 0000000..0dec1a8
+index 0000000..4411123
 --- /dev/null
 +++ b/README.md
 @@ -0,0 +1,86 @@
@@ -1241,7 +1312,7 @@ index 0000000..0dec1a8
 +
 +| Code | Cause |
 +|---|---|
-+| `UNKNOWN_COMMAND` | The first word is not `run`, `compare` or `help` |
++| `UNKNOWN_COMMAND` | The first word is not `run`, `compare`, `help` or `--help` |
 +| `UNKNOWN_OPTION` | The command does not take the word |
 +| `MISSING_VALUE` | An option that needs a value comes last |
 +| `BAD_NUMBER` | A value is not a number of the right form |
@@ -1500,8 +1571,8 @@ def CommandLine.site (commandLine : CommandLine) : Site :=
 def CommandLine.battery (commandLine : CommandLine) : Battery :=
   { capacityKwh := commandLine.number batteryOption, powerKw := commandLine.number powerOption }
 
-/-- The value of a whole-number option. The range step makes sure that the value is whole and
-not negative. -/
+/-- The value of a whole-number option. The reading step makes sure that the value is whole,
+and the range step makes sure that it is not negative. -/
 def CommandLine.whole (commandLine : CommandLine) (option : NumberOption) : Nat :=
   (commandLine.number option).toUInt64.toNat
 
@@ -1568,9 +1639,13 @@ def output (command : Command) (commandLine : CommandLine) : List String :=
 
 /-! ## The command -/
 
-/-- A line of the usage: the option and its value, spaces to column 21, and the meaning. -/
+/-- The width of the option, its value and its spaces in a line of the usage. -/
+def usageOptionWidth : Nat := 18
+
+/-- A line of the usage: two spaces, the option and its value, spaces to fill
+`usageOptionWidth`, and the meaning. -/
 def usageLine (option meaning : String) : String :=
-  "  " ++ option ++ "".pushn ' ' (labelWidth - option.length) ++ meaning
+  "  " ++ option ++ "".pushn ' ' (usageOptionWidth - option.length) ++ meaning
 
 def usage : List String :=
   let numberLine (option : NumberOption) :=
@@ -1685,7 +1760,7 @@ The line is `error: <code>: <detail>`, for example `error: OUT_OF_RANGE: --days 
 
 | Code | Cause |
 |---|---|
-| `UNKNOWN_COMMAND` | The first word is not `run`, `compare` or `help` |
+| `UNKNOWN_COMMAND` | The first word is not `run`, `compare`, `help` or `--help` |
 | `UNKNOWN_OPTION` | The command does not take the word |
 | `MISSING_VALUE` | An option that needs a value comes last |
 | `BAD_NUMBER` | A value is not a number of the right form |
