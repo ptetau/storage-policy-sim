@@ -1,7 +1,11 @@
 name = "storage-policy-sim"
 version = "0.1.0"
-defaultTargets = ["StoragePolicySim"]
+defaultTargets = ["StoragePolicySim", "sim"]
 
 [[lean_lib]]
 name = "StoragePolicySim"
 globs = ["StoragePolicySim.+"]
+
+[[lean_exe]]
+name = "sim"
+root = "Main"
