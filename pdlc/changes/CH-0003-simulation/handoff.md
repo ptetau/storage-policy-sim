@@ -1,12 +1,12 @@
-# Handoff · CH-0003 · verify → user
+# Handoff · CH-0003 · verify → show
 
-Time: 2026-11-01T01:12:18+00:00
+Time: 2026-11-01T01:25:57+00:00
 
 ## Done
 
-- Security, quality and privacy passed on the fixed `stepHour`. Compliance does not apply.
-- The specification review failed on one code comment: a sentence of 27 words at `StoragePolicySim/Simulation.lean:48`.
-- This failure is the third failed round of CH-0003 (simulation), so the work stops.
+- All 123 checks pass, and no check changed since the lock.
+- Each remit passed: tests, specification, security, quality and privacy. Compliance does not apply.
+- CAP-simulation.R1 (energy flows of an hour) to R5 (strategy order) are `verified`.
 
 ## Decided on defaults
 
@@ -14,17 +14,16 @@ Time: 2026-11-01T01:12:18+00:00
 
 ## Open
 
-- The user must decide how CH-0003 (simulation) goes on.
-- Recommended answer: the builder splits the comment into two sentences, and the specification review runs again.
+- none
 
 ## Look here
 
-- `pdlc/changes/CH-0003-simulation/review/specification/result.md`
+- `pdlc/changes/CH-0003-simulation/review/`
 
 ## Don't redo
 
-- The code, the checks, and the passed reviews.
+- The code, the checks, the reviews and the demo script.
 
 ## Next: do this first
 
-Take the answer of the user, or the recommended answer.
+Record the GIF again with `visual.json`.
