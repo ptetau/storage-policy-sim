@@ -1,12 +1,12 @@
-# Handoff · CH-0002 · build → verify
+# Handoff · CH-0002 · verify → user
 
-Time: 2026-10-31T23:57:49+00:00
+Time: 2026-11-01T00:00:07+00:00
 
 ## Done
 
-- The builder wrote `StoragePolicySim/Strategy.lean` with the four strategies of the Interface.
-- All checks pass: 35 in `tests/CAP-strategies.lean` and 34 in `tests/CAP-scenario.lean`. No check changed since the lock `91d1e6b`.
-- CAP-strategies.R1 (strategy names) to R5 (load shift into sun) are now `built`.
+- The code of CH-0002 (strategies) passes all checks, and the security, privacy, quality and compliance reviews.
+- The specification review failed two times, each time only on the words of new lines in the progress log of `change.md`.
+- With the failed tests review, CH-0002 (strategies) has three failed rounds, so the work stops.
 
 ## Decided on defaults
 
@@ -14,16 +14,17 @@ Time: 2026-10-31T23:57:49+00:00
 
 ## Open
 
-- none
+- The user must decide how CH-0002 (strategies) goes on.
+- Recommended answer: correct the four log lines, and run the specification review again. No code or check changes.
 
 ## Look here
 
-- `StoragePolicySim/Strategy.lean`
+- `pdlc/changes/CH-0002-strategies/review/specification/result.md`
 
 ## Don't redo
 
-- The code and the checks.
+- The code, the checks, and the passed reviews.
 
 ## Next: do this first
 
-Make the review packets with `make_packets.py CH-0002 --verify`.
+Take the answer of the user, or the recommended answer.
