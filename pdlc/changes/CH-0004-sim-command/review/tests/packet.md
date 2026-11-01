@@ -2,7 +2,53 @@
 
 Judge only what is in this packet. Write your result next to it, in result.md.
 
-Made at: aed11b17794b9d671a6f389c8267a70bbf59d5ea
+Made at: f8100c4aaa1b6319bdf31cbbe8b0beef7cdabdde
+
+## Re-review
+
+Earlier review: 79a6f27
+
+An earlier review of this remit judged the checks locked at 79a6f27. Judge only these two things:
+
+1. Each earlier problem below. If the problem is not fixed, list it again under "Problems".
+2. The changes since the earlier review, in the diff below. List a new problem only
+   where a changed line causes the problem.
+
+Do not raise a new problem on material that did not change. This rule also applies
+to a problem that the earlier review missed.
+Write a "Wrong versions" line only for each check that changed. If no check
+changed, write "none" under "Wrong versions".
+
+### Earlier problems
+
+- tests/JOB-simulate.lean:277 · The check "JOB-simulate.R1 --strategy none --battery 0 shows export as solar less self-used" compares the printed values with `near e (s - u) 0.1`. Each printed value is rounded to one decimal. Thus a correct app can print values whose difference is exactly 0.1, for example solar 100.1, self-used 50.0 and export 50.0 from the true values 100.06, 50.03 and 50.03. The acceptance line accepts that output. But the Float subtraction of the printed values can give 0.1000000000001, and then the check fails a correct app. The fix is a small extra tolerance, for example `0.1 + 1e-9`. · JOB-simulate.R1 "the `export` value equals `solar` less `self-used`, within 0.1 kWh"; remit rule "A correct app passes each check"
+- tests/JOB-simulate.lean:461 · The check "JOB-simulate.R5 a --days or --seed value that is close to a whole number gives BAD_NUMBER" expects `--days 2.0` to give `BAD_NUMBER`. The spec does not decide this case. R5 says that a number option takes "an optional sign, digits, and an optional point with more digits", and that `--days` and `--seed` "take only whole numbers". The value 2.0 has the number form and is a whole number. Thus a correct app can accept `--days 2.0` as 2 days, and the check fails that app. The fix is to remove the `2.0` case, or to make the spec say first that a whole number has no point. · JOB-simulate.R5 (the number form and the whole-number rule); remit rule "A correct app passes each check"
+
+### Changes since the earlier review
+
+````
+diff --git a/tests/JOB-simulate.lean b/tests/JOB-simulate.lean
+index e8f8c41..f08d486 100644
+--- a/tests/JOB-simulate.lean
++++ b/tests/JOB-simulate.lean
+@@ -274,7 +274,7 @@ def checks : List Check := [
+       let r ← sim ["run", "--strategy", "none", "--battery", "0"]
+       return match numOf r.out "solar", numOf r.out "self-used", numOf r.out "export" with
+         | some s, some u, some e =>
+-          if r.code == 0 && s > 0 && e > 0 && near e (s - u) 0.1 then none
++          if r.code == 0 && s > 0 && e > 0 && near e (s - u) (0.1 + 1e-9) then none
+           else some s!"solar {s}, self-used {u}, export {e}"
+         | _, _, _ => some s!"stdout is {repr r.out}" },
+   { name := "JOB-simulate.R1 --days 3650 exits with 0 and shows 3650 days",
+@@ -458,7 +458,6 @@ def checks : List Check := [
+     run := expectError ["run", "--days", "36.5"] "error: BAD_NUMBER: --days 36.5" },
+   { name := "JOB-simulate.R5 a --days or --seed value that is close to a whole number gives BAD_NUMBER",
+     run := allOf [
+-      expectError ["run", "--days", "2.0"] "error: BAD_NUMBER: --days 2.0",
+       expectError ["run", "--days", " 2"] "error: BAD_NUMBER: --days  2",
+       expectStart ["run", "--days", "2\n"] "error: BAD_NUMBER: --days 2\n",
+       expectError ["run", "--seed", "1.5"] "error: BAD_NUMBER: --seed 1.5"] },
+````
 
 # Remit: tests
 
@@ -99,7 +145,7 @@ Write "Wrong versions" for the acceptance checks in the same way as for other ch
 
 Intent: IN-0001 · Scope: JOB-simulate · Status: testing · Ticket: none · Branch: pdlc/CH-0004-sim-command · Base: pdlc/CH-0003-simulation
 
-Tests-Locked: 79a6f27
+Tests-Locked: a7fe93a
 
 ## Delivers
 
@@ -903,10 +949,10 @@ port.
 ````
 diff --git a/tests/JOB-simulate.lean b/tests/JOB-simulate.lean
 new file mode 100644
-index 0000000..e8f8c41
+index 0000000..f08d486
 --- /dev/null
 +++ b/tests/JOB-simulate.lean
-@@ -0,0 +1,608 @@
+@@ -0,0 +1,607 @@
 +/-
 +Component checks of JOB-simulate (simulate a year of solar and compare strategies), for
 +CH-0004 (the sim command).
@@ -1183,7 +1229,7 @@ index 0000000..e8f8c41
 +      let r ← sim ["run", "--strategy", "none", "--battery", "0"]
 +      return match numOf r.out "solar", numOf r.out "self-used", numOf r.out "export" with
 +        | some s, some u, some e =>
-+          if r.code == 0 && s > 0 && e > 0 && near e (s - u) 0.1 then none
++          if r.code == 0 && s > 0 && e > 0 && near e (s - u) (0.1 + 1e-9) then none
 +          else some s!"solar {s}, self-used {u}, export {e}"
 +        | _, _, _ => some s!"stdout is {repr r.out}" },
 +  { name := "JOB-simulate.R1 --days 3650 exits with 0 and shows 3650 days",
@@ -1367,7 +1413,6 @@ index 0000000..e8f8c41
 +    run := expectError ["run", "--days", "36.5"] "error: BAD_NUMBER: --days 36.5" },
 +  { name := "JOB-simulate.R5 a --days or --seed value that is close to a whole number gives BAD_NUMBER",
 +    run := allOf [
-+      expectError ["run", "--days", "2.0"] "error: BAD_NUMBER: --days 2.0",
 +      expectError ["run", "--days", " 2"] "error: BAD_NUMBER: --days  2",
 +      expectStart ["run", "--days", "2\n"] "error: BAD_NUMBER: --days 2\n",
 +      expectError ["run", "--seed", "1.5"] "error: BAD_NUMBER: --seed 1.5"] },
@@ -1796,7 +1841,7 @@ def checks : List Check := [
       let r ← sim ["run", "--strategy", "none", "--battery", "0"]
       return match numOf r.out "solar", numOf r.out "self-used", numOf r.out "export" with
         | some s, some u, some e =>
-          if r.code == 0 && s > 0 && e > 0 && near e (s - u) 0.1 then none
+          if r.code == 0 && s > 0 && e > 0 && near e (s - u) (0.1 + 1e-9) then none
           else some s!"solar {s}, self-used {u}, export {e}"
         | _, _, _ => some s!"stdout is {repr r.out}" },
   { name := "JOB-simulate.R1 --days 3650 exits with 0 and shows 3650 days",
@@ -1980,7 +2025,6 @@ def checks : List Check := [
     run := expectError ["run", "--days", "36.5"] "error: BAD_NUMBER: --days 36.5" },
   { name := "JOB-simulate.R5 a --days or --seed value that is close to a whole number gives BAD_NUMBER",
     run := allOf [
-      expectError ["run", "--days", "2.0"] "error: BAD_NUMBER: --days 2.0",
       expectError ["run", "--days", " 2"] "error: BAD_NUMBER: --days  2",
       expectStart ["run", "--days", "2\n"] "error: BAD_NUMBER: --days 2\n",
       expectError ["run", "--seed", "1.5"] "error: BAD_NUMBER: --seed 1.5"] },
