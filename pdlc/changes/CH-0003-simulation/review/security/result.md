@@ -4,12 +4,11 @@ Remit: security
 
 Problems: none
 
-Follow-ups:
-- Check the `Battery` fields and the `Site` fields before a run. `stepHour` and `simulate` accept a negative capacity, a negative power, or a NaN value, and then give flows with no meaning. No acceptance line asks for this check, and the Interface says that no entry can fail. A new intent could add a check with an error code in DES-errors (the project's error codes), for example `OUT_OF_RANGE`, at the caller that reads user input.
-- Cap the `days` argument of `simulate`. The run keeps one `HourResult` for each hour, so a very large value uses much memory and time. No acceptance line names a limit. A new intent could add a cap where a caller passes user input, for example in a future `sim` command.
+Follow-ups: none
 
 Notes:
-- The change is a pure library module. It reads no file, no network and no environment. It builds no command, query, path or HTML. It holds no secret and logs nothing.
-- The change adds no dependency. It imports only `StoragePolicySim.Scenario` and `StoragePolicySim.Strategy` from earlier changes.
-- The code reads arrays with `[k]!` and `calendar[...]!`. These reads stay in range: `placeFlex` gives 24 items (CAP-strategies), `monthOfDay` gives 0 to 11, and the scenario gives 24 hours for each day.
-- `simulate` uses `daysInYear`, and the packet does not show it. It probably comes from `StoragePolicySim/Scenario.lean`. This item has no effect on security.
+- This is a re-review. The earlier review listed no problems, so no earlier problem is left to fix.
+- The diff changes two places in `StoragePolicySim/Simulation.lean`. Neither change has a security effect.
+- Line 963 renames `freeRoomKwh` to `chargeToFillKwh`. The value and its use do not change.
+- Lines 1084 to 1087 drop the `openMonth.days > 0` test and the `month` update on each day. The first open month is month 0, and day 0 is in month 0. Thus, the code never closes an empty month. `monthOfDay` gives only 0 to 11, so `calendar[openMonth.month]!` stays in range.
+- The module is a pure library. It reads no files, no network, and no user input. It builds no command, query, path, or HTML. It holds no secrets and adds no dependency.

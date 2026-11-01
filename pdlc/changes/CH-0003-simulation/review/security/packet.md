@@ -2,7 +2,57 @@
 
 Judge only what is in this packet. Write your result next to it, in result.md.
 
-Made at: 707f29d2c925b709a259d7d912e0d0faf1d54d5f
+Made at: 879c56afeef00af4a20e82080a7c170029f80f76
+
+## Re-review
+
+Earlier review: 707f29d2c925b709a259d7d912e0d0faf1d54d5f
+
+An earlier review of this remit judged this change at 707f29d2c925. Judge only these two things:
+
+1. Each earlier problem below. If the problem is not fixed, list it again under "Problems".
+2. The changes since the earlier review, in the diff below. List a new problem only
+   where a changed line causes the problem.
+
+Do not raise a new problem on material that did not change. This rule also applies
+to a problem that the earlier review missed.
+
+### Earlier problems
+
+none
+
+### Changes since the earlier review
+
+````
+diff --git a/StoragePolicySim/Simulation.lean b/StoragePolicySim/Simulation.lean
+index 37a119f..fb26bb3 100644
+--- a/StoragePolicySim/Simulation.lean
++++ b/StoragePolicySim/Simulation.lean
+@@ -51,8 +51,8 @@ def stepHour (battery : Battery) (socKwh : Float) (strategy : Strategy) (hour :
+   let surplusKwh := pvKwh - directKwh
+   let shortfallKwh := loadKwh - directKwh
+   let request := strategy.decide hour surplusKwh shortfallKwh
+-  let freeRoomKwh := (battery.capacityKwh - socKwh) / efficiency
+-  let chargeKwh := limitTo request.chargeKwh surplusKwh (min battery.powerKw freeRoomKwh)
++  let chargeToFillKwh := (battery.capacityKwh - socKwh) / efficiency
++  let chargeKwh := limitTo request.chargeKwh surplusKwh (min battery.powerKw chargeToFillKwh)
+   let storedAfterChargeKwh := socKwh + chargeKwh * efficiency
+   let dischargeKwh := limitTo request.dischargeKwh shortfallKwh
+     (min battery.powerKw (storedAfterChargeKwh * efficiency))
+@@ -172,10 +172,10 @@ def simulate (site : Site) (battery : Battery) (strategy : Strategy) (seed days
+     let dayHours := scenarioHours.extract (24 * day) (24 * day + 24)
+     let flexKwh := strategy.placeFlex (dayHours.map (·.pvKwh)) (dayHours.map (·.flexKwh))
+     let month := monthOfDay (day % daysInYear)
+-    if month != openMonth.month && openMonth.days > 0 then
++    if month != openMonth.month then
+       months := months.push (openMonth.close socKwh)
+       openMonth := { month }
+-    openMonth := { openMonth with month, days := openMonth.days + 1 }
++    openMonth := { openMonth with days := openMonth.days + 1 }
+     for k in [0:dayHours.size] do
+       let hour := dayHours[k]!
+       let loadKwh := hour.baseLoadKwh + flexKwh[k]!
+````
 
 # Remit: security
 
@@ -198,6 +248,7 @@ none
 - The first tests review could not see the items of CH-0001 (scenario) and CH-0002 (strategies). The skill listed these items under "Interface". The checks did not change.
 - The second tests review could not see the derived instances of these items. The skill added them. The checks did not change.
 - Build: the 123 checks of the three check files pass. No check changed since the lock `ba51e5b`.
+- The first verify failed on quality. The change went back to build.
 ````
 
 ## The spec it covers: title and summary
@@ -655,7 +706,7 @@ port.
 ````
 diff --git a/StoragePolicySim/Simulation.lean b/StoragePolicySim/Simulation.lean
 new file mode 100644
-index 0000000..37a119f
+index 0000000..fb26bb3
 --- /dev/null
 +++ b/StoragePolicySim/Simulation.lean
 @@ -0,0 +1,192 @@
@@ -712,8 +763,8 @@ index 0000000..37a119f
 +  let surplusKwh := pvKwh - directKwh
 +  let shortfallKwh := loadKwh - directKwh
 +  let request := strategy.decide hour surplusKwh shortfallKwh
-+  let freeRoomKwh := (battery.capacityKwh - socKwh) / efficiency
-+  let chargeKwh := limitTo request.chargeKwh surplusKwh (min battery.powerKw freeRoomKwh)
++  let chargeToFillKwh := (battery.capacityKwh - socKwh) / efficiency
++  let chargeKwh := limitTo request.chargeKwh surplusKwh (min battery.powerKw chargeToFillKwh)
 +  let storedAfterChargeKwh := socKwh + chargeKwh * efficiency
 +  let dischargeKwh := limitTo request.dischargeKwh shortfallKwh
 +    (min battery.powerKw (storedAfterChargeKwh * efficiency))
@@ -833,10 +884,10 @@ index 0000000..37a119f
 +    let dayHours := scenarioHours.extract (24 * day) (24 * day + 24)
 +    let flexKwh := strategy.placeFlex (dayHours.map (·.pvKwh)) (dayHours.map (·.flexKwh))
 +    let month := monthOfDay (day % daysInYear)
-+    if month != openMonth.month && openMonth.days > 0 then
++    if month != openMonth.month then
 +      months := months.push (openMonth.close socKwh)
 +      openMonth := { month }
-+    openMonth := { openMonth with month, days := openMonth.days + 1 }
++    openMonth := { openMonth with days := openMonth.days + 1 }
 +    for k in [0:dayHours.size] do
 +      let hour := dayHours[k]!
 +      let loadKwh := hour.baseLoadKwh + flexKwh[k]!
@@ -909,8 +960,8 @@ def stepHour (battery : Battery) (socKwh : Float) (strategy : Strategy) (hour : 
   let surplusKwh := pvKwh - directKwh
   let shortfallKwh := loadKwh - directKwh
   let request := strategy.decide hour surplusKwh shortfallKwh
-  let freeRoomKwh := (battery.capacityKwh - socKwh) / efficiency
-  let chargeKwh := limitTo request.chargeKwh surplusKwh (min battery.powerKw freeRoomKwh)
+  let chargeToFillKwh := (battery.capacityKwh - socKwh) / efficiency
+  let chargeKwh := limitTo request.chargeKwh surplusKwh (min battery.powerKw chargeToFillKwh)
   let storedAfterChargeKwh := socKwh + chargeKwh * efficiency
   let dischargeKwh := limitTo request.dischargeKwh shortfallKwh
     (min battery.powerKw (storedAfterChargeKwh * efficiency))
@@ -1030,10 +1081,10 @@ def simulate (site : Site) (battery : Battery) (strategy : Strategy) (seed days 
     let dayHours := scenarioHours.extract (24 * day) (24 * day + 24)
     let flexKwh := strategy.placeFlex (dayHours.map (·.pvKwh)) (dayHours.map (·.flexKwh))
     let month := monthOfDay (day % daysInYear)
-    if month != openMonth.month && openMonth.days > 0 then
+    if month != openMonth.month then
       months := months.push (openMonth.close socKwh)
       openMonth := { month }
-    openMonth := { openMonth with month, days := openMonth.days + 1 }
+    openMonth := { openMonth with days := openMonth.days + 1 }
     for k in [0:dayHours.size] do
       let hour := dayHours[k]!
       let loadKwh := hour.baseLoadKwh + flexKwh[k]!
