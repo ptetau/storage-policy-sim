@@ -2,7 +2,7 @@
 
 Judge only what is in this packet. Write your result next to it, in result.md.
 
-Made at: 144199141d891c6f17d32089e56b55f2914cfc0a
+Made at: d5c7c66a04f8e649016b6183d41d724d47a8345d
 
 ## Re-review
 
@@ -89,7 +89,7 @@ If the change touches no personal data, reply `Result: pass` and say "not applic
 ````
 # CH-0004 · The sim command
 
-Intent: IN-0001 · Scope: JOB-simulate · Status: building · Ticket: none · Branch: pdlc/CH-0004-sim-command · Base: pdlc/CH-0003-simulation
+Intent: IN-0001 · Scope: JOB-simulate · Status: in review · Ticket: none · Branch: pdlc/CH-0004-sim-command · Base: pdlc/CH-0003-simulation
 
 Tests-Locked: a7fe93a
 
@@ -322,7 +322,7 @@ option is a fair test.
 
 ### JOB-simulate.R1 · Run one strategy
 
-Status: built · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 `sim run` simulates one strategy, prints the result on stdout, and exits with 0. Each line
 is a label, spaces to column 19, and a value (assumed). An energy has one decimal and `kWh`,
@@ -348,7 +348,7 @@ The options and their defaults are these (assumed):
 
 ### JOB-simulate.R2 · Monthly table
 
-Status: built · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 `sim run --monthly` prints the 11 lines, a blank line, and a table with one row for each
 month (assumed). The header is `month solar-kWh load-kWh import-kWh export-kWh
@@ -362,7 +362,7 @@ row starts with the short month name, for example `Jan`, and has seven fields.
 
 ### JOB-simulate.R3 · Compare strategies
 
-Status: built · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 `sim compare` runs each strategy on the same weather, and prints one row for each strategy.
 The header is `strategy self-consumption-% self-sufficiency-% import-kWh export-kWh`
@@ -377,7 +377,7 @@ spaces. `sim compare` takes each option of `sim run` except `--strategy` and `--
 
 ### JOB-simulate.R4 · Repeatable weather
 
-Status: built · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 The seed sets the weather. The same options and seed give the same output each time.
 
@@ -386,7 +386,7 @@ The seed sets the weather. The same options and seed give the same output each t
 
 ### JOB-simulate.R5 · Bad command line
 
-Status: built · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 A bad command line prints one error line on stderr, prints nothing on stdout, and exits
 with 2 (assumed). The line is `error: <code>: <detail>` (assumed). `sim`, `sim help` and
