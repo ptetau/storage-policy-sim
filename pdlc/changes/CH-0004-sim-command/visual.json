@@ -2,7 +2,7 @@
   "kind": "terminal",
   "title": "CH-0004 \u00b7 The sim command",
   "width": 1100,
-  "height": 680,
+  "height": 780,
   "steps": [
     {
       "caption": "JOB-simulate \u00b7 setup: build the sim command",
@@ -22,7 +22,7 @@
     },
     {
       "caption": "JOB-simulate.R1 \u00b7 shift, 30 days, latitude 45: the values equal the library",
-      "run": ".lake/build/bin/sim run --strategy shift --days 30 --lat 45 | tail -8 && lake env lean --run pdlc/changes/CH-0004-sim-command/library.lean"
+      "run": ".lake/build/bin/sim run --strategy shift --days 30 --lat 45 && lake env lean --run pdlc/changes/CH-0004-sim-command/library.lean"
     },
     {
       "caption": "JOB-simulate.R1 \u00b7 none, no battery: export equals solar less self-used",
