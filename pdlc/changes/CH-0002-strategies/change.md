@@ -1,8 +1,8 @@
 # CH-0002 · Battery and load strategies
 
-Intent: IN-0001 · Scope: CAP-strategies · Status: planned · Ticket: none · Branch: none · Base: main
+Intent: IN-0001 · Scope: CAP-strategies · Status: in review · Ticket: none · Branch: pdlc/CH-0002-strategies · Base: pdlc/CH-0001-scenario
 
-Tests-Locked: none
+Tests-Locked: 91d1e6b
 
 ## Delivers
 
@@ -95,31 +95,31 @@ none
 
 ## Steps
 
-### Step 1 · Strategy names · [ ]
+### Step 1 · Strategy names · [x]
 
 - Requirement: CAP-strategies.R1
 - Check: the checks named `CAP-strategies.R1 …` in `tests/CAP-strategies.lean`
 - Done when: the checks pass
 
-### Step 2 · No battery use · [ ]
+### Step 2 · No battery use · [x]
 
 - Requirement: CAP-strategies.R2
 - Check: the checks named `CAP-strategies.R2 …` in `tests/CAP-strategies.lean`
 - Done when: the checks pass
 
-### Step 3 · Greedy battery use · [ ]
+### Step 3 · Greedy battery use · [x]
 
 - Requirement: CAP-strategies.R3
 - Check: the checks named `CAP-strategies.R3 …` in `tests/CAP-strategies.lean`
 - Done when: the checks pass
 
-### Step 4 · Evening battery use · [ ]
+### Step 4 · Evening battery use · [x]
 
 - Requirement: CAP-strategies.R4
 - Check: the checks named `CAP-strategies.R4 …` in `tests/CAP-strategies.lean`
 - Done when: the checks pass
 
-### Step 5 · Load shift into sun · [ ]
+### Step 5 · Load shift into sun · [x]
 
 - Requirement: CAP-strategies.R5
 - Check: the checks named `CAP-strategies.R5 …` in `tests/CAP-strategies.lean`
@@ -131,4 +131,11 @@ none
 
 ## Progress log
 
-- Planned after CH-0001 (scenario), so that the simulation can use both. The strategies do not need the scenario.
+- The change comes after CH-0001 (scenario). CH-0003 (simulation) needs the scenario and the strategies. The strategies do not need the scenario.
+- The first tests review failed, because a wrong `shift` that takes three hours in a row passed the checks of R5 (load shift into sun).
+- The test writer then added a check whose three sunniest hours are not next to each other. The second tests review passed.
+- Build: the 35 checks of `tests/CAP-strategies.lean` and the 34 checks of `tests/CAP-scenario.lean` pass. No check changed since the lock `91d1e6b`.
+- The first verify failed on the quality review and the specification review.
+- The quality review asked for DES-writing-style (writing rules). `make_packets.py` gives that spec only to the specification review. The quality remit does not judge writing, so the builder changed no code.
+- Verify filed IN-0005 (guards on strategy inputs) for approval. IN-0004 (shift on a day with little sun) already covers the follow-up about days with little sun.
+- The user decided that a review failure only on the words of pdlc records does not use one of the permitted verify rounds.

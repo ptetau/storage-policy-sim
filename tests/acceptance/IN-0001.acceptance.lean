@@ -21,7 +21,7 @@ def near (a b tol : Float) : Bool := (a - b).abs ≤ tol
 
 /-- Rounds to one decimal, half away from zero. -/
 def round1 (x : Float) : Float :=
-  if x < 0 then -(Float.round (-x * 10)) / 10 else Float.round (x * 10) / 10
+  if x < 0.0 then -(Float.round (-x * 10.0)) / 10.0 else Float.round (x * 10.0) / 10.0
 
 def firstFail : List (Bool × String) → Option String
   | [] => none
@@ -233,12 +233,12 @@ def checks : List Check := [
     run := do
       let a := pvOutput (site 45) 171 12 Sky.sunny
       let b := pvOutput (site 45) 354 12 Sky.sunny
-      return if a > 2 * b && b > 0 then none else some s!"day 171 {a}, day 354 {b}" },
+      return if a > 2.0 * b && b > 0.0 then none else some s!"day 171 {a}, day 354 {b}" },
   { name := "CAP-scenario.R1 at latitude -41 day 354 gives more than twice day 171",
     run := do
       let a := pvOutput (site (-41)) 354 12 Sky.sunny
       let b := pvOutput (site (-41)) 171 12 Sky.sunny
-      return if a > 2 * b && b > 0 then none else some s!"day 354 {a}, day 171 {b}" },
+      return if a > 2.0 * b && b > 0.0 then none else some s!"day 354 {a}, day 171 {b}" },
   { name := "CAP-scenario.R1 at latitude 0 days 171 and 354 differ by less than 1%",
     run := do
       let a := pvOutput (site 0) 171 12 Sky.sunny
@@ -337,7 +337,7 @@ def checks : List Check := [
       let hs := scenario (site 45) 7 365
       let n := ((List.range 364).filter (fun d =>
         hs[(d + 1) * 24]!.sky == hs[d * 24]!.sky)).length
-      return if hs.size == 8760 && n.toFloat ≥ 0.6 * 364 then none else some s!"{n} days keep" },
+      return if hs.size == 8760 && n.toFloat ≥ 0.6 * 364.0 then none else some s!"{n} days keep" },
   { name := "CAP-scenario.R2 after day 364 the day of the year starts again at 0",
     run := do
       let hs := scenario (site 45) 7 730
@@ -540,19 +540,22 @@ def checks : List Check := [
     run := do
       let res := simulate (site 45) (bat 5 2) Strategy.greedy 7 365
       let bad := res.hours.toList.find? (fun h =>
-        h.flow.chargeKwh > 2 + 1e-9 || h.flow.dischargeKwh > 2 + 1e-9)
-      -- The discharge cap must bind in at least one hour. Else a version with no cap on the
-      -- discharge also passes.
-      let capped := res.hours.any (fun h => near h.flow.dischargeKwh 2 1e-6)
+        h.flow.chargeKwh > 2.0 + 1e-9 || h.flow.dischargeKwh > 2.0 + 1e-9)
+      -- The two hours below make each cap bind with no need for the load profile. Thus a
+      -- version with no cap on the charge or on the discharge fails.
+      let dis := stepHour (bat 5 2) 5 Strategy.greedy 19 0 3
+      let chg := stepHour (bat 5 2) 0 Strategy.greedy 12 3 0
       return if res.hours.size != 8760 then some s!"{res.hours.size} hours"
         else match bad with
           | some h => some s!"day {h.hour.day} hour {h.hour.hour}: charge {h.flow.chargeKwh}, discharge {h.flow.dischargeKwh}"
-          | none => if capped then none else some "no hour discharges 2 kWh" },
+          | none =>
+            (flowIs dis [("discharge with a 3 kWh shortfall", dis.dischargeKwh, 2)]) <|>
+            (flowIs chg [("charge with a 3 kWh surplus", chg.chargeKwh, 2)]) },
   { name := "CAP-simulation.R2 a 5 kWh battery holds 0 to 5 kWh each hour",
     run := do
       let res := simulate (site 45) (bat 5 2) Strategy.greedy 7 365
       let bad := res.hours.toList.find? (fun h =>
-        h.flow.socKwh < -1e-9 || h.flow.socKwh > 5 + 1e-9)
+        h.flow.socKwh < -1e-9 || h.flow.socKwh > 5.0 + 1e-9)
       return if res.hours.size != 8760 then some s!"{res.hours.size} hours"
         else match bad with
           | some h => some s!"day {h.hour.day} hour {h.hour.hour} holds {h.flow.socKwh}"
@@ -600,13 +603,13 @@ def checks : List Check := [
   { name := "CAP-simulation.R3 the self-consumption is 100 × (solar - export) / solar",
     run := do
       let t := (simulate (site 45) (bat 10 5) Strategy.greedy 7 365).totals
-      let want := 100 * (t.pvKwh - t.exportKwh) / t.pvKwh
+      let want := 100.0 * (t.pvKwh - t.exportKwh) / t.pvKwh
       return if t.pvKwh > 0 && near t.selfConsumption want 1e-6 then none
         else some s!"got {t.selfConsumption}, want {want}" },
   { name := "CAP-simulation.R3 the self-sufficiency is 100 × (load - import) / load",
     run := do
       let t := (simulate (site 45) (bat 10 5) Strategy.greedy 7 365).totals
-      let want := 100 * (t.loadKwh - t.importKwh) / t.loadKwh
+      let want := 100.0 * (t.loadKwh - t.importKwh) / t.loadKwh
       return if t.loadKwh > 0 && near t.selfSufficiency want 1e-6 then none
         else some s!"got {t.selfSufficiency}, want {want}" },
   { name := "CAP-simulation.R3 0 kW of panels gives 0% for each ratio",
@@ -654,7 +657,7 @@ def checks : List Check := [
   { name := "CAP-simulation.R4 July has more than twice the solar of December",
     run := do
       let ms := (simulate (site 45) (bat 10 5) Strategy.greedy 7 365).months
-      return if ms.size == 12 && ms[6]!.totals.pvKwh > 2 * ms[11]!.totals.pvKwh then none
+      return if ms.size == 12 && ms[6]!.totals.pvKwh > 2.0 * ms[11]!.totals.pvKwh then none
         else some s!"July {ms[6]!.totals.pvKwh}, December {ms[11]!.totals.pvKwh}" },
   { name := "CAP-simulation.R4 the July self-sufficiency is more than the January self-sufficiency",
     run := do
@@ -780,7 +783,7 @@ def checks : List Check := [
       let solar := fun (n : String) =>
         (rows.find? (fun l => (words l).head? == some n)).bind (fun l => (words l)[1]?.bind parseNum)
       return match solar "Jul", solar "Dec" with
-        | some j, some d => if r.code == 0 && j > 2 * d then none else some s!"Jul {j}, Dec {d}"
+        | some j, some d => if r.code == 0 && j > 2.0 * d then none else some s!"Jul {j}, Dec {d}"
         | _, _ => some s!"stdout is {repr r.out}" },
   { name := "JOB-simulate.R2 without --monthly sim run prints only the 11 lines",
     run := do
@@ -1011,7 +1014,7 @@ def checks : List Check := [
 
 def main (args : List String) : IO UInt32 := do
   let sel := match args with
-    | f :: _ => checks.filter (fun c => c.name.startsWith (f ++ " "))
+    | f :: _ => checks.filter (fun (c : Check) => c.name.startsWith (f ++ " "))
     | [] => checks
   let mut failed := 0
   for c in sel do

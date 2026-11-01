@@ -1,6 +1,6 @@
 # Remit: specification
 
-Default: yes
+Default: no
 
 You judge if the code does what the spec says. You do not see the checks.
 
@@ -14,10 +14,10 @@ You judge if the code does what the spec says. You do not see the checks.
   its requirements, and a README in "Files" show the behaviour as it is now. They include
   what the change adds. Nothing that the change removes or changes still shows the old
   way. The README says how to run the checks, and names any seam that a user can set.
-- The spec text, the README text, and the code comments in the change follow the writing
-  rules (`DES-writing-style`, in the packet). Each break of a rule is a problem. Give the
-  line and the rule.
-- Each finding under "Writing check" in the packet is a problem, unless you judge the
-  finding to be a false alarm. For each false alarm, say why under "Notes".
+- In this project, the writing rules (`DES-writing-style`, in the packet) are a guideline,
+  not a hard rule. A break of a writing rule, or a finding under "Writing check", goes under
+  "Notes" with its line and rule. It is not a problem, and it does not fail the review.
+- A text that is wrong or unclear about what the code does is still a problem. Examples are
+  a wrong fact, a wrong number, and a sentence with two possible meanings.
 - On a re-review, the writing check covers only the lines that changed since the earlier
   review.

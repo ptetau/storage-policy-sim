@@ -1,8 +1,8 @@
 # CH-0001 · Seasonal sun, daily weather and household load
 
-Intent: IN-0001 · Scope: CAP-scenario · Status: planned · Ticket: none · Branch: none · Base: main
+Intent: IN-0001 · Scope: CAP-scenario · Status: in review · Ticket: none · Branch: pdlc/CH-0001-scenario · Base: main
 
-Tests-Locked: none
+Tests-Locked: 6feecd6
 
 ## Delivers
 
@@ -89,6 +89,7 @@ so no entry has an error code.
 - `StoragePolicySim/Scenario.lean`
 - `lakefile.toml: the rest`
 - `lean-toolchain`
+- `lake-manifest.json`
 
 ## Check files
 
@@ -96,19 +97,19 @@ so no entry has an error code.
 
 ## Steps
 
-### Step 1 · Seasonal sun · [ ]
+### Step 1 · Seasonal sun · [x]
 
 - Requirement: CAP-scenario.R1
 - Check: the checks named `CAP-scenario.R1 …` in `tests/CAP-scenario.lean`
 - Done when: the checks pass
 
-### Step 2 · Daily weather · [ ]
+### Step 2 · Daily weather · [x]
 
 - Requirement: CAP-scenario.R2
 - Check: the checks named `CAP-scenario.R2 …` in `tests/CAP-scenario.lean`
 - Done when: the checks pass
 
-### Step 3 · Household load · [ ]
+### Step 3 · Household load · [x]
 
 - Requirement: CAP-scenario.R3
 - Check: the checks named `CAP-scenario.R3 …` in `tests/CAP-scenario.lean`
@@ -121,3 +122,14 @@ none
 ## Progress log
 
 - Planned as the first change of IN-0001 (solar self-consumption simulator), because each other change uses its hours.
+- The builder found that `tests/CAP-scenario.lean` does not compile. `fun c => c.name` needs the type `Check` in Lean 4.35.0. The check goes back to the test writer, round 1 of 2.
+- `lake build` writes `lake-manifest.json`. The file goes into "Files" (assumed), so that the build is the same each time.
+- After the fix, the 34 checks of `tests/CAP-scenario.lean` pass on the code of the builder. App code exists after a send-back, so a pass is permitted.
+- Build: the 34 checks of `tests/CAP-scenario.lean` pass. No check changed since the lock `5de000a`.
+- Verify round 1: quality and specification failed. The follow-ups of security (a cap on days, and large seeds) need no intent, because JOB-simulate.R5 (bad command line) limits `--days` and `--seed`.
+- Verify returned the change to build, because two local names in `scenario` were not clear.
+- The builder renamed the array of the day skies to `daySkies`, and the sky of one day to `sky`. The 34 checks pass.
+- Verify round 2: specification failed on the words of three log lines. Verify corrected the words, and no code changed.
+- Verify round 3: specification failed, because two log lines did not agree on the count of names. The user chose to correct the words and review again.
+- Verify round 4: each remit passed. The change is `in review`.
+- The tests review found a `Float` compared with `==`. The test writer used a tolerance, and the 34 checks pass.

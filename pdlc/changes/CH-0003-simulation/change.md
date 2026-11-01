@@ -1,8 +1,8 @@
 # CH-0003 · Hourly energy flows and results
 
-Intent: IN-0001 · Scope: CAP-simulation · Status: planned · Ticket: none · Branch: none · Base: main
+Intent: IN-0001 · Scope: CAP-simulation · Status: in review · Ticket: none · Branch: pdlc/CH-0003-simulation · Base: pdlc/CH-0002-strategies
 
-Tests-Locked: none
+Tests-Locked: ba51e5b
 
 ## Delivers
 
@@ -99,6 +99,28 @@ A check imports `StoragePolicySim.Simulation`, which also gives the items of CH-
   Result`. The hours come from `scenario site seed days`. For each day, the flexible load
   comes from `Strategy.placeFlex` with the solar and the flexible load of that day.
 
+The checks can also use these items of earlier changes, in the namespace `StoragePolicySim`:
+
+- From CH-0001 (scenario), in `StoragePolicySim/Scenario.lean`:
+  - `inductive Sky | sunny | cloudy | overcast` with `BEq`, `Repr` and `Inhabited`.
+  - `structure Site` with `Repr` and `Inhabited`, and the fields `latitude`, `pvKw`,
+    `dailyLoadKwh` and `flexKwh`, each a `Float`.
+  - `structure Hour` with `Repr` and `Inhabited`. Its fields are `day`, `dayOfYear` and
+    `hour` (each a `Nat`), `sky : Sky`, and
+    `pvKwh`, `baseLoadKwh` and `flexKwh` (each a `Float`).
+  - `pvOutput (site : Site) (dayOfYear hour : Nat) (sky : Sky) : Float`.
+  - `scenario (site : Site) (seed days : Nat) : Array Hour`.
+- From CH-0002 (strategies), in `StoragePolicySim/Strategy.lean`:
+  - `inductive Strategy | none | greedy | evening | shift` with `BEq`, `Repr` and
+    `Inhabited`. Each value is written in full, for example
+    `Strategy.none`.
+  - `Strategy.all : List Strategy` and `Strategy.name : Strategy → String`.
+  - `structure Request` with `Repr`, and the fields `chargeKwh : Float` and
+    `dischargeKwh : Float`.
+  - `Strategy.decide (s : Strategy) (hour : Nat) (surplusKwh shortfallKwh : Float) : Request`.
+  - `Strategy.placeFlex (s : Strategy) (pvKwh flexKwh : Array Float) : Array Float`, with
+    24 items in each array.
+
 ### Test seams
 
 - randomness: the `seed` argument of `simulate`. The same seed gives the same weather.
@@ -114,31 +136,31 @@ A check imports `StoragePolicySim.Simulation`, which also gives the items of CH-
 
 ## Steps
 
-### Step 1 · Energy flows of an hour · [ ]
+### Step 1 · Energy flows of an hour · [x]
 
 - Requirement: CAP-simulation.R1
 - Check: the checks named `CAP-simulation.R1 …` in `tests/CAP-simulation.lean`
 - Done when: the checks pass
 
-### Step 2 · Battery limits · [ ]
+### Step 2 · Battery limits · [x]
 
 - Requirement: CAP-simulation.R2
 - Check: the checks named `CAP-simulation.R2 …` in `tests/CAP-simulation.lean`
 - Done when: the checks pass
 
-### Step 3 · Totals and ratios · [ ]
+### Step 3 · Totals and ratios · [x]
 
 - Requirement: CAP-simulation.R3
 - Check: the checks named `CAP-simulation.R3 …` in `tests/CAP-simulation.lean`
 - Done when: the checks pass
 
-### Step 4 · Monthly totals · [ ]
+### Step 4 · Monthly totals · [x]
 
 - Requirement: CAP-simulation.R4
 - Check: the checks named `CAP-simulation.R4 …` in `tests/CAP-simulation.lean`
 - Done when: the checks pass
 
-### Step 5 · Strategy order · [ ]
+### Step 5 · Strategy order · [x]
 
 - Requirement: CAP-simulation.R5
 - Check: the checks named `CAP-simulation.R5 …` in `tests/CAP-simulation.lean`
@@ -151,3 +173,7 @@ none
 ## Progress log
 
 - Planned after CH-0001 (scenario) and CH-0002 (strategies), because the simulation uses both.
+- The first tests review could not see the items of CH-0001 (scenario) and CH-0002 (strategies). The skill listed these items under "Interface". The checks did not change.
+- The second tests review could not see the derived instances of these items. The skill added them. The checks did not change.
+- Build: the 123 checks of the three check files pass. No check changed since the lock `ba51e5b`.
+- The first verify failed on quality. The change went back to build.

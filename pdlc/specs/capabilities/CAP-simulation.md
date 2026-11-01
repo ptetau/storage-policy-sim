@@ -18,7 +18,7 @@ forecast, with a count of fetches each day and an error scale.
 
 ### CAP-simulation.R1 · Energy flows of an hour
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 The house first uses solar energy directly. Then the battery takes what the strategy asks,
 up to the surplus, the battery power for one hour, and the free room. The rest goes to
@@ -41,7 +41,7 @@ holds 10 kWh with 5 kW of power, unless the line says otherwise.
 
 ### CAP-simulation.R2 · Battery limits
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 Over a run, the battery never goes past its power or its capacity. The energy of each run
 balances, with the battery losses included. In these lines, the site is at latitude 45
@@ -55,7 +55,7 @@ the line says otherwise.
 
 ### CAP-simulation.R3 · Totals and ratios
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 The totals add up the hours of the run. The self-consumption is the solar energy less the
 export, as a percentage of the solar energy. The self-sufficiency is the load less the
@@ -69,7 +69,7 @@ import, as a percentage of the load. A ratio with nothing to divide by is 0% (as
 
 ### CAP-simulation.R4 · Monthly totals
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 The result has the totals of each calendar month in the run, in order. A year has 365
 days, with no leap day (assumed). Each month also has its own two ratios.
@@ -83,7 +83,7 @@ days, with no leap day (assumed). Each month also has its own two ratios.
 
 ### CAP-simulation.R5 · Strategy order
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 On the same weather, a battery must raise the self-consumption, and a later discharge must
 not raise it. In these lines, the site is at latitude 45 with 5 kW of panels and 20 kWh of

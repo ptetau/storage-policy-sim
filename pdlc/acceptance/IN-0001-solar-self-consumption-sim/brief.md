@@ -5,7 +5,7 @@ Write the acceptance checks of this intent, only in the file on its line `Accept
 This brief holds each input of the checks. Read another file only when this brief names
 it, for example an existing check file to match its style.
 
-Made at: 33c1415c2b32bc8df6d011b26682ff8e3ff1b21d
+Made at: aed11b17794b9d671a6f389c8267a70bbf59d5ea
 
 ## The intent
 
@@ -52,7 +52,7 @@ maximizing self consumption of solar captured power. Written in lean4 using late
 ## Acceptance checks
 
 Acceptance-File: tests/acceptance/IN-0001.acceptance.lean
-Acceptance-Locked: 36a6e76
+Acceptance-Locked: 6cc1154
 Acceptance-Passed: none
 
 ## Notes
@@ -71,45 +71,43 @@ Acceptance-Passed: none
 - DES-lean-checks (Lean check files): How does a Lean check file run and report? → a Lean script with a name filter and a count line (assumed).
 - JOB-simulate.R1 (run one strategy): was "`--flex`: 3", now "`--flex`: 3, or the `--load` value when that is less" (assumed).
 - JOB-simulate.R5 (bad command line): How does a range show? → `(<lowest> to <highest>)` as in the table (assumed).
+- IN-0001 (simulator): Does a review that fails only on the words of pdlc records count as a round? → no, in this project. The skill fixes the words and reviews again. The user decided this, and https://github.com/ptetau/pskills/issues/24 tracks a fix in pdlc.
+- IN-0001 (simulator): Does a break of a writing rule fail a review? → no, for now. The writing rules are a guideline in this project. The user decided this.
 
 ## Handoff
 
-### Handoff · IN-0001 · change → acceptance
+### Handoff · IN-0001 · acceptance → tests
 
-Time: 2026-10-31T22:58:08+00:00
+Time: 2026-10-31T23:14:03+00:00
 
 ### Done
 
-- Change planned four changes, one for each spec, in this order:
-  1. CH-0001 (scenario): the hours of a scenario, in `StoragePolicySim/Scenario.lean`.
-  2. CH-0002 (strategies): the four strategies, in `StoragePolicySim/Strategy.lean`.
-  3. CH-0003 (simulation): the energy flows and the totals, in `StoragePolicySim/Simulation.lean`.
-  4. CH-0004 (sim command): the `sim` command, in `Main.lean`, with the README.
-- The order follows what each change uses. CH-0003 (simulation) uses the first two, and CH-0004 (sim command) uses all three.
+- The test writer wrote 154 acceptance checks in `tests/acceptance/IN-0001.acceptance.lean`, for all 18 requirements of IN-0001 (simulator).
+- The checks failed before any code, because the library and `lakefile.toml` do not exist yet.
+- The first review failed on one check of CAP-simulation.R2 (battery limits). The test writer fixed it, and the re-review passed.
+- The lock is `67970d4`. The file has no stored-data line.
 
 ### Decided on defaults
 
-- CH-0001 (scenario): What are the Lean names? → `Sky`, `Site`, `Hour`, `pvOutput` and `scenario`, in the namespace `StoragePolicySim` (assumed).
-- CH-0002 (strategies): What are the Lean names? → `Strategy`, `Request`, `Strategy.decide` and `Strategy.placeFlex` (assumed).
-- CH-0003 (simulation): What are the Lean names? → `Battery`, `Flow`, `stepHour`, `Totals`, `Month`, `Result` and `simulate` (assumed).
-- CH-0004 (sim command): In which order does `sim` find problems? → the command, then each option from left to right, then the ranges, then `--flex` (assumed).
+- JOB-simulate.R1 (run one strategy): What is the `--flex` default when `--load` is less than 3? → the `--load` value (assumed).
+- JOB-simulate.R5 (bad command line): How does a range show? → `(<lowest> to <highest>)` as in the table (assumed).
 
 ### Open
 
-- none
+- The check of CAP-simulation.R2 (battery limits) needs one hour that discharges exactly 2 kWh. The load profile of CH-0001 (scenario) must give such an hour.
 
 ### Look here
 
-- The "Interface" of each change spec in `pdlc/changes/`.
-- `pdlc/specs/design/DES-lean-checks.md`: the form of a check file.
+- `tests/acceptance/IN-0001.acceptance.lean`
+- `pdlc/acceptance/IN-0001-solar-self-consumption-sim/review/tests/result.md`
 
 ### Don't redo
 
-- The four change specs and their order.
+- The acceptance checks and their lock.
 
 ### Next: do this first
 
-Write the acceptance checks in `tests/acceptance/IN-0001.acceptance.lean`. Prove the JOB-simulate (the `sim` command) lines through the `sim` process, and the capability lines through the library functions.
+Start CH-0001 (scenario) from `pdlc/IN-0001-solar-sim`. Its component checks go in `tests/CAP-scenario.lean`.
 ````
 
 ## The change specs of the intent
@@ -119,9 +117,9 @@ Write the acceptance checks in `tests/acceptance/IN-0001.acceptance.lean`. Prove
 ````
 # CH-0001 · Seasonal sun, daily weather and household load
 
-Intent: IN-0001 · Scope: CAP-scenario · Status: planned · Ticket: none · Branch: none · Base: main
+Intent: IN-0001 · Scope: CAP-scenario · Status: in review · Ticket: none · Branch: pdlc/CH-0001-scenario · Base: main
 
-Tests-Locked: none
+Tests-Locked: 6feecd6
 
 ## Delivers
 
@@ -208,6 +206,7 @@ so no entry has an error code.
 - `StoragePolicySim/Scenario.lean`
 - `lakefile.toml: the rest`
 - `lean-toolchain`
+- `lake-manifest.json`
 
 ## Check files
 
@@ -215,19 +214,19 @@ so no entry has an error code.
 
 ## Steps
 
-### Step 1 · Seasonal sun · [ ]
+### Step 1 · Seasonal sun · [x]
 
 - Requirement: CAP-scenario.R1
 - Check: the checks named `CAP-scenario.R1 …` in `tests/CAP-scenario.lean`
 - Done when: the checks pass
 
-### Step 2 · Daily weather · [ ]
+### Step 2 · Daily weather · [x]
 
 - Requirement: CAP-scenario.R2
 - Check: the checks named `CAP-scenario.R2 …` in `tests/CAP-scenario.lean`
 - Done when: the checks pass
 
-### Step 3 · Household load · [ ]
+### Step 3 · Household load · [x]
 
 - Requirement: CAP-scenario.R3
 - Check: the checks named `CAP-scenario.R3 …` in `tests/CAP-scenario.lean`
@@ -240,6 +239,17 @@ none
 ## Progress log
 
 - Planned as the first change of IN-0001 (solar self-consumption simulator), because each other change uses its hours.
+- The builder found that `tests/CAP-scenario.lean` does not compile. `fun c => c.name` needs the type `Check` in Lean 4.35.0. The check goes back to the test writer, round 1 of 2.
+- `lake build` writes `lake-manifest.json`. The file goes into "Files" (assumed), so that the build is the same each time.
+- After the fix, the 34 checks of `tests/CAP-scenario.lean` pass on the code of the builder. App code exists after a send-back, so a pass is permitted.
+- Build: the 34 checks of `tests/CAP-scenario.lean` pass. No check changed since the lock `5de000a`.
+- Verify round 1: quality and specification failed. The follow-ups of security (a cap on days, and large seeds) need no intent, because JOB-simulate.R5 (bad command line) limits `--days` and `--seed`.
+- Verify returned the change to build, because two local names in `scenario` were not clear.
+- The builder renamed the array of the day skies to `daySkies`, and the sky of one day to `sky`. The 34 checks pass.
+- Verify round 2: specification failed on the words of three log lines. Verify corrected the words, and no code changed.
+- Verify round 3: specification failed, because two log lines did not agree on the count of names. The user chose to correct the words and review again.
+- Verify round 4: each remit passed. The change is `in review`.
+- The tests review found a `Float` compared with `==`. The test writer used a tolerance, and the 34 checks pass.
 ````
 
 ### pdlc/changes/CH-0002-strategies/change.md
@@ -247,9 +257,9 @@ none
 ````
 # CH-0002 · Battery and load strategies
 
-Intent: IN-0001 · Scope: CAP-strategies · Status: planned · Ticket: none · Branch: none · Base: main
+Intent: IN-0001 · Scope: CAP-strategies · Status: in review · Ticket: none · Branch: pdlc/CH-0002-strategies · Base: pdlc/CH-0001-scenario
 
-Tests-Locked: none
+Tests-Locked: 91d1e6b
 
 ## Delivers
 
@@ -342,31 +352,31 @@ none
 
 ## Steps
 
-### Step 1 · Strategy names · [ ]
+### Step 1 · Strategy names · [x]
 
 - Requirement: CAP-strategies.R1
 - Check: the checks named `CAP-strategies.R1 …` in `tests/CAP-strategies.lean`
 - Done when: the checks pass
 
-### Step 2 · No battery use · [ ]
+### Step 2 · No battery use · [x]
 
 - Requirement: CAP-strategies.R2
 - Check: the checks named `CAP-strategies.R2 …` in `tests/CAP-strategies.lean`
 - Done when: the checks pass
 
-### Step 3 · Greedy battery use · [ ]
+### Step 3 · Greedy battery use · [x]
 
 - Requirement: CAP-strategies.R3
 - Check: the checks named `CAP-strategies.R3 …` in `tests/CAP-strategies.lean`
 - Done when: the checks pass
 
-### Step 4 · Evening battery use · [ ]
+### Step 4 · Evening battery use · [x]
 
 - Requirement: CAP-strategies.R4
 - Check: the checks named `CAP-strategies.R4 …` in `tests/CAP-strategies.lean`
 - Done when: the checks pass
 
-### Step 5 · Load shift into sun · [ ]
+### Step 5 · Load shift into sun · [x]
 
 - Requirement: CAP-strategies.R5
 - Check: the checks named `CAP-strategies.R5 …` in `tests/CAP-strategies.lean`
@@ -378,7 +388,14 @@ none
 
 ## Progress log
 
-- Planned after CH-0001 (scenario), so that the simulation can use both. The strategies do not need the scenario.
+- The change comes after CH-0001 (scenario). CH-0003 (simulation) needs the scenario and the strategies. The strategies do not need the scenario.
+- The first tests review failed, because a wrong `shift` that takes three hours in a row passed the checks of R5 (load shift into sun).
+- The test writer then added a check whose three sunniest hours are not next to each other. The second tests review passed.
+- Build: the 35 checks of `tests/CAP-strategies.lean` and the 34 checks of `tests/CAP-scenario.lean` pass. No check changed since the lock `91d1e6b`.
+- The first verify failed on the quality review and the specification review.
+- The quality review asked for DES-writing-style (writing rules). `make_packets.py` gives that spec only to the specification review. The quality remit does not judge writing, so the builder changed no code.
+- Verify filed IN-0005 (guards on strategy inputs) for approval. IN-0004 (shift on a day with little sun) already covers the follow-up about days with little sun.
+- The user decided that a review failure only on the words of pdlc records does not use one of the permitted verify rounds.
 ````
 
 ### pdlc/changes/CH-0003-simulation/change.md
@@ -386,9 +403,9 @@ none
 ````
 # CH-0003 · Hourly energy flows and results
 
-Intent: IN-0001 · Scope: CAP-simulation · Status: planned · Ticket: none · Branch: none · Base: main
+Intent: IN-0001 · Scope: CAP-simulation · Status: in review · Ticket: none · Branch: pdlc/CH-0003-simulation · Base: pdlc/CH-0002-strategies
 
-Tests-Locked: none
+Tests-Locked: ba51e5b
 
 ## Delivers
 
@@ -485,6 +502,28 @@ A check imports `StoragePolicySim.Simulation`, which also gives the items of CH-
   Result`. The hours come from `scenario site seed days`. For each day, the flexible load
   comes from `Strategy.placeFlex` with the solar and the flexible load of that day.
 
+The checks can also use these items of earlier changes, in the namespace `StoragePolicySim`:
+
+- From CH-0001 (scenario), in `StoragePolicySim/Scenario.lean`:
+  - `inductive Sky | sunny | cloudy | overcast` with `BEq`, `Repr` and `Inhabited`.
+  - `structure Site` with `Repr` and `Inhabited`, and the fields `latitude`, `pvKw`,
+    `dailyLoadKwh` and `flexKwh`, each a `Float`.
+  - `structure Hour` with `Repr` and `Inhabited`. Its fields are `day`, `dayOfYear` and
+    `hour` (each a `Nat`), `sky : Sky`, and
+    `pvKwh`, `baseLoadKwh` and `flexKwh` (each a `Float`).
+  - `pvOutput (site : Site) (dayOfYear hour : Nat) (sky : Sky) : Float`.
+  - `scenario (site : Site) (seed days : Nat) : Array Hour`.
+- From CH-0002 (strategies), in `StoragePolicySim/Strategy.lean`:
+  - `inductive Strategy | none | greedy | evening | shift` with `BEq`, `Repr` and
+    `Inhabited`. Each value is written in full, for example
+    `Strategy.none`.
+  - `Strategy.all : List Strategy` and `Strategy.name : Strategy → String`.
+  - `structure Request` with `Repr`, and the fields `chargeKwh : Float` and
+    `dischargeKwh : Float`.
+  - `Strategy.decide (s : Strategy) (hour : Nat) (surplusKwh shortfallKwh : Float) : Request`.
+  - `Strategy.placeFlex (s : Strategy) (pvKwh flexKwh : Array Float) : Array Float`, with
+    24 items in each array.
+
 ### Test seams
 
 - randomness: the `seed` argument of `simulate`. The same seed gives the same weather.
@@ -500,31 +539,31 @@ A check imports `StoragePolicySim.Simulation`, which also gives the items of CH-
 
 ## Steps
 
-### Step 1 · Energy flows of an hour · [ ]
+### Step 1 · Energy flows of an hour · [x]
 
 - Requirement: CAP-simulation.R1
 - Check: the checks named `CAP-simulation.R1 …` in `tests/CAP-simulation.lean`
 - Done when: the checks pass
 
-### Step 2 · Battery limits · [ ]
+### Step 2 · Battery limits · [x]
 
 - Requirement: CAP-simulation.R2
 - Check: the checks named `CAP-simulation.R2 …` in `tests/CAP-simulation.lean`
 - Done when: the checks pass
 
-### Step 3 · Totals and ratios · [ ]
+### Step 3 · Totals and ratios · [x]
 
 - Requirement: CAP-simulation.R3
 - Check: the checks named `CAP-simulation.R3 …` in `tests/CAP-simulation.lean`
 - Done when: the checks pass
 
-### Step 4 · Monthly totals · [ ]
+### Step 4 · Monthly totals · [x]
 
 - Requirement: CAP-simulation.R4
 - Check: the checks named `CAP-simulation.R4 …` in `tests/CAP-simulation.lean`
 - Done when: the checks pass
 
-### Step 5 · Strategy order · [ ]
+### Step 5 · Strategy order · [x]
 
 - Requirement: CAP-simulation.R5
 - Check: the checks named `CAP-simulation.R5 …` in `tests/CAP-simulation.lean`
@@ -537,6 +576,10 @@ none
 ## Progress log
 
 - Planned after CH-0001 (scenario) and CH-0002 (strategies), because the simulation uses both.
+- The first tests review could not see the items of CH-0001 (scenario) and CH-0002 (strategies). The skill listed these items under "Interface". The checks did not change.
+- The second tests review could not see the derived instances of these items. The skill added them. The checks did not change.
+- Build: the 123 checks of the three check files pass. No check changed since the lock `ba51e5b`.
+- The first verify failed on quality. The change went back to build.
 ````
 
 ### pdlc/changes/CH-0004-sim-command/change.md
@@ -544,9 +587,9 @@ none
 ````
 # CH-0004 · The sim command
 
-Intent: IN-0001 · Scope: JOB-simulate · Status: planned · Ticket: none · Branch: none · Base: main
+Intent: IN-0001 · Scope: JOB-simulate · Status: testing · Ticket: none · Branch: pdlc/CH-0004-sim-command · Base: pdlc/CH-0003-simulation
 
-Tests-Locked: none
+Tests-Locked: 79a6f27
 
 ## Delivers
 
@@ -756,7 +799,7 @@ Status: active
 
 ## What it is for
 
-CAP-scenario (sun, weather and load) makes the world that a strategy must deal with, one hour at a time. It gives
+CAP-scenario (sun, weather and load) makes the conditions that a strategy must handle, one hour at a time. It gives
 the solar output of each hour from the season and the sun height, and a daily sky from a
 seeded weather model. It also gives the household load of each hour, with a seasonal base
 load and a flexible load that a strategy can move.
@@ -766,12 +809,13 @@ load and a flexible load that a strategy can move.
 - `StoragePolicySim/Scenario.lean`
 - `lakefile.toml: the rest`
 - `lean-toolchain`
+- `lake-manifest.json`
 
 ## Requirements
 
 ### CAP-scenario.R1 · Seasonal sun
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 The output of an hour is the panel power, times the sine of the sun height, times the sky
 factor (assumed). The sun height uses the latitude, the day of the year, and the middle of
@@ -793,7 +837,7 @@ unless the line says otherwise.
 
 ### CAP-scenario.R2 · Daily weather
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 A seed and a number of days give one sky for each day, and the same hours each time. The
 scenario starts on 1 January and gives the hours in order of day, then hour.
@@ -820,7 +864,7 @@ a negative latitude (assumed). After day 364, the day of the year starts again a
 
 ### CAP-scenario.R3 · Household load
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 The daily load includes the flexible load. The base load is the daily load less the flexible
 load, spread over the hours by a fixed profile (assumed).
@@ -871,7 +915,7 @@ The four strategies are these:
 
 ### CAP-strategies.R1 · Strategy names
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 The list of strategies is `none`, `greedy`, `evening` and `shift`, in this order (assumed).
 A name finds its strategy only when the name matches exactly (assumed).
@@ -883,7 +927,7 @@ A name finds its strategy only when the name matches exactly (assumed).
 
 ### CAP-strategies.R2 · No battery use
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 The `none` strategy never asks the battery to charge or to discharge. It keeps the
 flexible load at its default hours.
@@ -894,7 +938,7 @@ flexible load at its default hours.
 
 ### CAP-strategies.R3 · Greedy battery use
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 The `greedy` strategy asks to charge with each surplus, and to discharge for each shortfall,
 at any hour. It keeps the flexible load at its default hours. The simulation applies the
@@ -908,7 +952,7 @@ limits of the battery.
 
 ### CAP-strategies.R4 · Evening battery use
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 The `evening` strategy charges as `greedy` does. It discharges only from 17:00 to 23:59
 (assumed), to keep the stored energy for the evening peak. It keeps the flexible load at its
@@ -923,7 +967,7 @@ default hours.
 
 ### CAP-strategies.R5 · Load shift into sun
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 The `shift` strategy uses the battery as `greedy` does. It also moves the flexible load of
 each day, in equal parts, to the three hours with the most solar output (assumed). A tie
@@ -959,7 +1003,7 @@ can compare strategies on the same weather.
 
 ### CAP-simulation.R1 · Energy flows of an hour
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 The house first uses solar energy directly. Then the battery takes what the strategy asks,
 up to the surplus, the battery power for one hour, and the free room. The rest goes to
@@ -982,7 +1026,7 @@ holds 10 kWh with 5 kW of power, unless the line says otherwise.
 
 ### CAP-simulation.R2 · Battery limits
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 Over a run, the battery never goes past its power or its capacity. The energy of each run
 balances, with the battery losses included. In these lines, the site is at latitude 45
@@ -996,7 +1040,7 @@ the line says otherwise.
 
 ### CAP-simulation.R3 · Totals and ratios
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 The totals add up the hours of the run. The self-consumption is the solar energy less the
 export, as a percentage of the solar energy. The self-sufficiency is the load less the
@@ -1010,7 +1054,7 @@ import, as a percentage of the load. A ratio with nothing to divide by is 0% (as
 
 ### CAP-simulation.R4 · Monthly totals
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 The result has the totals of each calendar month in the run, in order. A year has 365
 days, with no leap day (assumed). Each month also has its own two ratios.
@@ -1024,7 +1068,7 @@ days, with no leap day (assumed). Each month also has its own two ratios.
 
 ### CAP-simulation.R5 · Strategy order
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 On the same weather, a battery must raise the self-consumption, and a later discharge must
 not raise it. In these lines, the site is at latitude 45 with 5 kW of panels and 20 kWh of
@@ -1321,7 +1365,7 @@ def checks : List Check := [
 
 def main (args : List String) : IO UInt32 := do
   let sel := match args with
-    | f :: _ => checks.filter (fun c => c.name.startsWith (f ++ " "))
+    | f :: _ => checks.filter (fun (c : Check) => c.name.startsWith (f ++ " "))
     | [] => checks
   let mut failed := 0
   for c in sel do
@@ -1359,4 +1403,8 @@ checks yet keeps its checks in `tests/`.
 
 ## The check files that exist now
 
+- tests/CAP-scenario.lean
+- tests/CAP-simulation.lean
+- tests/CAP-strategies.lean
+- tests/JOB-simulate.lean
 - tests/acceptance/IN-0001.acceptance.lean

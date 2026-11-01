@@ -2,18 +2,18 @@
 
 Judge only what is in this packet. Write your result next to it, in result.md.
 
-Made at: 45f5be7beb5ff0c787f2c9104f6f8fbc45d57ae4
+Made at: 2773fc1825cfe78ff264272fadf1aa4814ecd62a
 
-Acceptance-Locked: 67970d4
+Acceptance-Locked: f5cb760
 
 These are the acceptance checks of an intent. Judge them by the section "Acceptance
 checks of an intent" of the remit below, and by its "Wrong versions".
 
 ## Re-review
 
-Earlier review: 36a6e76
+Earlier review: 6cc1154
 
-An earlier review of this remit judged the checks locked at 36a6e76. Judge only these two things:
+An earlier review of this remit judged the checks locked at 6cc1154. Judge only these two things:
 
 1. Each earlier problem below. If the problem is not fixed, list it again under "Problems".
 2. The changes since the earlier review, in the diff below. List a new problem only
@@ -26,30 +26,100 @@ changed, write "none" under "Wrong versions".
 
 ### Earlier problems
 
-- tests/acceptance/IN-0001.acceptance.lean:539 · The check "CAP-simulation.R2 a battery with 2 kW of power charges and discharges 2 kWh or less" never shows that a shortfall reaches the 2 kWh cap. A plausible wrong version limits the charge by the power but not the discharge. That version passes if no hour of the run has a shortfall over 2 kWh while the battery holds over 2.1 kWh. The packet does not give the load profile, so no value in the packet catches that version. Fix: also expect that at least one hour discharges 2 kWh (within 1e-6), so that the discharge cap must bind. · CAP-simulation.R2 (battery limits), line 1: "no hour charges or discharges over 2 kWh", and the remit rule "Each check can fail".
+none
 
 ### Changes since the earlier review
 
 ````
 diff --git a/tests/acceptance/IN-0001.acceptance.lean b/tests/acceptance/IN-0001.acceptance.lean
-index 1753319..17a7776 100644
+index c26c3d6..949babc 100644
 --- a/tests/acceptance/IN-0001.acceptance.lean
 +++ b/tests/acceptance/IN-0001.acceptance.lean
-@@ -541,10 +541,13 @@ def checks : List Check := [
-       let res := simulate (site 45) (bat 5 2) Strategy.greedy 7 365
-       let bad := res.hours.toList.find? (fun h =>
-         h.flow.chargeKwh > 2 + 1e-9 || h.flow.dischargeKwh > 2 + 1e-9)
-+      -- The discharge cap must bind in at least one hour. Else a version with no cap on the
-+      -- discharge also passes.
-+      let capped := res.hours.any (fun h => near h.flow.dischargeKwh 2 1e-6)
-       return if res.hours.size != 8760 then some s!"{res.hours.size} hours"
-         else match bad with
-           | some h => some s!"day {h.hour.day} hour {h.hour.hour}: charge {h.flow.chargeKwh}, discharge {h.flow.dischargeKwh}"
--          | none => none },
-+          | none => if capped then none else some "no hour discharges 2 kWh" },
-   { name := "CAP-simulation.R2 a 5 kWh battery holds 0 to 5 kWh each hour",
+@@ -21,7 +21,7 @@ def near (a b tol : Float) : Bool := (a - b).abs ≤ tol
+ 
+ /-- Rounds to one decimal, half away from zero. -/
+ def round1 (x : Float) : Float :=
+-  if x < 0 then -(Float.round (-x * 10)) / 10 else Float.round (x * 10) / 10
++  if x < 0.0 then -(Float.round (-x * 10.0)) / 10.0 else Float.round (x * 10.0) / 10.0
+ 
+ def firstFail : List (Bool × String) → Option String
+   | [] => none
+@@ -233,12 +233,12 @@ def checks : List Check := [
+     run := do
+       let a := pvOutput (site 45) 171 12 Sky.sunny
+       let b := pvOutput (site 45) 354 12 Sky.sunny
+-      return if a > 2 * b && b > 0 then none else some s!"day 171 {a}, day 354 {b}" },
++      return if a > 2.0 * b && b > 0.0 then none else some s!"day 171 {a}, day 354 {b}" },
+   { name := "CAP-scenario.R1 at latitude -41 day 354 gives more than twice day 171",
+     run := do
+       let a := pvOutput (site (-41)) 354 12 Sky.sunny
+       let b := pvOutput (site (-41)) 171 12 Sky.sunny
+-      return if a > 2 * b && b > 0 then none else some s!"day 354 {a}, day 171 {b}" },
++      return if a > 2.0 * b && b > 0.0 then none else some s!"day 354 {a}, day 171 {b}" },
+   { name := "CAP-scenario.R1 at latitude 0 days 171 and 354 differ by less than 1%",
+     run := do
+       let a := pvOutput (site 0) 171 12 Sky.sunny
+@@ -337,7 +337,7 @@ def checks : List Check := [
+       let hs := scenario (site 45) 7 365
+       let n := ((List.range 364).filter (fun d =>
+         hs[(d + 1) * 24]!.sky == hs[d * 24]!.sky)).length
+-      return if hs.size == 8760 && n.toFloat ≥ 0.6 * 364 then none else some s!"{n} days keep" },
++      return if hs.size == 8760 && n.toFloat ≥ 0.6 * 364.0 then none else some s!"{n} days keep" },
+   { name := "CAP-scenario.R2 after day 364 the day of the year starts again at 0",
+     run := do
+       let hs := scenario (site 45) 7 730
+@@ -540,7 +540,7 @@ def checks : List Check := [
      run := do
        let res := simulate (site 45) (bat 5 2) Strategy.greedy 7 365
+       let bad := res.hours.toList.find? (fun h =>
+-        h.flow.chargeKwh > 2 + 1e-9 || h.flow.dischargeKwh > 2 + 1e-9)
++        h.flow.chargeKwh > 2.0 + 1e-9 || h.flow.dischargeKwh > 2.0 + 1e-9)
+       -- The two hours below make each cap bind with no need for the load profile. Thus a
+       -- version with no cap on the charge or on the discharge fails.
+       let dis := stepHour (bat 5 2) 5 Strategy.greedy 19 0 3
+@@ -555,7 +555,7 @@ def checks : List Check := [
+     run := do
+       let res := simulate (site 45) (bat 5 2) Strategy.greedy 7 365
+       let bad := res.hours.toList.find? (fun h =>
+-        h.flow.socKwh < -1e-9 || h.flow.socKwh > 5 + 1e-9)
++        h.flow.socKwh < -1e-9 || h.flow.socKwh > 5.0 + 1e-9)
+       return if res.hours.size != 8760 then some s!"{res.hours.size} hours"
+         else match bad with
+           | some h => some s!"day {h.hour.day} hour {h.hour.hour} holds {h.flow.socKwh}"
+@@ -603,13 +603,13 @@ def checks : List Check := [
+   { name := "CAP-simulation.R3 the self-consumption is 100 × (solar - export) / solar",
+     run := do
+       let t := (simulate (site 45) (bat 10 5) Strategy.greedy 7 365).totals
+-      let want := 100 * (t.pvKwh - t.exportKwh) / t.pvKwh
++      let want := 100.0 * (t.pvKwh - t.exportKwh) / t.pvKwh
+       return if t.pvKwh > 0 && near t.selfConsumption want 1e-6 then none
+         else some s!"got {t.selfConsumption}, want {want}" },
+   { name := "CAP-simulation.R3 the self-sufficiency is 100 × (load - import) / load",
+     run := do
+       let t := (simulate (site 45) (bat 10 5) Strategy.greedy 7 365).totals
+-      let want := 100 * (t.loadKwh - t.importKwh) / t.loadKwh
++      let want := 100.0 * (t.loadKwh - t.importKwh) / t.loadKwh
+       return if t.loadKwh > 0 && near t.selfSufficiency want 1e-6 then none
+         else some s!"got {t.selfSufficiency}, want {want}" },
+   { name := "CAP-simulation.R3 0 kW of panels gives 0% for each ratio",
+@@ -657,7 +657,7 @@ def checks : List Check := [
+   { name := "CAP-simulation.R4 July has more than twice the solar of December",
+     run := do
+       let ms := (simulate (site 45) (bat 10 5) Strategy.greedy 7 365).months
+-      return if ms.size == 12 && ms[6]!.totals.pvKwh > 2 * ms[11]!.totals.pvKwh then none
++      return if ms.size == 12 && ms[6]!.totals.pvKwh > 2.0 * ms[11]!.totals.pvKwh then none
+         else some s!"July {ms[6]!.totals.pvKwh}, December {ms[11]!.totals.pvKwh}" },
+   { name := "CAP-simulation.R4 the July self-sufficiency is more than the January self-sufficiency",
+     run := do
+@@ -783,7 +783,7 @@ def checks : List Check := [
+       let solar := fun (n : String) =>
+         (rows.find? (fun l => (words l).head? == some n)).bind (fun l => (words l)[1]?.bind parseNum)
+       return match solar "Jul", solar "Dec" with
+-        | some j, some d => if r.code == 0 && j > 2 * d then none else some s!"Jul {j}, Dec {d}"
++        | some j, some d => if r.code == 0 && j > 2.0 * d then none else some s!"Jul {j}, Dec {d}"
+         | _, _ => some s!"stdout is {repr r.out}" },
+   { name := "JOB-simulate.R2 without --monthly sim run prints only the 11 lines",
+     run := do
 ````
 
 # Remit: tests
@@ -183,7 +253,7 @@ maximizing self consumption of solar captured power. Written in lean4 using late
 ## Acceptance checks
 
 Acceptance-File: tests/acceptance/IN-0001.acceptance.lean
-Acceptance-Locked: 67970d4
+Acceptance-Locked: f5cb760
 Acceptance-Passed: none
 
 ## Notes
@@ -202,52 +272,50 @@ Acceptance-Passed: none
 - DES-lean-checks (Lean check files): How does a Lean check file run and report? → a Lean script with a name filter and a count line (assumed).
 - JOB-simulate.R1 (run one strategy): was "`--flex`: 3", now "`--flex`: 3, or the `--load` value when that is less" (assumed).
 - JOB-simulate.R5 (bad command line): How does a range show? → `(<lowest> to <highest>)` as in the table (assumed).
+- IN-0001 (simulator): Does a review that fails only on the words of pdlc records count as a round? → no, in this project. The skill fixes the words and reviews again. The user decided this, and https://github.com/ptetau/pskills/issues/24 tracks a fix in pdlc.
+- IN-0001 (simulator): Does a break of a writing rule fail a review? → no, for now. The writing rules are a guideline in this project. The user decided this.
 
 ## Handoff
 
-### Handoff · IN-0001 · change → acceptance
+### Handoff · IN-0001 · acceptance → tests
 
-Time: 2026-10-31T22:58:08+00:00
+Time: 2026-10-31T23:14:03+00:00
 
 ### Done
 
-- Change planned four changes, one for each spec, in this order:
-  1. CH-0001 (scenario): the hours of a scenario, in `StoragePolicySim/Scenario.lean`.
-  2. CH-0002 (strategies): the four strategies, in `StoragePolicySim/Strategy.lean`.
-  3. CH-0003 (simulation): the energy flows and the totals, in `StoragePolicySim/Simulation.lean`.
-  4. CH-0004 (sim command): the `sim` command, in `Main.lean`, with the README.
-- The order follows what each change uses. CH-0003 (simulation) uses the first two, and CH-0004 (sim command) uses all three.
+- The test writer wrote 154 acceptance checks in `tests/acceptance/IN-0001.acceptance.lean`, for all 18 requirements of IN-0001 (simulator).
+- The checks failed before any code, because the library and `lakefile.toml` do not exist yet.
+- The first review failed on one check of CAP-simulation.R2 (battery limits). The test writer fixed it, and the re-review passed.
+- The lock is `67970d4`. The file has no stored-data line.
 
 ### Decided on defaults
 
-- CH-0001 (scenario): What are the Lean names? → `Sky`, `Site`, `Hour`, `pvOutput` and `scenario`, in the namespace `StoragePolicySim` (assumed).
-- CH-0002 (strategies): What are the Lean names? → `Strategy`, `Request`, `Strategy.decide` and `Strategy.placeFlex` (assumed).
-- CH-0003 (simulation): What are the Lean names? → `Battery`, `Flow`, `stepHour`, `Totals`, `Month`, `Result` and `simulate` (assumed).
-- CH-0004 (sim command): In which order does `sim` find problems? → the command, then each option from left to right, then the ranges, then `--flex` (assumed).
+- JOB-simulate.R1 (run one strategy): What is the `--flex` default when `--load` is less than 3? → the `--load` value (assumed).
+- JOB-simulate.R5 (bad command line): How does a range show? → `(<lowest> to <highest>)` as in the table (assumed).
 
 ### Open
 
-- none
+- The check of CAP-simulation.R2 (battery limits) needs one hour that discharges exactly 2 kWh. The load profile of CH-0001 (scenario) must give such an hour.
 
 ### Look here
 
-- The "Interface" of each change spec in `pdlc/changes/`.
-- `pdlc/specs/design/DES-lean-checks.md`: the form of a check file.
+- `tests/acceptance/IN-0001.acceptance.lean`
+- `pdlc/acceptance/IN-0001-solar-self-consumption-sim/review/tests/result.md`
 
 ### Don't redo
 
-- The four change specs and their order.
+- The acceptance checks and their lock.
 
 ### Next: do this first
 
-Write the acceptance checks in `tests/acceptance/IN-0001.acceptance.lean`. Prove the JOB-simulate (the `sim` command) lines through the `sim` process, and the capability lines through the library functions.
+Start CH-0001 (scenario) from `pdlc/IN-0001-solar-sim`. Its component checks go in `tests/CAP-scenario.lean`.
 ````
 
 ## The requirements, in full
 
 ### CAP-scenario.R1 · Seasonal sun
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 The output of an hour is the panel power, times the sine of the sun height, times the sky
 factor (assumed). The sun height uses the latitude, the day of the year, and the middle of
@@ -269,7 +337,7 @@ unless the line says otherwise.
 
 ### CAP-scenario.R2 · Daily weather
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 A seed and a number of days give one sky for each day, and the same hours each time. The
 scenario starts on 1 January and gives the hours in order of day, then hour.
@@ -296,7 +364,7 @@ a negative latitude (assumed). After day 364, the day of the year starts again a
 
 ### CAP-scenario.R3 · Household load
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 The daily load includes the flexible load. The base load is the daily load less the flexible
 load, spread over the hours by a fixed profile (assumed).
@@ -320,7 +388,7 @@ unless the line says otherwise.
 
 ### CAP-strategies.R1 · Strategy names
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 The list of strategies is `none`, `greedy`, `evening` and `shift`, in this order (assumed).
 A name finds its strategy only when the name matches exactly (assumed).
@@ -332,7 +400,7 @@ A name finds its strategy only when the name matches exactly (assumed).
 
 ### CAP-strategies.R2 · No battery use
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 The `none` strategy never asks the battery to charge or to discharge. It keeps the
 flexible load at its default hours.
@@ -343,7 +411,7 @@ flexible load at its default hours.
 
 ### CAP-strategies.R3 · Greedy battery use
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 The `greedy` strategy asks to charge with each surplus, and to discharge for each shortfall,
 at any hour. It keeps the flexible load at its default hours. The simulation applies the
@@ -357,7 +425,7 @@ limits of the battery.
 
 ### CAP-strategies.R4 · Evening battery use
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 The `evening` strategy charges as `greedy` does. It discharges only from 17:00 to 23:59
 (assumed), to keep the stored energy for the evening peak. It keeps the flexible load at its
@@ -372,7 +440,7 @@ default hours.
 
 ### CAP-strategies.R5 · Load shift into sun
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 The `shift` strategy uses the battery as `greedy` does. It also moves the flexible load of
 each day, in equal parts, to the three hours with the most solar output (assumed). A tie
@@ -387,7 +455,7 @@ goes to the earlier hour (assumed). A day with no solar output keeps its default
 
 ### CAP-simulation.R1 · Energy flows of an hour
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 The house first uses solar energy directly. Then the battery takes what the strategy asks,
 up to the surplus, the battery power for one hour, and the free room. The rest goes to
@@ -410,7 +478,7 @@ holds 10 kWh with 5 kW of power, unless the line says otherwise.
 
 ### CAP-simulation.R2 · Battery limits
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 Over a run, the battery never goes past its power or its capacity. The energy of each run
 balances, with the battery losses included. In these lines, the site is at latitude 45
@@ -424,7 +492,7 @@ the line says otherwise.
 
 ### CAP-simulation.R3 · Totals and ratios
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 The totals add up the hours of the run. The self-consumption is the solar energy less the
 export, as a percentage of the solar energy. The self-sufficiency is the load less the
@@ -438,7 +506,7 @@ import, as a percentage of the load. A ratio with nothing to divide by is 0% (as
 
 ### CAP-simulation.R4 · Monthly totals
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 The result has the totals of each calendar month in the run, in order. A year has 365
 days, with no leap day (assumed). Each month also has its own two ratios.
@@ -452,7 +520,7 @@ days, with no leap day (assumed). Each month also has its own two ratios.
 
 ### CAP-simulation.R5 · Strategy order
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 On the same weather, a battery must raise the self-consumption, and a later discharge must
 not raise it. In these lines, the site is at latitude 45 with 5 kW of panels and 20 kWh of
@@ -694,6 +762,28 @@ A check imports `StoragePolicySim.Simulation`, which also gives the items of CH-
   Result`. The hours come from `scenario site seed days`. For each day, the flexible load
   comes from `Strategy.placeFlex` with the solar and the flexible load of that day.
 
+The checks can also use these items of earlier changes, in the namespace `StoragePolicySim`:
+
+- From CH-0001 (scenario), in `StoragePolicySim/Scenario.lean`:
+  - `inductive Sky | sunny | cloudy | overcast` with `BEq`, `Repr` and `Inhabited`.
+  - `structure Site` with `Repr` and `Inhabited`, and the fields `latitude`, `pvKw`,
+    `dailyLoadKwh` and `flexKwh`, each a `Float`.
+  - `structure Hour` with `Repr` and `Inhabited`. Its fields are `day`, `dayOfYear` and
+    `hour` (each a `Nat`), `sky : Sky`, and
+    `pvKwh`, `baseLoadKwh` and `flexKwh` (each a `Float`).
+  - `pvOutput (site : Site) (dayOfYear hour : Nat) (sky : Sky) : Float`.
+  - `scenario (site : Site) (seed days : Nat) : Array Hour`.
+- From CH-0002 (strategies), in `StoragePolicySim/Strategy.lean`:
+  - `inductive Strategy | none | greedy | evening | shift` with `BEq`, `Repr` and
+    `Inhabited`. Each value is written in full, for example
+    `Strategy.none`.
+  - `Strategy.all : List Strategy` and `Strategy.name : Strategy → String`.
+  - `structure Request` with `Repr`, and the fields `chargeKwh : Float` and
+    `dischargeKwh : Float`.
+  - `Strategy.decide (s : Strategy) (hour : Nat) (surplusKwh shortfallKwh : Float) : Request`.
+  - `Strategy.placeFlex (s : Strategy) (pvKwh flexKwh : Array Float) : Array Float`, with
+    24 items in each array.
+
 ### Test seams
 
 - randomness: the `seed` argument of `simulate`. The same seed gives the same weather.
@@ -904,7 +994,7 @@ def checks : List Check := [
 
 def main (args : List String) : IO UInt32 := do
   let sel := match args with
-    | f :: _ => checks.filter (fun c => c.name.startsWith (f ++ " "))
+    | f :: _ => checks.filter (fun (c : Check) => c.name.startsWith (f ++ " "))
     | [] => checks
   let mut failed := 0
   for c in sel do
@@ -934,7 +1024,7 @@ Status: active
 
 ## What it is for
 
-CAP-scenario (sun, weather and load) makes the world that a strategy must deal with, one hour at a time. It gives
+CAP-scenario (sun, weather and load) makes the conditions that a strategy must handle, one hour at a time. It gives
 the solar output of each hour from the season and the sun height, and a daily sky from a
 seeded weather model. It also gives the household load of each hour, with a seasonal base
 load and a flexible load that a strategy can move.
@@ -944,12 +1034,13 @@ load and a flexible load that a strategy can move.
 - `StoragePolicySim/Scenario.lean`
 - `lakefile.toml: the rest`
 - `lean-toolchain`
+- `lake-manifest.json`
 
 ## Requirements
 
 ### CAP-scenario.R1 · Seasonal sun
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 The output of an hour is the panel power, times the sine of the sun height, times the sky
 factor (assumed). The sun height uses the latitude, the day of the year, and the middle of
@@ -971,7 +1062,7 @@ unless the line says otherwise.
 
 ### CAP-scenario.R2 · Daily weather
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 A seed and a number of days give one sky for each day, and the same hours each time. The
 scenario starts on 1 January and gives the hours in order of day, then hour.
@@ -998,7 +1089,7 @@ a negative latitude (assumed). After day 364, the day of the year starts again a
 
 ### CAP-scenario.R3 · Household load
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 The daily load includes the flexible load. The base load is the daily load less the flexible
 load, spread over the hours by a fixed profile (assumed).
@@ -1049,7 +1140,7 @@ The four strategies are these:
 
 ### CAP-strategies.R1 · Strategy names
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 The list of strategies is `none`, `greedy`, `evening` and `shift`, in this order (assumed).
 A name finds its strategy only when the name matches exactly (assumed).
@@ -1061,7 +1152,7 @@ A name finds its strategy only when the name matches exactly (assumed).
 
 ### CAP-strategies.R2 · No battery use
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 The `none` strategy never asks the battery to charge or to discharge. It keeps the
 flexible load at its default hours.
@@ -1072,7 +1163,7 @@ flexible load at its default hours.
 
 ### CAP-strategies.R3 · Greedy battery use
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 The `greedy` strategy asks to charge with each surplus, and to discharge for each shortfall,
 at any hour. It keeps the flexible load at its default hours. The simulation applies the
@@ -1086,7 +1177,7 @@ limits of the battery.
 
 ### CAP-strategies.R4 · Evening battery use
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 The `evening` strategy charges as `greedy` does. It discharges only from 17:00 to 23:59
 (assumed), to keep the stored energy for the evening peak. It keeps the flexible load at its
@@ -1101,7 +1192,7 @@ default hours.
 
 ### CAP-strategies.R5 · Load shift into sun
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 The `shift` strategy uses the battery as `greedy` does. It also moves the flexible load of
 each day, in equal parts, to the three hours with the most solar output (assumed). A tie
@@ -1137,7 +1228,7 @@ can compare strategies on the same weather.
 
 ### CAP-simulation.R1 · Energy flows of an hour
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 The house first uses solar energy directly. Then the battery takes what the strategy asks,
 up to the surplus, the battery power for one hour, and the free room. The rest goes to
@@ -1160,7 +1251,7 @@ holds 10 kWh with 5 kW of power, unless the line says otherwise.
 
 ### CAP-simulation.R2 · Battery limits
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 Over a run, the battery never goes past its power or its capacity. The energy of each run
 balances, with the battery losses included. In these lines, the site is at latitude 45
@@ -1174,7 +1265,7 @@ the line says otherwise.
 
 ### CAP-simulation.R3 · Totals and ratios
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 The totals add up the hours of the run. The self-consumption is the solar energy less the
 export, as a percentage of the solar energy. The self-sufficiency is the load less the
@@ -1188,7 +1279,7 @@ import, as a percentage of the load. A ratio with nothing to divide by is 0% (as
 
 ### CAP-simulation.R4 · Monthly totals
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 The result has the totals of each calendar month in the run, in order. A year has 365
 days, with no leap day (assumed). Each month also has its own two ratios.
@@ -1202,7 +1293,7 @@ days, with no leap day (assumed). Each month also has its own two ratios.
 
 ### CAP-simulation.R5 · Strategy order
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 On the same weather, a battery must raise the self-consumption, and a later discharge must
 not raise it. In these lines, the site is at latitude 45 with 5 kW of panels and 20 kWh of
@@ -1241,7 +1332,7 @@ def near (a b tol : Float) : Bool := (a - b).abs ≤ tol
 
 /-- Rounds to one decimal, half away from zero. -/
 def round1 (x : Float) : Float :=
-  if x < 0 then -(Float.round (-x * 10)) / 10 else Float.round (x * 10) / 10
+  if x < 0.0 then -(Float.round (-x * 10.0)) / 10.0 else Float.round (x * 10.0) / 10.0
 
 def firstFail : List (Bool × String) → Option String
   | [] => none
@@ -1453,12 +1544,12 @@ def checks : List Check := [
     run := do
       let a := pvOutput (site 45) 171 12 Sky.sunny
       let b := pvOutput (site 45) 354 12 Sky.sunny
-      return if a > 2 * b && b > 0 then none else some s!"day 171 {a}, day 354 {b}" },
+      return if a > 2.0 * b && b > 0.0 then none else some s!"day 171 {a}, day 354 {b}" },
   { name := "CAP-scenario.R1 at latitude -41 day 354 gives more than twice day 171",
     run := do
       let a := pvOutput (site (-41)) 354 12 Sky.sunny
       let b := pvOutput (site (-41)) 171 12 Sky.sunny
-      return if a > 2 * b && b > 0 then none else some s!"day 354 {a}, day 171 {b}" },
+      return if a > 2.0 * b && b > 0.0 then none else some s!"day 354 {a}, day 171 {b}" },
   { name := "CAP-scenario.R1 at latitude 0 days 171 and 354 differ by less than 1%",
     run := do
       let a := pvOutput (site 0) 171 12 Sky.sunny
@@ -1557,7 +1648,7 @@ def checks : List Check := [
       let hs := scenario (site 45) 7 365
       let n := ((List.range 364).filter (fun d =>
         hs[(d + 1) * 24]!.sky == hs[d * 24]!.sky)).length
-      return if hs.size == 8760 && n.toFloat ≥ 0.6 * 364 then none else some s!"{n} days keep" },
+      return if hs.size == 8760 && n.toFloat ≥ 0.6 * 364.0 then none else some s!"{n} days keep" },
   { name := "CAP-scenario.R2 after day 364 the day of the year starts again at 0",
     run := do
       let hs := scenario (site 45) 7 730
@@ -1760,19 +1851,22 @@ def checks : List Check := [
     run := do
       let res := simulate (site 45) (bat 5 2) Strategy.greedy 7 365
       let bad := res.hours.toList.find? (fun h =>
-        h.flow.chargeKwh > 2 + 1e-9 || h.flow.dischargeKwh > 2 + 1e-9)
-      -- The discharge cap must bind in at least one hour. Else a version with no cap on the
-      -- discharge also passes.
-      let capped := res.hours.any (fun h => near h.flow.dischargeKwh 2 1e-6)
+        h.flow.chargeKwh > 2.0 + 1e-9 || h.flow.dischargeKwh > 2.0 + 1e-9)
+      -- The two hours below make each cap bind with no need for the load profile. Thus a
+      -- version with no cap on the charge or on the discharge fails.
+      let dis := stepHour (bat 5 2) 5 Strategy.greedy 19 0 3
+      let chg := stepHour (bat 5 2) 0 Strategy.greedy 12 3 0
       return if res.hours.size != 8760 then some s!"{res.hours.size} hours"
         else match bad with
           | some h => some s!"day {h.hour.day} hour {h.hour.hour}: charge {h.flow.chargeKwh}, discharge {h.flow.dischargeKwh}"
-          | none => if capped then none else some "no hour discharges 2 kWh" },
+          | none =>
+            (flowIs dis [("discharge with a 3 kWh shortfall", dis.dischargeKwh, 2)]) <|>
+            (flowIs chg [("charge with a 3 kWh surplus", chg.chargeKwh, 2)]) },
   { name := "CAP-simulation.R2 a 5 kWh battery holds 0 to 5 kWh each hour",
     run := do
       let res := simulate (site 45) (bat 5 2) Strategy.greedy 7 365
       let bad := res.hours.toList.find? (fun h =>
-        h.flow.socKwh < -1e-9 || h.flow.socKwh > 5 + 1e-9)
+        h.flow.socKwh < -1e-9 || h.flow.socKwh > 5.0 + 1e-9)
       return if res.hours.size != 8760 then some s!"{res.hours.size} hours"
         else match bad with
           | some h => some s!"day {h.hour.day} hour {h.hour.hour} holds {h.flow.socKwh}"
@@ -1820,13 +1914,13 @@ def checks : List Check := [
   { name := "CAP-simulation.R3 the self-consumption is 100 × (solar - export) / solar",
     run := do
       let t := (simulate (site 45) (bat 10 5) Strategy.greedy 7 365).totals
-      let want := 100 * (t.pvKwh - t.exportKwh) / t.pvKwh
+      let want := 100.0 * (t.pvKwh - t.exportKwh) / t.pvKwh
       return if t.pvKwh > 0 && near t.selfConsumption want 1e-6 then none
         else some s!"got {t.selfConsumption}, want {want}" },
   { name := "CAP-simulation.R3 the self-sufficiency is 100 × (load - import) / load",
     run := do
       let t := (simulate (site 45) (bat 10 5) Strategy.greedy 7 365).totals
-      let want := 100 * (t.loadKwh - t.importKwh) / t.loadKwh
+      let want := 100.0 * (t.loadKwh - t.importKwh) / t.loadKwh
       return if t.loadKwh > 0 && near t.selfSufficiency want 1e-6 then none
         else some s!"got {t.selfSufficiency}, want {want}" },
   { name := "CAP-simulation.R3 0 kW of panels gives 0% for each ratio",
@@ -1874,7 +1968,7 @@ def checks : List Check := [
   { name := "CAP-simulation.R4 July has more than twice the solar of December",
     run := do
       let ms := (simulate (site 45) (bat 10 5) Strategy.greedy 7 365).months
-      return if ms.size == 12 && ms[6]!.totals.pvKwh > 2 * ms[11]!.totals.pvKwh then none
+      return if ms.size == 12 && ms[6]!.totals.pvKwh > 2.0 * ms[11]!.totals.pvKwh then none
         else some s!"July {ms[6]!.totals.pvKwh}, December {ms[11]!.totals.pvKwh}" },
   { name := "CAP-simulation.R4 the July self-sufficiency is more than the January self-sufficiency",
     run := do
@@ -2000,7 +2094,7 @@ def checks : List Check := [
       let solar := fun (n : String) =>
         (rows.find? (fun l => (words l).head? == some n)).bind (fun l => (words l)[1]?.bind parseNum)
       return match solar "Jul", solar "Dec" with
-        | some j, some d => if r.code == 0 && j > 2 * d then none else some s!"Jul {j}, Dec {d}"
+        | some j, some d => if r.code == 0 && j > 2.0 * d then none else some s!"Jul {j}, Dec {d}"
         | _, _ => some s!"stdout is {repr r.out}" },
   { name := "JOB-simulate.R2 without --monthly sim run prints only the 11 lines",
     run := do
@@ -2231,7 +2325,7 @@ def checks : List Check := [
 
 def main (args : List String) : IO UInt32 := do
   let sel := match args with
-    | f :: _ => checks.filter (fun c => c.name.startsWith (f ++ " "))
+    | f :: _ => checks.filter (fun (c : Check) => c.name.startsWith (f ++ " "))
     | [] => checks
   let mut failed := 0
   for c in sel do

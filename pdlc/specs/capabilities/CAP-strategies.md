@@ -25,7 +25,7 @@ The four strategies are these:
 
 ### CAP-strategies.R1 · Strategy names
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 The list of strategies is `none`, `greedy`, `evening` and `shift`, in this order (assumed).
 A name finds its strategy only when the name matches exactly (assumed).
@@ -37,7 +37,7 @@ A name finds its strategy only when the name matches exactly (assumed).
 
 ### CAP-strategies.R2 · No battery use
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 The `none` strategy never asks the battery to charge or to discharge. It keeps the
 flexible load at its default hours.
@@ -48,7 +48,7 @@ flexible load at its default hours.
 
 ### CAP-strategies.R3 · Greedy battery use
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 The `greedy` strategy asks to charge with each surplus, and to discharge for each shortfall,
 at any hour. It keeps the flexible load at its default hours. The simulation applies the
@@ -62,7 +62,7 @@ limits of the battery.
 
 ### CAP-strategies.R4 · Evening battery use
 
-Status: ready · Intents: IN-0001
+Status: verified · Intents: IN-0001
 
 The `evening` strategy charges as `greedy` does. It discharges only from 17:00 to 23:59
 (assumed), to keep the stored energy for the evening peak. It keeps the flexible load at its

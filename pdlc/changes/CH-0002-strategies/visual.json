@@ -1,0 +1,112 @@
+{
+  "kind": "terminal",
+  "title": "CH-0002 \u00b7 Battery and load strategies",
+  "width": 1000,
+  "height": 640,
+  "steps": [
+    {
+      "caption": "CAP-strategies \u00b7 setup: build the library",
+      "run": "lake build 2>&1 | tail -1"
+    },
+    {
+      "caption": "CAP-strategies.R1 \u00b7 the list is none, greedy, evening and shift, in this order",
+      "run": "lake env lean --run pdlc/changes/CH-0002-strategies/demo.lean r1-1"
+    },
+    {
+      "caption": "CAP-strategies.R1 \u00b7 the name \"greedy\" finds the greedy strategy",
+      "run": "lake env lean --run pdlc/changes/CH-0002-strategies/demo.lean r1-2"
+    },
+    {
+      "caption": "CAP-strategies.R1 \u00b7 the name \"Greedy\" finds no strategy",
+      "run": "lake env lean --run pdlc/changes/CH-0002-strategies/demo.lean r1-3"
+    },
+    {
+      "caption": "CAP-strategies.R1 \u00b7 the name \"\" finds no strategy",
+      "run": "lake env lean --run pdlc/changes/CH-0002-strategies/demo.lean r1-4"
+    },
+    {
+      "caption": "CAP-strategies.R2 \u00b7 none: a surplus of 2 kWh at 12:00 asks 0 and 0",
+      "run": "lake env lean --run pdlc/changes/CH-0002-strategies/demo.lean r2-1"
+    },
+    {
+      "caption": "CAP-strategies.R2 \u00b7 none: a shortfall of 1.5 kWh at 19:00 asks 0 and 0",
+      "run": "lake env lean --run pdlc/changes/CH-0002-strategies/demo.lean r2-2"
+    },
+    {
+      "caption": "CAP-strategies.R2 \u00b7 none: the flexible load does not change",
+      "run": "lake env lean --run pdlc/changes/CH-0002-strategies/demo.lean r2-3"
+    },
+    {
+      "caption": "CAP-strategies.R3 \u00b7 greedy: a surplus of 2 kWh at 12:00 asks to charge 2 kWh",
+      "run": "lake env lean --run pdlc/changes/CH-0002-strategies/demo.lean r3-1"
+    },
+    {
+      "caption": "CAP-strategies.R3 \u00b7 greedy: a shortfall of 1.5 kWh at 03:00 asks to discharge 1.5 kWh",
+      "run": "lake env lean --run pdlc/changes/CH-0002-strategies/demo.lean r3-2"
+    },
+    {
+      "caption": "CAP-strategies.R3 \u00b7 greedy: a shortfall of 1.5 kWh at 13:00 asks to discharge 1.5 kWh",
+      "run": "lake env lean --run pdlc/changes/CH-0002-strategies/demo.lean r3-3"
+    },
+    {
+      "caption": "CAP-strategies.R3 \u00b7 greedy: no surplus and no shortfall asks 0 and 0",
+      "run": "lake env lean --run pdlc/changes/CH-0002-strategies/demo.lean r3-4"
+    },
+    {
+      "caption": "CAP-strategies.R3 \u00b7 greedy: the flexible load does not change",
+      "run": "lake env lean --run pdlc/changes/CH-0002-strategies/demo.lean r3-5"
+    },
+    {
+      "caption": "CAP-strategies.R4 \u00b7 evening: a surplus of 2 kWh at 12:00 asks to charge 2 kWh",
+      "run": "lake env lean --run pdlc/changes/CH-0002-strategies/demo.lean r4-1"
+    },
+    {
+      "caption": "CAP-strategies.R4 \u00b7 evening: a shortfall at 16:00 asks to discharge 0 kWh",
+      "run": "lake env lean --run pdlc/changes/CH-0002-strategies/demo.lean r4-2"
+    },
+    {
+      "caption": "CAP-strategies.R4 \u00b7 evening: a shortfall at 17:00 asks to discharge 1.5 kWh",
+      "run": "lake env lean --run pdlc/changes/CH-0002-strategies/demo.lean r4-3"
+    },
+    {
+      "caption": "CAP-strategies.R4 \u00b7 evening: a shortfall at 23:00 asks to discharge 1.5 kWh",
+      "run": "lake env lean --run pdlc/changes/CH-0002-strategies/demo.lean r4-4"
+    },
+    {
+      "caption": "CAP-strategies.R4 \u00b7 evening: a shortfall at 00:00 asks to discharge 0 kWh",
+      "run": "lake env lean --run pdlc/changes/CH-0002-strategies/demo.lean r4-5"
+    },
+    {
+      "caption": "CAP-strategies.R4 \u00b7 evening: the flexible load does not change",
+      "run": "lake env lean --run pdlc/changes/CH-0002-strategies/demo.lean r4-6"
+    },
+    {
+      "caption": "CAP-strategies.R5 \u00b7 shift: a surplus of 2 kWh at 12:00 asks to charge 2 kWh",
+      "run": "lake env lean --run pdlc/changes/CH-0002-strategies/demo.lean r5-1"
+    },
+    {
+      "caption": "CAP-strategies.R5 \u00b7 shift: a shortfall of 1.5 kWh at 03:00 asks to discharge 1.5 kWh",
+      "run": "lake env lean --run pdlc/changes/CH-0002-strategies/demo.lean r5-2"
+    },
+    {
+      "caption": "CAP-strategies.R5 \u00b7 shift: the most sun at 13:00, 11:00 and 12:00 gives each 1 kWh",
+      "run": "lake env lean --run pdlc/changes/CH-0002-strategies/demo.lean r5-3"
+    },
+    {
+      "caption": "CAP-strategies.R5 \u00b7 shift: equal sun from 10:00 to 14:00 gives 10:00 to 12:00 1 kWh each",
+      "run": "lake env lean --run pdlc/changes/CH-0002-strategies/demo.lean r5-4"
+    },
+    {
+      "caption": "CAP-strategies.R5 \u00b7 shift: no sun keeps 18:00, 19:00 and 20:00",
+      "run": "lake env lean --run pdlc/changes/CH-0002-strategies/demo.lean r5-5"
+    },
+    {
+      "caption": "CAP-strategies.R5 \u00b7 shift: 0 kWh of flexible load stays 0 kWh in each hour",
+      "run": "lake env lean --run pdlc/changes/CH-0002-strategies/demo.lean r5-6"
+    },
+    {
+      "caption": "CH-0002 \u00b7 all checks pass",
+      "run": "for f in tests/*.lean; do lake env lean --run \"$f\" || exit 1; done"
+    }
+  ]
+}
