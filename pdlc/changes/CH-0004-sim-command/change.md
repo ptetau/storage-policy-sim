@@ -2,7 +2,7 @@
 
 Intent: IN-0001 · Scope: JOB-simulate · Status: testing · Ticket: none · Branch: pdlc/CH-0004-sim-command · Base: pdlc/CH-0003-simulation
 
-Tests-Locked: 79a6f27
+Tests-Locked: a7fe93a
 
 ## Delivers
 
