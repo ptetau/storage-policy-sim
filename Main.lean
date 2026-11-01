@@ -219,8 +219,8 @@ def CommandLine.site (commandLine : CommandLine) : Site :=
 def CommandLine.battery (commandLine : CommandLine) : Battery :=
   { capacityKwh := commandLine.number batteryOption, powerKw := commandLine.number powerOption }
 
-/-- The value of a whole-number option. The range step makes sure that the value is whole and
-not negative. -/
+/-- The value of a whole-number option. The reading step makes sure that the value is whole,
+and the range step makes sure that it is not negative. -/
 def CommandLine.whole (commandLine : CommandLine) (option : NumberOption) : Nat :=
   (commandLine.number option).toUInt64.toNat
 
@@ -287,9 +287,13 @@ def output (command : Command) (commandLine : CommandLine) : List String :=
 
 /-! ## The command -/
 
-/-- A line of the usage: the option and its value, spaces to column 21, and the meaning. -/
+/-- The width of the option, its value and its spaces in a line of the usage. -/
+def usageOptionWidth : Nat := 18
+
+/-- A line of the usage: two spaces, the option and its value, spaces to fill
+`usageOptionWidth`, and the meaning. -/
 def usageLine (option meaning : String) : String :=
-  "  " ++ option ++ "".pushn ' ' (labelWidth - option.length) ++ meaning
+  "  " ++ option ++ "".pushn ' ' (usageOptionWidth - option.length) ++ meaning
 
 def usage : List String :=
   let numberLine (option : NumberOption) :=

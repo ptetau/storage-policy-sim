@@ -68,7 +68,7 @@ The line is `error: <code>: <detail>`, for example `error: OUT_OF_RANGE: --days 
 
 | Code | Cause |
 |---|---|
-| `UNKNOWN_COMMAND` | The first word is not `run`, `compare` or `help` |
+| `UNKNOWN_COMMAND` | The first word is not `run`, `compare`, `help` or `--help` |
 | `UNKNOWN_OPTION` | The command does not take the word |
 | `MISSING_VALUE` | An option that needs a value comes last |
 | `BAD_NUMBER` | A value is not a number of the right form |
