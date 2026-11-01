@@ -156,37 +156,37 @@ CH-0003 (simulation) to compare values.
 
 ## Steps
 
-### Step 1 · Run one strategy · [ ]
+### Step 1 · Run one strategy · [x]
 
 - Requirement: JOB-simulate.R1
 - Check: the checks named `JOB-simulate.R1 …` in `tests/JOB-simulate.lean`
 - Done when: the checks pass
 
-### Step 2 · Monthly table · [ ]
+### Step 2 · Monthly table · [x]
 
 - Requirement: JOB-simulate.R2
 - Check: the checks named `JOB-simulate.R2 …` in `tests/JOB-simulate.lean`
 - Done when: the checks pass
 
-### Step 3 · Compare strategies · [ ]
+### Step 3 · Compare strategies · [x]
 
 - Requirement: JOB-simulate.R3
 - Check: the checks named `JOB-simulate.R3 …` in `tests/JOB-simulate.lean`
 - Done when: the checks pass
 
-### Step 4 · Repeatable weather · [ ]
+### Step 4 · Repeatable weather · [x]
 
 - Requirement: JOB-simulate.R4
 - Check: the checks named `JOB-simulate.R4 …` in `tests/JOB-simulate.lean`
 - Done when: the checks pass
 
-### Step 5 · Bad command line · [ ]
+### Step 5 · Bad command line · [x]
 
 - Requirement: JOB-simulate.R5
 - Check: the checks named `JOB-simulate.R5 …` in `tests/JOB-simulate.lean`
 - Done when: the checks pass
 
-### Step 6 · README · [ ]
+### Step 6 · README · [x]
 
 - Requirement: JOB-simulate.R1, JOB-simulate.R2, JOB-simulate.R3, JOB-simulate.R4, JOB-simulate.R5
 - Check: none
@@ -199,3 +199,4 @@ none
 ## Progress log
 
 - Planned last, because the command uses CH-0001 (scenario), CH-0002 (strategies) and CH-0003 (simulation).
+- Build: all 190 checks and the 154 acceptance checks pass. No check changed since the lock `a7fe93a`.

@@ -1,15 +1,17 @@
-# Handoff · CH-0004 · tests → build
+# Handoff · CH-0004 · build → verify
 
-Time: 2026-11-01T01:37:33+00:00
+Time: 2026-11-01T01:42:58+00:00
 
 ## Done
 
-- The test writer wrote 67 checks in `tests/JOB-simulate.lean`, for R1 (run one strategy) to R5 (bad command line). The lock is `a7fe93a`, and the tests review passed.
-- The acceptance file `tests/acceptance/IN-0001.acceptance.lean` compiles. Its 78 checks of the capabilities pass, and its 76 checks of the `sim` command fail.
+- The builder wrote `Main.lean` and `README.md`, and added the `sim` executable to `lakefile.toml`.
+- All 190 checks pass: 34, 54, 35 and 67 in the four check files. No check changed since the lock `a7fe93a`.
+- The acceptance file of IN-0001 (simulator) passes: 154 checks, 0 failed.
+- JOB-simulate.R1 (run one strategy) to R5 (bad command line) are now `built`.
 
 ## Decided on defaults
 
-- none
+- `sim help` and `sim --help` print the usage also when more words follow (assumed). No spec decides this case.
 
 ## Open
 
@@ -17,13 +19,12 @@ Time: 2026-11-01T01:37:33+00:00
 
 ## Look here
 
-- `tests/JOB-simulate.lean` and `tests/acceptance/IN-0001.acceptance.lean`
-- The "Interface" of `pdlc/changes/CH-0004-sim-command/change.md`
+- `Main.lean`, `README.md`, `lakefile.toml`
 
 ## Don't redo
 
-- The checks and their locks.
+- The code and the checks.
 
 ## Next: do this first
 
-Add the `sim` executable to `lakefile.toml`, and write `Main.lean` and `README.md`. This change is the last change of IN-0001 (simulator), so the acceptance file must pass too.
+Run all checks and the acceptance file, and make the review packets.
