@@ -2,7 +2,30 @@
 
 Judge only what is in this packet. Write your result next to it, in result.md.
 
-Made at: 0c720a0ffffb12a835569e89abc488939b7a061c
+Made at: b0f275366f30ccc386a4c97ab36d9baa8d9b180b
+
+## Re-review
+
+Earlier review: ba51e5b
+
+An earlier review of this remit judged the checks locked at ba51e5b. Judge only these two things:
+
+1. Each earlier problem below. If the problem is not fixed, list it again under "Problems".
+2. The changes since the earlier review, in the diff below. List a new problem only
+   where a changed line causes the problem.
+
+Do not raise a new problem on material that did not change. This rule also applies
+to a problem that the earlier review missed.
+Write a "Wrong versions" line only for each check that changed. If no check
+changed, write "none" under "Wrong versions".
+
+### Earlier problems
+
+- tests/CAP-simulation.lean:36 · The packet does not hold the Interface of CH-0001 (scenario) or CH-0002 (strategies). Thus, I cannot confirm that a correct app passes the checks. The checks use these names that the packet does not define: `Site` with `latitude`, `pvKw`, `dailyLoadKwh` and `flexKwh` (line 36). `Hour` with `day`, `dayOfYear`, `hour`, `sky`, `pvKwh`, `baseLoadKwh` and `flexKwh`, and a `BEq` on the sky (line 89). `scenario site seed days` that gives an `Array Hour` (line 244). `Strategy.placeFlex s pv fl` on two `Array Float` that gives an `Array Float` (line 83). `Strategy.greedy`, `Strategy.none`, `Strategy.evening` and `Strategy.shift` (line 183 and later). A wrong name or type fails each check, also on a correct app. Add the two Interfaces to the packet, and review these names again. · Remit rule "A correct app passes each check", and the reviewer rule "If something that you need is missing, report the missing item as a problem"
+
+### Changes since the earlier review
+
+Nothing changed.
 
 # Remit: tests
 
@@ -196,6 +219,24 @@ A check imports `StoragePolicySim.Simulation`, which also gives the items of CH-
   Result`. The hours come from `scenario site seed days`. For each day, the flexible load
   comes from `Strategy.placeFlex` with the solar and the flexible load of that day.
 
+The checks can also use these items of earlier changes, in the namespace `StoragePolicySim`:
+
+- From CH-0001 (scenario), in `StoragePolicySim/Scenario.lean`:
+  - `inductive Sky | sunny | cloudy | overcast`.
+  - `structure Site` with `latitude`, `pvKw`, `dailyLoadKwh` and `flexKwh`, each a `Float`.
+  - `structure Hour` with `day`, `dayOfYear` and `hour` (each a `Nat`), `sky : Sky`, and
+    `pvKwh`, `baseLoadKwh` and `flexKwh` (each a `Float`).
+  - `pvOutput (site : Site) (dayOfYear hour : Nat) (sky : Sky) : Float`.
+  - `scenario (site : Site) (seed days : Nat) : Array Hour`.
+- From CH-0002 (strategies), in `StoragePolicySim/Strategy.lean`:
+  - `inductive Strategy | none | greedy | evening | shift`, written in full, for example
+    `Strategy.none`.
+  - `Strategy.all : List Strategy` and `Strategy.name : Strategy → String`.
+  - `structure Request` with `chargeKwh : Float` and `dischargeKwh : Float`.
+  - `Strategy.decide (s : Strategy) (hour : Nat) (surplusKwh shortfallKwh : Float) : Request`.
+  - `Strategy.placeFlex (s : Strategy) (pvKwh flexKwh : Array Float) : Array Float`, with
+    24 items in each array.
+
 ### Test seams
 
 - randomness: the `seed` argument of `simulate`. The same seed gives the same weather.
@@ -248,6 +289,7 @@ none
 ## Progress log
 
 - Planned after CH-0001 (scenario) and CH-0002 (strategies), because the simulation uses both.
+- The first tests review could not see the items of CH-0001 (scenario) and CH-0002 (strategies). The skill listed these items under "Interface". The checks did not change.
 ````
 
 ## The spec it covers: title and summary
