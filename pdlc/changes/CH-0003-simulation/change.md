@@ -176,3 +176,4 @@ none
 - The first tests review could not see the items of CH-0001 (scenario) and CH-0002 (strategies). The skill listed these items under "Interface". The checks did not change.
 - The second tests review could not see the derived instances of these items. The skill added them. The checks did not change.
 - Build: the 123 checks of the three check files pass. No check changed since the lock `ba51e5b`.
+- The first verify failed on quality. The change went back to build.

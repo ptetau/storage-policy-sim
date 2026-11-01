@@ -9,6 +9,7 @@ The reviews of CH-0002 (battery and load strategies) found three inputs that no 
 - "`placeFlex` could check that `pvKwh` and `flexKwh` each have 24 items. If the two arrays have different sizes, `shiftIntoSun` can drop part of the flexible load."
 - "`decide` could reject an hour outside 0 to 23. It could also reject a negative or NaN surplus or shortfall."
 - "No acceptance line says what `shift` does with `NaN` solar values."
+- "Check the `Battery` and `Site` fields for negative or NaN values." (CH-0003, security)
 
 ## Requirements
 
