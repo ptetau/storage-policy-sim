@@ -3,20 +3,17 @@ Result: fail
 Remit: specification
 
 Problems:
-- pdlc/changes/CH-0002-strategies/change.md:"Progress log", item 1 · The text "Planned after CH-0001 (scenario), so that the simulation can use both." omits the subject and the verb. Also, the pronoun "both" has no noun in the same item that it can refer to. Write, for example, "The plan puts this change after CH-0001 (scenario models), so that the simulation can use the scenario and the strategies." · DES-writing-style 4.2 (do not omit words) and the local-references rule
-- pdlc/changes/CH-0002-strategies/change.md:"Progress log", item 2 · The text "The test writer added a check with hours apart, round 1 of 2." is not clear. "With hours apart" does not say which hours are apart. "Round 1 of 2" omits the subject and the verb. Write, for example, "The test writer added a check in which the three sunniest hours are not next to each other. This was round 1 of 2." · DES-writing-style 4.1 (accurate facts), GR-2 (one meaning with "with") and 4.2 (do not omit words)
+- pdlc/changes/CH-0002-strategies/change.md:136 · The text "The re-review passed." uses the short noun "the re-review", but no review is in the same list item. The reader must look back to the item above to find which review passed. Write, for example, "The second tests review passed." · DES-writing-style, the local-references rule (a short noun refers to a noun in the same paragraph, and a list item starts with the full noun)
+- pdlc/changes/CH-0002-strategies/change.md:138 · The text "Verify round 1 failed on quality and specification. This failure is round 2 of 2." gives two round numbers for one failure, so the facts are not clear. Also, "failed on quality and specification" omits the noun "reviews". Write, for example, "In verify round 1, the quality review and the specification review failed. This failure uses round 2 of the 2 permitted rounds." · DES-writing-style 4.1 (accurate facts) and 4.2 (do not omit words)
+- pdlc/changes/CH-0002-strategies/change.md:139 · The text "so no code changes" omits a subject or a verb. The words can mean "the code does not change" or "there are no code changes". Write, for example, "Thus, the code does not change." · DES-writing-style 4.2 (do not omit words) and 4.1 (accurate facts)
+- pdlc/changes/CH-0002-strategies/change.md:140 · The text "IN-0004 (shift on a day with little sun) covers the other follow-up." uses the short noun "the other follow-up", but the list item names no follow-up before it. Write, for example, "Verify filed IN-0005 (guards on strategy inputs) for approval, for one follow-up of the review. IN-0004 (shift on a day with little sun) covers the second follow-up." · DES-writing-style, the local-references rule (a short noun refers to a noun in the same paragraph)
 
-Follow-ups:
-- `shift` on a day with sun in fewer than three hours: `shiftIntoSun` takes the three top hours by sun, and ties go to the earlier hour. Thus, with sun only at 12:00, the flexible load goes to 12:00, 00:00 and 01:00. The spec permits this result, because the hours 00:00 and 01:00 tie for the next-most sun. A new intent can limit `shift` to hours with sun, and keep the remainder at the default hours, so that `shift` does not move load into the night.
-- `shift` with a `NaN` value in `pvKwh`: the comparison in `hoursBySun` gives no stable order for `NaN`. No acceptance line names this input. A new intent can define the result for solar values that are not numbers.
+Follow-ups: none
 
 Notes:
-- R1 (strategy names): `Strategy.all` gives none, greedy, evening and shift, in this order. `Strategy.ofName?` matches exactly, so "Greedy" and "" give `Option.none`.
-- R2 (no battery use): `none` asks for 0 kWh and 0 kWh, and keeps the flexible load.
-- R3 (greedy battery use): `greedy` asks for the full surplus and the full shortfall at each hour, and keeps the flexible load.
-- R4 (evening battery use): `evening` charges with the full surplus. `evening` discharges only when the hour is 17 or more, so 16:00 and 00:00 give 0 kWh, and 17:00 and 23:00 give 1.5 kWh. The interface limits the hour to 0 to 23.
-- R5 (load shift into sun): `shift` uses the battery as `greedy` does. The sort in `hoursBySun` puts more sun first, and puts the earlier hour first for equal sun. Thus, equal sun from 10:00 to 14:00 gives 10:00, 11:00 and 12:00. A day with no sun keeps the default hours. A total of 0 kWh gives 0 kWh at each hour.
-- Only `StoragePolicySim/Strategy.lean` changed, and "Files" lists this file. The change stays in CAP-strategies (battery and load strategies).
-- The title and the summary of CAP-strategies show the four strategies as the code builds them. "Files" lists no README.
-- The code comments in `StoragePolicySim/Strategy.lean` follow DES-writing-style. Some doc comments are noun phrases, for example "No battery use.". I judge these as labels for items, not as sentences with omitted words. The spec summary uses the same labels.
-- The writing check gave no findings. The two problems above are in rules that a script cannot measure.
+- Earlier problem 1 (item 1 of "Progress log": the omitted subject and the pronoun "both") is fixed. Line 134 now has full sentences and names CH-0003 (simulation), the scenario and the strategies.
+- Earlier problem 2 (item 2 of "Progress log": "with hours apart" and "round 1 of 2") is fixed. Line 135 now says that a wrong `shift` with three hours in a row passed the R5 (load shift into sun) checks, and "This review is round 1 of 2" has a subject and a verb.
+- Line 134 starts with "The change". In a change spec, this short noun clearly means CH-0002 (battery and load strategies), so I do not count it as a problem.
+- Line 136 says "a check whose three sunniest hours are not next to each other". The hours belong to the input day of the check, not to the check. I judge the meaning clear enough, so I do not count it as a problem.
+- The code in `StoragePolicySim/Strategy.lean` did not change since the earlier review. Thus, this re-review does not judge the code again.
+- The "Writing check" section of the packet has no findings.

@@ -2,7 +2,28 @@
 
 Judge only what is in this packet. Write your result next to it, in result.md.
 
-Made at: e938ab0cd8d2b1a44d7365504c446d2f160a2d27
+Made at: 66b6defb1f17dc1f6404ab08fca1271e90070270
+
+## Re-review
+
+Earlier review: e938ab0cd8d2b1a44d7365504c446d2f160a2d27
+
+An earlier review of this remit judged this change at e938ab0cd8d2. Judge only these two things:
+
+1. Each earlier problem below. If the problem is not fixed, list it again under "Problems".
+2. The changes since the earlier review, in the diff below. List a new problem only
+   where a changed line causes the problem.
+
+Do not raise a new problem on material that did not change. This rule also applies
+to a problem that the earlier review missed.
+
+### Earlier problems
+
+- packet.md:78 · The change relies on DES-writing-style (the conventions for prose), but the packet does not hold that spec. Thus, this review cannot judge the doc comments of `StoragePolicySim/Strategy.lean` against it. · Remit rule "The code follows the design specs in this packet", and the reviewer rule to report a missing item as a problem
+
+### Changes since the earlier review
+
+Nothing changed.
 
 # Remit: quality
 
@@ -153,9 +174,13 @@ none
 
 ## Progress log
 
-- Planned after CH-0001 (scenario), so that the simulation can use both. The strategies do not need the scenario.
-- The first tests review found that a three-hour window passed the check of R5 (load shift into sun). The test writer added a check with hours apart, round 1 of 2.
+- The change comes after CH-0001 (scenario). CH-0003 (simulation) needs the scenario and the strategies. The strategies do not need the scenario.
+- The first tests review found that a wrong `shift` with three hours in a row passed the checks of R5 (load shift into sun). This review is round 1 of 2.
+- The test writer added a check whose three sunniest hours are not next to each other. The re-review passed.
 - Build: the 35 checks of `tests/CAP-strategies.lean` and the 34 checks of `tests/CAP-scenario.lean` pass. No check changed since the lock `91d1e6b`.
+- Verify round 1 failed on quality and specification. This failure is round 2 of 2.
+- The quality review asked for DES-writing-style (writing rules). `make_packets.py` gives that spec only to the specification review, by design. The quality remit judges the design specs in its packet, so no code changes.
+- Verify corrected the words of two log lines for the specification review. Verify filed IN-0005 (guards on strategy inputs) for approval. IN-0004 (shift on a day with little sun) covers the other follow-up.
 ````
 
 ## The spec it covers: title and summary

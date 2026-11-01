@@ -2,7 +2,47 @@
 
 Judge only what is in this packet. Write your result next to it, in result.md.
 
-Made at: e938ab0cd8d2b1a44d7365504c446d2f160a2d27
+Made at: 66b6defb1f17dc1f6404ab08fca1271e90070270
+
+## Re-review
+
+Earlier review: e938ab0cd8d2b1a44d7365504c446d2f160a2d27
+
+An earlier review of this remit judged this change at e938ab0cd8d2. Judge only these two things:
+
+1. Each earlier problem below. If the problem is not fixed, list it again under "Problems".
+2. The changes since the earlier review, in the diff below. List a new problem only
+   where a changed line causes the problem.
+
+Do not raise a new problem on material that did not change. This rule also applies
+to a problem that the earlier review missed.
+
+### Earlier problems
+
+- pdlc/changes/CH-0002-strategies/change.md:"Progress log", item 1 · The text "Planned after CH-0001 (scenario), so that the simulation can use both." omits the subject and the verb. Also, the pronoun "both" has no noun in the same item that it can refer to. Write, for example, "The plan puts this change after CH-0001 (scenario models), so that the simulation can use the scenario and the strategies." · DES-writing-style 4.2 (do not omit words) and the local-references rule
+- pdlc/changes/CH-0002-strategies/change.md:"Progress log", item 2 · The text "The test writer added a check with hours apart, round 1 of 2." is not clear. "With hours apart" does not say which hours are apart. "Round 1 of 2" omits the subject and the verb. Write, for example, "The test writer added a check in which the three sunniest hours are not next to each other. This was round 1 of 2." · DES-writing-style 4.1 (accurate facts), GR-2 (one meaning with "with") and 4.2 (do not omit words)
+
+### Changes since the earlier review
+
+````
+diff --git a/pdlc/changes/CH-0002-strategies/change.md b/pdlc/changes/CH-0002-strategies/change.md
+index eb5fafd..8b03d3b 100644
+--- a/pdlc/changes/CH-0002-strategies/change.md
++++ b/pdlc/changes/CH-0002-strategies/change.md
+@@ -131,6 +131,10 @@ none
+ 
+ ## Progress log
+ 
+-- Planned after CH-0001 (scenario), so that the simulation can use both. The strategies do not need the scenario.
+-- The first tests review found that a three-hour window passed the check of R5 (load shift into sun). The test writer added a check with hours apart, round 1 of 2.
++- The change comes after CH-0001 (scenario). CH-0003 (simulation) needs the scenario and the strategies. The strategies do not need the scenario.
++- The first tests review found that a wrong `shift` with three hours in a row passed the checks of R5 (load shift into sun). This review is round 1 of 2.
++- The test writer added a check whose three sunniest hours are not next to each other. The re-review passed.
+ - Build: the 35 checks of `tests/CAP-strategies.lean` and the 34 checks of `tests/CAP-scenario.lean` pass. No check changed since the lock `91d1e6b`.
++- Verify round 1 failed on quality and specification. This failure is round 2 of 2.
++- The quality review asked for DES-writing-style (writing rules). `make_packets.py` gives that spec only to the specification review, by design. The quality remit judges the design specs in its packet, so no code changes.
++- Verify corrected the words of two log lines for the specification review. Verify filed IN-0005 (guards on strategy inputs) for approval. IN-0004 (shift on a day with little sun) covers the other follow-up.
+````
 
 # Remit: specification
 
@@ -164,9 +204,13 @@ none
 
 ## Progress log
 
-- Planned after CH-0001 (scenario), so that the simulation can use both. The strategies do not need the scenario.
-- The first tests review found that a three-hour window passed the check of R5 (load shift into sun). The test writer added a check with hours apart, round 1 of 2.
+- The change comes after CH-0001 (scenario). CH-0003 (simulation) needs the scenario and the strategies. The strategies do not need the scenario.
+- The first tests review found that a wrong `shift` with three hours in a row passed the checks of R5 (load shift into sun). This review is round 1 of 2.
+- The test writer added a check whose three sunniest hours are not next to each other. The re-review passed.
 - Build: the 35 checks of `tests/CAP-strategies.lean` and the 34 checks of `tests/CAP-scenario.lean` pass. No check changed since the lock `91d1e6b`.
+- Verify round 1 failed on quality and specification. This failure is round 2 of 2.
+- The quality review asked for DES-writing-style (writing rules). `make_packets.py` gives that spec only to the specification review, by design. The quality remit judges the design specs in its packet, so no code changes.
+- Verify corrected the words of two log lines for the specification review. Verify filed IN-0005 (guards on strategy inputs) for approval. IN-0004 (shift on a day with little sun) covers the other follow-up.
 ````
 
 ## The spec it covers: title and summary
@@ -913,7 +957,7 @@ end StoragePolicySim
 
 ## Writing check
 
-`pdlc/bin/check_writing.py --since pdlc/CH-0001-scenario` on pdlc/changes/CH-0002-strategies/change.md, pdlc/specs/capabilities/CAP-strategies.md:
+`pdlc/bin/check_writing.py --since e938ab0cd8d2b1a44d7365504c446d2f160a2d27` on pdlc/changes/CH-0002-strategies/change.md, pdlc/specs/capabilities/CAP-strategies.md:
 
 ````
 No findings.
