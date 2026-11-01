@@ -2,7 +2,7 @@
 
 Judge only what is in this packet. Write your result next to it, in result.md.
 
-Made at: b0f275366f30ccc386a4c97ab36d9baa8d9b180b
+Made at: 87d6cc7dde4fa0b3ebe4e8771efbf9f6020c948f
 
 ## Re-review
 
@@ -21,7 +21,7 @@ changed, write "none" under "Wrong versions".
 
 ### Earlier problems
 
-- tests/CAP-simulation.lean:36 · The packet does not hold the Interface of CH-0001 (scenario) or CH-0002 (strategies). Thus, I cannot confirm that a correct app passes the checks. The checks use these names that the packet does not define: `Site` with `latitude`, `pvKw`, `dailyLoadKwh` and `flexKwh` (line 36). `Hour` with `day`, `dayOfYear`, `hour`, `sky`, `pvKwh`, `baseLoadKwh` and `flexKwh`, and a `BEq` on the sky (line 89). `scenario site seed days` that gives an `Array Hour` (line 244). `Strategy.placeFlex s pv fl` on two `Array Float` that gives an `Array Float` (line 83). `Strategy.greedy`, `Strategy.none`, `Strategy.evening` and `Strategy.shift` (line 183 and later). A wrong name or type fails each check, also on a correct app. Add the two Interfaces to the packet, and review these names again. · Remit rule "A correct app passes each check", and the reviewer rule "If something that you need is missing, report the missing item as a problem"
+- tests/CAP-simulation.lean:90 · The earlier problem (missing Interface of CH-0001 and CH-0002) is only partly fixed. The packet now lists the names and the types of `Site`, `Hour`, `scenario`, `Strategy` and `Strategy.placeFlex`, and the checks use them correctly. But two instances that the checks need are still not in the packet. First, `sameHour` compares `a.sky == b.sky` (line 90), and this needs a `BEq` (or `DecidableEq`) on `Sky`. The Interface lists `inductive Sky | sunny | cloudy | overcast` with no derived instance. Second, the check "CAP-simulation.R1 the hours of a run are the hours of the scenario" reads `hs[i]!` on the `Array Hour` of `scenario` (line 247), and this needs `Inhabited Hour`. The Interface lists `Hour` with no instances, but it marks `Repr` and `Inhabited` on each structure of CH-0003. If `Sky` has no `BEq`, the whole file does not compile, and each check fails on a correct app. Add the instances of `Sky` and `Hour` to the Interface, or change the checks so that they do not need them (for example, match the sky by a `match` or by `Sky.toCtorIdx`). · Remit rule "A correct app passes each check", and the reviewer rule "If something that you need is missing, report the missing item as a problem"
 
 ### Changes since the earlier review
 
@@ -222,17 +222,21 @@ A check imports `StoragePolicySim.Simulation`, which also gives the items of CH-
 The checks can also use these items of earlier changes, in the namespace `StoragePolicySim`:
 
 - From CH-0001 (scenario), in `StoragePolicySim/Scenario.lean`:
-  - `inductive Sky | sunny | cloudy | overcast`.
-  - `structure Site` with `latitude`, `pvKw`, `dailyLoadKwh` and `flexKwh`, each a `Float`.
-  - `structure Hour` with `day`, `dayOfYear` and `hour` (each a `Nat`), `sky : Sky`, and
+  - `inductive Sky | sunny | cloudy | overcast` with `BEq`, `Repr` and `Inhabited`.
+  - `structure Site` with `Repr` and `Inhabited`, and the fields `latitude`, `pvKw`,
+    `dailyLoadKwh` and `flexKwh`, each a `Float`.
+  - `structure Hour` with `Repr` and `Inhabited`. Its fields are `day`, `dayOfYear` and
+    `hour` (each a `Nat`), `sky : Sky`, and
     `pvKwh`, `baseLoadKwh` and `flexKwh` (each a `Float`).
   - `pvOutput (site : Site) (dayOfYear hour : Nat) (sky : Sky) : Float`.
   - `scenario (site : Site) (seed days : Nat) : Array Hour`.
 - From CH-0002 (strategies), in `StoragePolicySim/Strategy.lean`:
-  - `inductive Strategy | none | greedy | evening | shift`, written in full, for example
+  - `inductive Strategy | none | greedy | evening | shift` with `BEq`, `Repr` and
+    `Inhabited`. Each value is written in full, for example
     `Strategy.none`.
   - `Strategy.all : List Strategy` and `Strategy.name : Strategy → String`.
-  - `structure Request` with `chargeKwh : Float` and `dischargeKwh : Float`.
+  - `structure Request` with `Repr`, and the fields `chargeKwh : Float` and
+    `dischargeKwh : Float`.
   - `Strategy.decide (s : Strategy) (hour : Nat) (surplusKwh shortfallKwh : Float) : Request`.
   - `Strategy.placeFlex (s : Strategy) (pvKwh flexKwh : Array Float) : Array Float`, with
     24 items in each array.
@@ -290,6 +294,7 @@ none
 
 - Planned after CH-0001 (scenario) and CH-0002 (strategies), because the simulation uses both.
 - The first tests review could not see the items of CH-0001 (scenario) and CH-0002 (strategies). The skill listed these items under "Interface". The checks did not change.
+- The second tests review could not see the derived instances of these items. The skill added them. The checks did not change.
 ````
 
 ## The spec it covers: title and summary
