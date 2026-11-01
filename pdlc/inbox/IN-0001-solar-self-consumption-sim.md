@@ -58,6 +58,7 @@ Acceptance-Passed: none
 - JOB-simulate.R1 (run one strategy): was "`--flex`: 3", now "`--flex`: 3, or the `--load` value when that is less" (assumed).
 - JOB-simulate.R5 (bad command line): How does a range show? → `(<lowest> to <highest>)` as in the table (assumed).
 - IN-0001 (simulator): Does a review that fails only on the words of pdlc records count as a round? → no, in this project. The skill fixes the words and reviews again. The user decided this, and https://github.com/ptetau/pskills/issues/24 tracks a fix in pdlc.
+- IN-0001 (simulator): Does a break of a writing rule fail a review? → no, for now. The writing rules are a guideline in this project. The user decided this.
 
 ## Handoff
 
