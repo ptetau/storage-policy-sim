@@ -2,13 +2,13 @@
 
 Judge only what is in this packet. Write your result next to it, in result.md.
 
-Made at: 8e9c0b3c9f38fc8845a17585a59e2012b6088332
+Made at: 91e87a56cfeac263c83ce316d1fe6e10a89cd347
 
 ## Re-review
 
-Earlier review: 66b6defb1f17dc1f6404ab08fca1271e90070270
+Earlier review: 8e9c0b3c9f38fc8845a17585a59e2012b6088332
 
-An earlier review of this remit judged this change at 66b6defb1f17. Judge only these two things:
+An earlier review of this remit judged this change at 8e9c0b3c9f38. Judge only these two things:
 
 1. Each earlier problem below. If the problem is not fixed, list it again under "Problems".
 2. The changes since the earlier review, in the diff below. List a new problem only
@@ -19,34 +19,21 @@ to a problem that the earlier review missed.
 
 ### Earlier problems
 
-- pdlc/changes/CH-0002-strategies/change.md:136 · The text "The re-review passed." uses the short noun "the re-review", but no review is in the same list item. The reader must look back to the item above to find which review passed. Write, for example, "The second tests review passed." · DES-writing-style, the local-references rule (a short noun refers to a noun in the same paragraph, and a list item starts with the full noun)
-- pdlc/changes/CH-0002-strategies/change.md:138 · The text "Verify round 1 failed on quality and specification. This failure is round 2 of 2." gives two round numbers for one failure, so the facts are not clear. Also, "failed on quality and specification" omits the noun "reviews". Write, for example, "In verify round 1, the quality review and the specification review failed. This failure uses round 2 of the 2 permitted rounds." · DES-writing-style 4.1 (accurate facts) and 4.2 (do not omit words)
-- pdlc/changes/CH-0002-strategies/change.md:139 · The text "so no code changes" omits a subject or a verb. The words can mean "the code does not change" or "there are no code changes". Write, for example, "Thus, the code does not change." · DES-writing-style 4.2 (do not omit words) and 4.1 (accurate facts)
-- pdlc/changes/CH-0002-strategies/change.md:140 · The text "IN-0004 (shift on a day with little sun) covers the other follow-up." uses the short noun "the other follow-up", but the list item names no follow-up before it. Write, for example, "Verify filed IN-0005 (guards on strategy inputs) for approval, for one follow-up of the review. IN-0004 (shift on a day with little sun) covers the second follow-up." · DES-writing-style, the local-references rule (a short noun refers to a noun in the same paragraph)
+- pdlc/changes/CH-0002-strategies/change.md:141 · The text "is not a round in this project" does not say what a round is. The changed log lines removed each other mention of verify rounds, so no noun in the log tells the reader that "a round" is one of the permitted verify rounds. Write, for example, "The user decided that a review failure only on the words of pdlc records does not use one of the permitted verify rounds." · DES-writing-style 4.1 (accurate facts, not abstract statements) and 1.11 (one technical noun for one item)
 
 ### Changes since the earlier review
 
 ````
 diff --git a/pdlc/changes/CH-0002-strategies/change.md b/pdlc/changes/CH-0002-strategies/change.md
-index 8b03d3b..74ec887 100644
+index 74ec887..ed2afd6 100644
 --- a/pdlc/changes/CH-0002-strategies/change.md
 +++ b/pdlc/changes/CH-0002-strategies/change.md
-@@ -132,9 +132,10 @@ none
- ## Progress log
- 
- - The change comes after CH-0001 (scenario). CH-0003 (simulation) needs the scenario and the strategies. The strategies do not need the scenario.
--- The first tests review found that a wrong `shift` with three hours in a row passed the checks of R5 (load shift into sun). This review is round 1 of 2.
--- The test writer added a check whose three sunniest hours are not next to each other. The re-review passed.
-+- The first tests review failed, because a wrong `shift` that takes three hours in a row passed the checks of R5 (load shift into sun).
-+- The test writer then added a check whose three sunniest hours are not next to each other. The second tests review passed.
- - Build: the 35 checks of `tests/CAP-strategies.lean` and the 34 checks of `tests/CAP-scenario.lean` pass. No check changed since the lock `91d1e6b`.
--- Verify round 1 failed on quality and specification. This failure is round 2 of 2.
--- The quality review asked for DES-writing-style (writing rules). `make_packets.py` gives that spec only to the specification review, by design. The quality remit judges the design specs in its packet, so no code changes.
--- Verify corrected the words of two log lines for the specification review. Verify filed IN-0005 (guards on strategy inputs) for approval. IN-0004 (shift on a day with little sun) covers the other follow-up.
-+- The first verify failed on the quality review and the specification review.
-+- The quality review asked for DES-writing-style (writing rules). `make_packets.py` gives that spec only to the specification review. The quality remit does not judge writing, so the builder changed no code.
-+- Verify filed IN-0005 (guards on strategy inputs) for approval. IN-0004 (shift on a day with little sun) already covers the follow-up about days with little sun.
-+- The user decided that a failure only on the words of pdlc records is not a round in this project.
+@@ -138,4 +138,4 @@ none
+ - The first verify failed on the quality review and the specification review.
+ - The quality review asked for DES-writing-style (writing rules). `make_packets.py` gives that spec only to the specification review. The quality remit does not judge writing, so the builder changed no code.
+ - Verify filed IN-0005 (guards on strategy inputs) for approval. IN-0004 (shift on a day with little sun) already covers the follow-up about days with little sun.
+-- The user decided that a failure only on the words of pdlc records is not a round in this project.
++- The user decided that a review failure only on the words of pdlc records does not use one of the permitted verify rounds.
 ````
 
 # Remit: specification
@@ -216,7 +203,7 @@ none
 - The first verify failed on the quality review and the specification review.
 - The quality review asked for DES-writing-style (writing rules). `make_packets.py` gives that spec only to the specification review. The quality remit does not judge writing, so the builder changed no code.
 - Verify filed IN-0005 (guards on strategy inputs) for approval. IN-0004 (shift on a day with little sun) already covers the follow-up about days with little sun.
-- The user decided that a failure only on the words of pdlc records is not a round in this project.
+- The user decided that a review failure only on the words of pdlc records does not use one of the permitted verify rounds.
 ````
 
 ## The spec it covers: title and summary
@@ -963,7 +950,7 @@ end StoragePolicySim
 
 ## Writing check
 
-`pdlc/bin/check_writing.py --since 66b6defb1f17dc1f6404ab08fca1271e90070270` on pdlc/changes/CH-0002-strategies/change.md, pdlc/specs/capabilities/CAP-strategies.md:
+`pdlc/bin/check_writing.py --since 8e9c0b3c9f38fc8845a17585a59e2012b6088332` on pdlc/changes/CH-0002-strategies/change.md, pdlc/specs/capabilities/CAP-strategies.md:
 
 ````
 No findings.
