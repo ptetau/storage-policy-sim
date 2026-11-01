@@ -44,7 +44,9 @@ private def limitTo (a b c : Float) : Float :=
 /-- The flows of one hour. `socKwh` is the energy in the battery before the hour. The
 battery takes what the strategy asks, up to the surplus, the power and the free room. The
 battery gives what the strategy asks, up to the shortfall, the power and the stored energy.
-The power limit applies to the energy in, and to the energy out after the loss. -/
+The power limit applies to the energy in, and to the energy out after the loss. The
+stored energy after the hour stays from 0 to the capacity, so that a rounding error of the
+floats cannot move it out of this range. -/
 def stepHour (battery : Battery) (socKwh : Float) (strategy : Strategy) (hour : Nat)
     (pvKwh loadKwh : Float) : Flow :=
   let directKwh := min pvKwh loadKwh
@@ -61,7 +63,7 @@ def stepHour (battery : Battery) (socKwh : Float) (strategy : Strategy) (hour : 
     exportKwh := surplusKwh - chargeKwh,
     importKwh := shortfallKwh - dischargeKwh,
     lossKwh := chargeKwh - chargeKwh * efficiency + takenOutKwh - dischargeKwh,
-    socKwh := storedAfterChargeKwh - takenOutKwh }
+    socKwh := max 0 (min battery.capacityKwh (storedAfterChargeKwh - takenOutKwh)) }
 
 /-- One hour of a run. -/
 structure HourResult where
