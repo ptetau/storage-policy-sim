@@ -1,12 +1,13 @@
-# Handoff · CH-0003 · verify → show
+# Handoff · CH-0003 · show → user
 
-Time: 2026-11-01T01:25:57+00:00
+Time: 2026-11-01T01:29:03+00:00
 
 ## Done
 
-- All 123 checks pass, and no check changed since the lock.
-- Each remit passed: tests, specification, security, quality and privacy. Compliance does not apply.
-- CAP-simulation.R1 (energy flows of an hour) to R5 (strategy order) are `verified`.
+- Show recorded `review.gif` with 27 frames. The frames show 25 acceptance lines out of 25, then all checks pass.
+- The first recording found stored energy a little below 0 kWh. Build fixed `stepHour`, and verify passed again.
+- The visual review passed after show printed all the totals in frame 13. The merge gate passes, except for CH-0004 (sim command), which is not ready.
+- The proposal is in `proposal.md`, because the remote has no `main` branch for a pull request.
 
 ## Decided on defaults
 
@@ -18,12 +19,12 @@ Time: 2026-11-01T01:25:57+00:00
 
 ## Look here
 
-- `pdlc/changes/CH-0003-simulation/review/`
+- `pdlc/changes/CH-0003-simulation/proposal.md`
 
 ## Don't redo
 
-- The code, the checks, the reviews and the demo script.
+- The code, the checks, the reviews and the recording.
 
 ## Next: do this first
 
-Record the GIF again with `visual.json`.
+Start CH-0004 (sim command) from this branch.
