@@ -1,11 +1,12 @@
-# Handoff · CH-0003 · build → verify
+# Handoff · CH-0003 · verify → user
 
-Time: 2026-11-01T01:11:19+00:00
+Time: 2026-11-01T01:12:18+00:00
 
 ## Done
 
-- The builder keeps the stored energy from 0 to the capacity after each hour, in `stepHour`.
-- The greedy run with a 5 kWh battery now has no hour below 0 kWh. All 123 checks pass, and no check changed since the lock.
+- Security, quality and privacy passed on the fixed `stepHour`. Compliance does not apply.
+- The specification review failed on one code comment: a sentence of 27 words at `StoragePolicySim/Simulation.lean:48`.
+- This failure is the third failed round of CH-0003 (simulation), so the work stops.
 
 ## Decided on defaults
 
@@ -13,16 +14,17 @@ Time: 2026-11-01T01:11:19+00:00
 
 ## Open
 
-- none
+- The user must decide how CH-0003 (simulation) goes on.
+- Recommended answer: the builder splits the comment into two sentences, and the specification review runs again.
 
 ## Look here
 
-- `StoragePolicySim/Simulation.lean`: `stepHour`
+- `pdlc/changes/CH-0003-simulation/review/specification/result.md`
 
 ## Don't redo
 
-- The checks and the demo script.
+- The code, the checks, and the passed reviews.
 
 ## Next: do this first
 
-Make the re-review packets with `make_packets.py CH-0003 --verify`.
+Take the answer of the user, or the recommended answer.
