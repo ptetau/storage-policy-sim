@@ -14,6 +14,7 @@ def round1 (x : Float) : String :=
   if x < 0 && r != 0 then "-" ++ txt else txt
 
 def main : IO Unit := do
+  IO.println "library: simulate with shift, seed 1, 30 days, latitude 45, 5 kW of panels, 20 kWh with 3 kWh flexible, 10 kWh / 5 kW battery"
   let site : Site := { latitude := 45, pvKw := 5, dailyLoadKwh := 20, flexKwh := 3 }
   let t := (simulate site { capacityKwh := 10, powerKw := 5 } Strategy.shift 1 30).totals
   IO.println s!"library: solar {round1 t.pvKwh}, load {round1 t.loadKwh}, self-used {round1 t.selfUsedKwh}"
