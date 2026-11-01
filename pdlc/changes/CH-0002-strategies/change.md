@@ -138,4 +138,4 @@ none
 - The first verify failed on the quality review and the specification review.
 - The quality review asked for DES-writing-style (writing rules). `make_packets.py` gives that spec only to the specification review. The quality remit does not judge writing, so the builder changed no code.
 - Verify filed IN-0005 (guards on strategy inputs) for approval. IN-0004 (shift on a day with little sun) already covers the follow-up about days with little sun.
-- The user decided that a failure only on the words of pdlc records is not a round in this project.
+- The user decided that a review failure only on the words of pdlc records does not use one of the permitted verify rounds.
