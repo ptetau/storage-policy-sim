@@ -5,7 +5,7 @@ Write the component checks of this change, only in the files under its "Check fi
 This brief holds each input of the checks. Read another file only when this brief names
 it, for example an existing check file to match its style.
 
-Made at: 6b6c206414cfa87900b6c56f794801609bb8764c
+Made at: fcad6e20f0f87316f5e04727cfef815b318f8872
 
 ## The change spec
 
@@ -16,7 +16,7 @@ Path: pdlc/changes/CH-0004-sim-command/change.md
 
 Intent: IN-0001 · Scope: JOB-simulate · Status: testing · Ticket: none · Branch: pdlc/CH-0004-sim-command · Base: pdlc/CH-0003-simulation
 
-Tests-Locked: none
+Tests-Locked: 79a6f27
 
 ## Delivers
 
@@ -833,4 +833,5 @@ checks yet keeps its checks in `tests/`.
 - tests/CAP-scenario.lean
 - tests/CAP-simulation.lean
 - tests/CAP-strategies.lean
+- tests/JOB-simulate.lean
 - tests/acceptance/IN-0001.acceptance.lean
