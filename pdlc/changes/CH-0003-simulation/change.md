@@ -136,31 +136,31 @@ The checks can also use these items of earlier changes, in the namespace `Storag
 
 ## Steps
 
-### Step 1 · Energy flows of an hour · [ ]
+### Step 1 · Energy flows of an hour · [x]
 
 - Requirement: CAP-simulation.R1
 - Check: the checks named `CAP-simulation.R1 …` in `tests/CAP-simulation.lean`
 - Done when: the checks pass
 
-### Step 2 · Battery limits · [ ]
+### Step 2 · Battery limits · [x]
 
 - Requirement: CAP-simulation.R2
 - Check: the checks named `CAP-simulation.R2 …` in `tests/CAP-simulation.lean`
 - Done when: the checks pass
 
-### Step 3 · Totals and ratios · [ ]
+### Step 3 · Totals and ratios · [x]
 
 - Requirement: CAP-simulation.R3
 - Check: the checks named `CAP-simulation.R3 …` in `tests/CAP-simulation.lean`
 - Done when: the checks pass
 
-### Step 4 · Monthly totals · [ ]
+### Step 4 · Monthly totals · [x]
 
 - Requirement: CAP-simulation.R4
 - Check: the checks named `CAP-simulation.R4 …` in `tests/CAP-simulation.lean`
 - Done when: the checks pass
 
-### Step 5 · Strategy order · [ ]
+### Step 5 · Strategy order · [x]
 
 - Requirement: CAP-simulation.R5
 - Check: the checks named `CAP-simulation.R5 …` in `tests/CAP-simulation.lean`
@@ -175,3 +175,4 @@ none
 - Planned after CH-0001 (scenario) and CH-0002 (strategies), because the simulation uses both.
 - The first tests review could not see the items of CH-0001 (scenario) and CH-0002 (strategies). The skill listed these items under "Interface". The checks did not change.
 - The second tests review could not see the derived instances of these items. The skill added them. The checks did not change.
+- Build: the 123 checks of the three check files pass. No check changed since the lock `ba51e5b`.
