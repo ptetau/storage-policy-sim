@@ -1,6 +1,6 @@
 # CH-0004 · The sim command
 
-Intent: IN-0001 · Scope: JOB-simulate · Status: planned · Ticket: none · Branch: none · Base: main
+Intent: IN-0001 · Scope: JOB-simulate · Status: testing · Ticket: none · Branch: pdlc/CH-0004-sim-command · Base: pdlc/CH-0003-simulation
 
 Tests-Locked: none
 
