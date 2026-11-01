@@ -20,7 +20,7 @@ def showFlow (label : String) (f : Flow) : String :=
     s!"export {f3 f.exportKwh}, import {f3 f.importKwh} kWh; the battery then holds {f3 f.socKwh} kWh"
 
 def showTotals (t : Totals) : String :=
-  s!"solar {f3 t.pvKwh}, load {f3 t.loadKwh}, export {f3 t.exportKwh}, import {f3 t.importKwh}, " ++
+  s!"solar {f3 t.pvKwh}, load {f3 t.loadKwh}, self-used {f3 t.selfUsedKwh}, export {f3 t.exportKwh}, import {f3 t.importKwh}, " ++
     s!"losses {f3 t.lossKwh}, stored at end {f3 t.finalSocKwh} kWh\n" ++
     s!"self-consumption {f3 t.selfConsumption}%, self-sufficiency {f3 t.selfSufficiency}%"
 
@@ -66,10 +66,15 @@ def run : String → IO Unit
     say s!"0 kWh battery, 365 days\ngreedy: {showTotals g}\nnone:   {showTotals n}"
   | "r3-1" => do
     let r := simulate (site) (bat 10 5) .none 7 365
-    let pv := r.hours.foldl (fun a h => a + h.hour.pvKwh) 0
-    let im := r.hours.foldl (fun a h => a + h.flow.importKwh) 0
-    let ex := r.hours.foldl (fun a h => a + h.flow.exportKwh) 0
-    say s!"none, latitude 45, 365 days\nsolar: total {f3 r.totals.pvKwh}, sum of hours {f3 pv}\nimport: total {f3 r.totals.importKwh}, sum of hours {f3 im}\nexport: total {f3 r.totals.exportKwh}, sum of hours {f3 ex}"
+    let sum (f : HourResult → Float) := r.hours.foldl (fun a h => a + f h) 0
+    let row (n : String) (tot s : Float) := s!"{n}: total {f3 tot}, sum of hours {f3 s}"
+    say ("none, latitude 45, 365 days\n" ++ "\n".intercalate [
+      row "solar" r.totals.pvKwh (sum (·.hour.pvKwh)),
+      row "load" r.totals.loadKwh (sum (·.loadKwh)),
+      row "import" r.totals.importKwh (sum (·.flow.importKwh)),
+      row "export" r.totals.exportKwh (sum (·.flow.exportKwh)),
+      row "losses" r.totals.lossKwh (sum (·.flow.lossKwh)),
+      row "self-used" r.totals.selfUsedKwh (sum (·.hour.pvKwh) - sum (·.flow.exportKwh))])
   | "r3-2" => do
     let t := (simulate (site) (bat 10 5) .greedy 7 365).totals
     say s!"greedy, latitude 45, 365 days\nself-consumption: {f3 t.selfConsumption}%\n100 × (solar - export) / solar = {f3 (100 * (t.pvKwh - t.exportKwh) / t.pvKwh)}%"
@@ -97,10 +102,10 @@ def run : String → IO Unit
     let r := simulate (site) (bat 10 5) .greedy 7 365
     let j := (month r "Jul").totals.pvKwh
     let d := (month r "Dec").totals.pvKwh
-    say s!"latitude 45, seed 7, greedy\nJuly solar: {f3 j} kWh\nDecember solar: {f3 d} kWh\nratio: {f3 (j / d)} (more than 2)"
+    say s!"latitude 45, seed 7, greedy, 365 days\nJuly solar: {f3 j} kWh\nDecember solar: {f3 d} kWh\nratio: {f3 (j / d)} (more than 2)"
   | "r4-6" => do
     let r := simulate (site) (bat 10 5) .greedy 7 365
-    say s!"latitude 45, seed 7, greedy\nJuly self-sufficiency: {f3 (month r "Jul").totals.selfSufficiency}%\nJanuary self-sufficiency: {f3 (month r "Jan").totals.selfSufficiency}%"
+    say s!"latitude 45, seed 7, greedy, 365 days\nJuly self-sufficiency: {f3 (month r "Jul").totals.selfSufficiency}%\nJanuary self-sufficiency: {f3 (month r "Jan").totals.selfSufficiency}%"
   | "r5-1" => do
     let g := (simulate (site) (bat 10 5) .greedy 7 365).totals.selfConsumption
     let n := (simulate (site) (bat 10 5) .none 7 365).totals.selfConsumption
