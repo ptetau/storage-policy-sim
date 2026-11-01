@@ -2,7 +2,28 @@
 
 Judge only what is in this packet. Write your result next to it, in result.md.
 
-Made at: f21a00d01dba323fd0febe587e1e15c4ebac9ea9
+Made at: bec980fba617fe637a3501cab7ff21a50f7f0f6d
+
+## Re-review
+
+Earlier review: f21a00d01dba323fd0febe587e1e15c4ebac9ea9
+
+An earlier review of this remit judged this change at f21a00d01dba. Judge only these two things:
+
+1. Each earlier problem below. If the problem is not fixed, list it again under "Problems".
+2. The changes since the earlier review, in the diff below. List a new problem only
+   where a changed line causes the problem.
+
+Do not raise a new problem on material that did not change. This rule also applies
+to a problem that the earlier review missed.
+
+### Earlier problems
+
+- frames/13.png · The caption claims that each total of `none` equals the sum of its hours. The frame shows only three totals: solar, import and export. The load total and the loss total do not show on screen, so the frame shows less than its caption claims. · CAP-simulation.R3 (totals and ratios), line 1: "each total equals the sum of its hours"; remit rule "Each part of a caption is visible on screen" · script
+
+### Changes since the earlier review
+
+Nothing changed.
 
 # Remit: visual
 
@@ -460,17 +481,17 @@ daily load, 3 kWh of it flexible. The seed is 7, and each run is 365 days.
 
 Read each frame:
 
-- pdlc/changes/CH-0003-simulation/frames/01.png
-- pdlc/changes/CH-0003-simulation/frames/02.png
-- pdlc/changes/CH-0003-simulation/frames/03.png
-- pdlc/changes/CH-0003-simulation/frames/04.png
-- pdlc/changes/CH-0003-simulation/frames/05.png
-- pdlc/changes/CH-0003-simulation/frames/06.png
-- pdlc/changes/CH-0003-simulation/frames/07.png
-- pdlc/changes/CH-0003-simulation/frames/08.png
-- pdlc/changes/CH-0003-simulation/frames/09.png
-- pdlc/changes/CH-0003-simulation/frames/10.png
-- pdlc/changes/CH-0003-simulation/frames/11.png
+- pdlc/changes/CH-0003-simulation/frames/01.png (unchanged since the earlier review)
+- pdlc/changes/CH-0003-simulation/frames/02.png (unchanged since the earlier review)
+- pdlc/changes/CH-0003-simulation/frames/03.png (unchanged since the earlier review)
+- pdlc/changes/CH-0003-simulation/frames/04.png (unchanged since the earlier review)
+- pdlc/changes/CH-0003-simulation/frames/05.png (unchanged since the earlier review)
+- pdlc/changes/CH-0003-simulation/frames/06.png (unchanged since the earlier review)
+- pdlc/changes/CH-0003-simulation/frames/07.png (unchanged since the earlier review)
+- pdlc/changes/CH-0003-simulation/frames/08.png (unchanged since the earlier review)
+- pdlc/changes/CH-0003-simulation/frames/09.png (unchanged since the earlier review)
+- pdlc/changes/CH-0003-simulation/frames/10.png (unchanged since the earlier review)
+- pdlc/changes/CH-0003-simulation/frames/11.png (unchanged since the earlier review)
 - pdlc/changes/CH-0003-simulation/frames/12.png
 - pdlc/changes/CH-0003-simulation/frames/13.png
 - pdlc/changes/CH-0003-simulation/frames/14.png
