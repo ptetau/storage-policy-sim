@@ -2,13 +2,13 @@
 
 Judge only what is in this packet. Write your result next to it, in result.md.
 
-Made at: ede76bc813dc53cd8968ab92021fa1fdfe3781e2
+Made at: d319606219d6f2af3ee86de3e71e8d17bec7fc51
 
 ## Re-review
 
-Earlier review: 707f29d2c925b709a259d7d912e0d0faf1d54d5f
+Earlier review: ede76bc813dc53cd8968ab92021fa1fdfe3781e2
 
-An earlier review of this remit judged this change at 707f29d2c925. Judge only these two things:
+An earlier review of this remit judged this change at ede76bc813dc. Judge only these two things:
 
 1. Each earlier problem below. If the problem is not fixed, list it again under "Problems".
 2. The changes since the earlier review, in the diff below. List a new problem only
@@ -19,41 +19,35 @@ to a problem that the earlier review missed.
 
 ### Earlier problems
 
-- StoragePolicySim/Simulation.lean:175 · In `simulate`, the condition `&& openMonth.days > 0` never changes the result. On day 0, `month` is 0 and `openMonth.month` is 0, so the first part is already false. On each later day, `openMonth.days` is 1 or more. Remove the second part, so that the reader does not look for a case that cannot happen. · Remit rule: no dead code.
-- StoragePolicySim/Simulation.lean:178 · In `simulate`, `{ openMonth with month, days := ... }` sets `month` each day, but `openMonth.month` already equals `month` at that point. The reset on line 177 sets it for a new month, and day 0 starts at month 0. The extra field makes the month change look like it happens in two places. Write `{ openMonth with days := openMonth.days + 1 }`. · Remit rule: no unnecessary repetition and no dead code; the code is as simple as the requirement lets it be.
-- StoragePolicySim/Simulation.lean:54 · In `stepHour`, `freeRoomKwh` is not the free room of the battery. The free room is `capacityKwh - socKwh`. The value is that room divided by `efficiency`: the charge before the loss that fills the room. A reader who takes the name at its word gets the limit wrong by 5%. Use a name such as `chargeToFillKwh`, or keep the free room in its own value and divide on line 55. · Remit rule: names tell what things are.
+none
 
 ### Changes since the earlier review
 
 ````
 diff --git a/StoragePolicySim/Simulation.lean b/StoragePolicySim/Simulation.lean
-index 37a119f..fb26bb3 100644
+index fb26bb3..e6544c2 100644
 --- a/StoragePolicySim/Simulation.lean
 +++ b/StoragePolicySim/Simulation.lean
-@@ -51,8 +51,8 @@ def stepHour (battery : Battery) (socKwh : Float) (strategy : Strategy) (hour :
-   let surplusKwh := pvKwh - directKwh
-   let shortfallKwh := loadKwh - directKwh
-   let request := strategy.decide hour surplusKwh shortfallKwh
--  let freeRoomKwh := (battery.capacityKwh - socKwh) / efficiency
--  let chargeKwh := limitTo request.chargeKwh surplusKwh (min battery.powerKw freeRoomKwh)
-+  let chargeToFillKwh := (battery.capacityKwh - socKwh) / efficiency
-+  let chargeKwh := limitTo request.chargeKwh surplusKwh (min battery.powerKw chargeToFillKwh)
-   let storedAfterChargeKwh := socKwh + chargeKwh * efficiency
-   let dischargeKwh := limitTo request.dischargeKwh shortfallKwh
-     (min battery.powerKw (storedAfterChargeKwh * efficiency))
-@@ -172,10 +172,10 @@ def simulate (site : Site) (battery : Battery) (strategy : Strategy) (seed days
-     let dayHours := scenarioHours.extract (24 * day) (24 * day + 24)
-     let flexKwh := strategy.placeFlex (dayHours.map (·.pvKwh)) (dayHours.map (·.flexKwh))
-     let month := monthOfDay (day % daysInYear)
--    if month != openMonth.month && openMonth.days > 0 then
-+    if month != openMonth.month then
-       months := months.push (openMonth.close socKwh)
-       openMonth := { month }
--    openMonth := { openMonth with month, days := openMonth.days + 1 }
-+    openMonth := { openMonth with days := openMonth.days + 1 }
-     for k in [0:dayHours.size] do
-       let hour := dayHours[k]!
-       let loadKwh := hour.baseLoadKwh + flexKwh[k]!
+@@ -44,7 +44,9 @@ private def limitTo (a b c : Float) : Float :=
+ /-- The flows of one hour. `socKwh` is the energy in the battery before the hour. The
+ battery takes what the strategy asks, up to the surplus, the power and the free room. The
+ battery gives what the strategy asks, up to the shortfall, the power and the stored energy.
+-The power limit applies to the energy in, and to the energy out after the loss. -/
++The power limit applies to the energy in, and to the energy out after the loss. The
++stored energy after the hour stays from 0 to the capacity, so that a rounding error of the
++floats cannot move it out of this range. -/
+ def stepHour (battery : Battery) (socKwh : Float) (strategy : Strategy) (hour : Nat)
+     (pvKwh loadKwh : Float) : Flow :=
+   let directKwh := min pvKwh loadKwh
+@@ -61,7 +63,7 @@ def stepHour (battery : Battery) (socKwh : Float) (strategy : Strategy) (hour :
+     exportKwh := surplusKwh - chargeKwh,
+     importKwh := shortfallKwh - dischargeKwh,
+     lossKwh := chargeKwh - chargeKwh * efficiency + takenOutKwh - dischargeKwh,
+-    socKwh := storedAfterChargeKwh - takenOutKwh }
++    socKwh := max 0 (min battery.capacityKwh (storedAfterChargeKwh - takenOutKwh)) }
+ 
+ /-- One hour of a run. -/
+ structure HourResult where
 ````
 
 # Remit: quality
@@ -708,10 +702,10 @@ port.
 ````
 diff --git a/StoragePolicySim/Simulation.lean b/StoragePolicySim/Simulation.lean
 new file mode 100644
-index 0000000..fb26bb3
+index 0000000..e6544c2
 --- /dev/null
 +++ b/StoragePolicySim/Simulation.lean
-@@ -0,0 +1,192 @@
+@@ -0,0 +1,194 @@
 +/-
 +The simulation: one strategy with a battery over a scenario, hour by hour. It gives the
 +energy flows of each hour, the totals of the run, and the totals of each month.
@@ -758,7 +752,9 @@ index 0000000..fb26bb3
 +/-- The flows of one hour. `socKwh` is the energy in the battery before the hour. The
 +battery takes what the strategy asks, up to the surplus, the power and the free room. The
 +battery gives what the strategy asks, up to the shortfall, the power and the stored energy.
-+The power limit applies to the energy in, and to the energy out after the loss. -/
++The power limit applies to the energy in, and to the energy out after the loss. The
++stored energy after the hour stays from 0 to the capacity, so that a rounding error of the
++floats cannot move it out of this range. -/
 +def stepHour (battery : Battery) (socKwh : Float) (strategy : Strategy) (hour : Nat)
 +    (pvKwh loadKwh : Float) : Flow :=
 +  let directKwh := min pvKwh loadKwh
@@ -775,7 +771,7 @@ index 0000000..fb26bb3
 +    exportKwh := surplusKwh - chargeKwh,
 +    importKwh := shortfallKwh - dischargeKwh,
 +    lossKwh := chargeKwh - chargeKwh * efficiency + takenOutKwh - dischargeKwh,
-+    socKwh := storedAfterChargeKwh - takenOutKwh }
++    socKwh := max 0 (min battery.capacityKwh (storedAfterChargeKwh - takenOutKwh)) }
 +
 +/-- One hour of a run. -/
 +structure HourResult where
@@ -955,7 +951,9 @@ private def limitTo (a b c : Float) : Float :=
 /-- The flows of one hour. `socKwh` is the energy in the battery before the hour. The
 battery takes what the strategy asks, up to the surplus, the power and the free room. The
 battery gives what the strategy asks, up to the shortfall, the power and the stored energy.
-The power limit applies to the energy in, and to the energy out after the loss. -/
+The power limit applies to the energy in, and to the energy out after the loss. The
+stored energy after the hour stays from 0 to the capacity, so that a rounding error of the
+floats cannot move it out of this range. -/
 def stepHour (battery : Battery) (socKwh : Float) (strategy : Strategy) (hour : Nat)
     (pvKwh loadKwh : Float) : Flow :=
   let directKwh := min pvKwh loadKwh
@@ -972,7 +970,7 @@ def stepHour (battery : Battery) (socKwh : Float) (strategy : Strategy) (hour : 
     exportKwh := surplusKwh - chargeKwh,
     importKwh := shortfallKwh - dischargeKwh,
     lossKwh := chargeKwh - chargeKwh * efficiency + takenOutKwh - dischargeKwh,
-    socKwh := storedAfterChargeKwh - takenOutKwh }
+    socKwh := max 0 (min battery.capacityKwh (storedAfterChargeKwh - takenOutKwh)) }
 
 /-- One hour of a run. -/
 structure HourResult where

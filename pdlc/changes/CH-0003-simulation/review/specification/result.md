@@ -1,20 +1,16 @@
-Result: pass
+Result: fail
 
 Remit: specification
 
-Problems: none
+Problems:
+- StoragePolicySim/Simulation.lean:48 · The new descriptive sentence in the doc comment of `stepHour` has 27 words: "The stored energy after the hour stays from 0 to the capacity, so that a rounding error of the floats cannot move it out of this range." · DES-writing-style rule 6.3 (a maximum of 25 words in each descriptive sentence). A possible fix is two sentences: "The stored energy after the hour stays from 0 to the capacity. Thus, a rounding error of the floats cannot move the stored energy out of this range."
 
 Follow-ups: none
 
 Notes:
-- This review is a re-review. The earlier review at 707f29d2c925 found no problems. Thus, this review judges only the diff since that review.
-- StoragePolicySim/Simulation.lean:53-54 · The diff renames `freeRoomKwh` to `chargeToFillKwh`. The behaviour does not change. CAP-simulation.R1 (energy flows of an hour) still holds: the charge stays within the request, the surplus, the power and the free room. The doc comment of `stepHour` still says "the free room". This wording is correct, because the limit is still the free room of the battery.
-- StoragePolicySim/Simulation.lean:174-178 · The diff removes the `openMonth.days > 0` guard and the `month` update in the `with` expression. The month logic still meets CAP-simulation.R4 (monthly totals):
-  - The first day of each run is day 0 of the year, and day 0 is January. `openMonth` starts as January. Thus, the first day never closes an empty month, and the removed guard was never necessary.
-  - After a month change, `openMonth` is `{ month }`. Thus, `openMonth.month` already holds the month of the day, and the removed `month` field in the `with` expression was not necessary.
-  - 365 days give 12 months with 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30 and 31 days.
-  - 400 days give 14 months. Day 365 closes December and opens January. Days 396 to 399 give February with 4 days.
-  - 10 days give one month, January with 10 days.
-  - 0 days give no months, because the final `openMonth.days > 0` guard stays.
-- pdlc/changes/CH-0003-simulation/change.md:179 · The new line of the progress log obeys DES-writing-style (how pdlc writes). "went back to build" is a literal movement to the build stage, not an idiomatic phrasal verb. Thus, the line does not break rule 9.3 (no phrasal verbs). The writing check found no findings on the changed lines.
-- The diff changes only `StoragePolicySim/Simulation.lean` and the change spec. `StoragePolicySim/Simulation.lean` is the one entry under "Files".
+- This review is a re-review. The earlier review found no problems. Thus, this review judges only the diff since 879c56afeef0 (the earlier review).
+- The changed code line limits `socKwh` (the stored energy after the hour) to the range from 0 to `battery.capacityKwh`. This limit is not new behaviour. CAP-simulation.R2 (battery limits) says that the battery never goes past its capacity, and its second acceptance line asks for 0 to 5 kWh in each hour. The limit breaks no acceptance line.
+- The limit removes or adds only a rounding error of the floats. The energy balance of CAP-simulation.R2 has a tolerance of 0.01 kWh, so the limit cannot break that balance line. The `lossKwh` field does not include the removed amount.
+- With a battery of 0 kWh, the limit gives 0 kWh. Thus, the CAP-simulation.R2 line that compares `greedy` and `none` with a battery of 0 kWh still holds.
+- The writing check in the packet covered only `change.md` and `CAP-simulation.md`, and it found nothing. The writing check did not cover the code comments. The problem above comes from my own reading of the changed comment.
+- The changed comment obeys the local-references rule. In the comment, "it" refers to "the stored energy" in the same sentence.
