@@ -50,11 +50,11 @@ the tank and the surplus of that hour.
   - errors: none
 - `defaultPlan : PlanParams` · constant · `StoragePolicySim/Policy.lean` · proposed
   - in: not applicable
-  - out: a target of 9.0 kWh, a minimum forecast of 0.5 kWh, and discharge from 17:00
+  - out: a target of 10.5 kWh (a full tank), a minimum forecast of 0.5 kWh, and discharge from 17:00
   - errors: none
 - `defaultDynamic : DynamicParams` · constant · `StoragePolicySim/Policy.lean` · proposed
   - in: not applicable
-  - out: a low level of 4.0 kWh, a target of 9.0 kWh, and discharge from 17:00
+  - out: a low level of 5.25 kWh, a target of 10.5 kWh (a full tank), and discharge from 17:00
   - errors: none
 - `staticProfile (params : StaticParams) : Array Action` · function · `StoragePolicySim/Policy.lean` · proposed
   - in: the parameters of a static policy
@@ -108,8 +108,8 @@ until the need is met. A tie goes to the earlier hour (assumed). If the hours ca
 the need, the rest of the need stays unplanned. The battery rules are those of R1, with
 `dischargeFrom` of the plan.
 
-In these lines, the tank is the default tank and the parameters are `defaultPlan`, unless the
-line says otherwise.
+In these lines, the tank is the default tank and the parameters are `defaultPlan` with a target
+of 9.0 kWh, unless the line says otherwise.
 
 - Given a forecast of 1.0, 2.0, 3.5, 3.0, 4.0 and 1.5 kWh in hours 9 to 14 and 0 kWh in the other hours, 4.0 kWh in the tank and an expected draw of 6.0 kWh, when the day is planned, then hours 10, 11, 12 and 13 ask for 2.0, 3.0, 3.0 and 3.0 kWh. The other hours ask for 0 kWh.
 - Given the same forecast, 9.0 kWh in the tank and an expected draw of 0.5 kWh, when the day is planned, then hour 13 asks for 0.5 kWh. The other hours ask for 0 kWh.
@@ -132,8 +132,8 @@ energy that the tank lacks, the tank asks for the smaller of the element power a
 lack. In every other case the tank asks for 0 kWh. The battery rules are those of R1, with
 `dischargeFrom` of the policy. The surplus is 0 or more (assumed).
 
-In these lines, the tank is the default tank and the parameters are `defaultDynamic`, unless
-the line says otherwise.
+In these lines, the tank is the default tank and the parameters are `defaultDynamic` with a low
+level of 4.0 kWh and a target of 9.0 kWh, unless the line says otherwise.
 
 - Given a surplus of 2.0 kWh and 5.0 kWh in the tank, when the hour is decided, then the tank asks for 2.0 kWh.
 - Given a surplus of 5.0 kWh and 5.0 kWh in the tank, when the hour is decided, then the tank asks for 3.0 kWh.
@@ -150,10 +150,11 @@ the line says otherwise.
 
 Status: ready · Intents: IN-0008
 
-The defaults give a sensible start for a home with the default tank (assumed). A policy has a
-name that a command can print.
+The defaults give a sensible start for a home with the default tank (assumed). The target is a
+full tank, because the tank must be full once a day for the legionella guard, and the sun is
+cheaper than the grid for that heating (assumed). A policy has a name that a command can print.
 
 - Given `defaultStatic`, when it is read, then the heating starts at 10, lasts 4 hours, discharge starts at 17, and the element is 3.0 kW.
-- Given `defaultPlan`, when it is read, then the target is 9.0 kWh, the minimum forecast is 0.5 kWh, and discharge starts at 17.
-- Given `defaultDynamic`, when it is read, then the low level is 4.0 kWh, the target is 9.0 kWh, and discharge starts at 17.
+- Given `defaultPlan`, when it is read, then the target is 10.5 kWh, the minimum forecast is 0.5 kWh, and discharge starts at 17.
+- Given `defaultDynamic`, when it is read, then the low level is 5.25 kWh, the target is 10.5 kWh, and discharge starts at 17.
 - Given a static, a precomputed and a dynamic policy, when the names are read, then they are `static`, `precomputed` and `dynamic`.

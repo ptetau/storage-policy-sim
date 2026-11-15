@@ -12,8 +12,8 @@ option is a fair test.
 
 They also plan the daily profile of a hot-water tank and a battery. They see the simulated
 Solcast forecast of a fetch with `sim forecast`. They run one policy with `sim policy run`, and
-compare a thermostat-only baseline with the static, the precomputed and the dynamic policy
-with `sim policy compare`. They test a policy over many seeds with `sim policy robust`, and
+compare a thermostat-only baseline with the static, the precomputed and the dynamic policy,
+and the precomputed policy with a perfect forecast, with `sim policy compare`. They test a policy over many seeds with `sim policy robust`, and
 search for the best static profile with `sim policy tune`.
 
 ## Relies on
@@ -58,7 +58,7 @@ search for the best static profile with `sim policy tune`.
     - `UNKNOWN_POLICY` · `error: UNKNOWN_POLICY: <name> (static, precomputed, dynamic)` · exit 2 · stderr
 - `sim policy compare [policy options]` · command · `Main.lean` · proposed
   - in: the options, each with one value
-  - out: on standard output, the header `policy self-consumption-% self-sufficiency-% import-kWh export-kWh backstop-kWh`, and one row for each of `thermostat`, `static`, `precomputed` and `dynamic`, in this order. The exit code is 0.
+  - out: on standard output, the header `policy self-consumption-% self-sufficiency-% import-kWh export-kWh backstop-kWh`, and one row for each of `thermostat`, `static`, `precomputed`, `dynamic` and `perfect-forecast`, in this order. The exit code is 0.
   - errors:
     - `UNKNOWN_OPTION` · `error: UNKNOWN_OPTION: <word>` · exit 2 · stderr
     - `MISSING_VALUE` · `error: MISSING_VALUE: <option>` · exit 2 · stderr
@@ -66,7 +66,7 @@ search for the best static profile with `sim policy tune`.
     - `OUT_OF_RANGE` · `error: OUT_OF_RANGE: <option> <value> (<lowest> to <highest>)` · exit 2 · stderr
 - `sim policy robust [--seeds N] [policy options]` · command · `Main.lean` · proposed
   - in: the options, each with one value
-  - out: on standard output, the header `policy mean-self-consumption-% worst-self-consumption-% mean-self-sufficiency-% mean-export-kWh mean-backstop-kWh unmet-kWh cold-hours safe`, and one row for each of `thermostat`, `static`, `precomputed` and `dynamic`, in this order. The exit code is 0.
+  - out: on standard output, the header `policy mean-self-consumption-% worst-self-consumption-% mean-self-sufficiency-% mean-export-kWh mean-backstop-kWh unmet-kWh cold-hours safe`, and one row for each of `thermostat`, `static`, `precomputed`, `dynamic` and `perfect-forecast`, in this order. The exit code is 0.
   - errors:
     - `UNKNOWN_OPTION` · `error: UNKNOWN_OPTION: <word>` · exit 2 · stderr
     - `MISSING_VALUE` · `error: MISSING_VALUE: <option>` · exit 2 · stderr
@@ -257,18 +257,19 @@ The options are those of `sim run` except `--strategy` and `--monthly`, and thes
 defaults are those of CAP-homesim (home simulation) and CAP-policy (daily-profile policies):
 
 - `--policy`: `static`, `precomputed` or `dynamic`. Default `static`.
-- `--tank` (kWh), `--element` (kW), `--floor` (kWh) and `--draw` (kWh of hot water each day): 10.5, 3.0, 3.0 and 6.0.
+- `--tank` (kWh), `--element` (kW), `--cut-in` (kWh, the level below which the thermostat cuts in), `--floor` (kWh, the level below which the tank counts as cold) and `--draw` (kWh of hot water each day): 10.5, 3.0, 5.25, 2.1 and 6.0.
+- `--draw-cv` (the spread of the draw from day to day): 0.25.
 - `--fetches` and `--forecast-error`: 10 and 1.
 - `--heat-start`, `--heat-hours` and `--discharge-from` of the static policy: 10, 4 and 17.
-- `--target` (kWh) and `--min-solar` (kWh) of the precomputed policy: 9.0 and 0.5.
-- `--low` (kWh) of the dynamic policy: 4.0. The precomputed policy and the dynamic policy also use `--discharge-from`, and the dynamic policy also uses `--target`.
+- `--target` (kWh) and `--min-solar` (kWh) of the precomputed policy: 10.5 and 0.5.
+- `--low` (kWh) of the dynamic policy: 5.25. The precomputed policy and the dynamic policy also use `--discharge-from`, and the dynamic policy also uses `--target`.
 
 - Given no options, when the person runs `sim policy run`, then it prints the 13 lines in order and exits with 0.
 - Given no options, when the person runs `sim policy run`, then the first three lines are `policy            static`, `days              365` and `seed              1`.
 - Given `--policy dynamic --days 30 --lat 45 --seed 9`, when the person runs `sim policy run`, then the lines show `dynamic`, 30 days and seed 9. The values equal the totals of CAP-homesim (home simulation) for these options.
 - Given `--policy precomputed --target 8 --min-solar 1`, when the person runs `sim policy run`, then the values equal the totals of CAP-homesim for the precomputed policy with this target and this minimum.
 - Given `--heat-hours 0`, when the person runs `sim policy run`, then the `heating` line is `heating           0.0 kWh` and the `backstop` value is more than 0.0 kWh.
-- Given `--tank 0`, when the person runs `sim policy run`, then the `unmet-hot-water` value is 2190.0 kWh, within 0.1 kWh, and the `heating` and `backstop` values are 0.0 kWh.
+- Given `--tank 0 --draw-cv 0`, when the person runs `sim policy run`, then the `unmet-hot-water` value is 2190.0 kWh, within 0.1 kWh, and the `heating` and `backstop` values are 0.0 kWh.
 - Given `--element 0.2 --heat-hours 0 --days 90`, when the person runs `sim policy run`, then the `unmet-hot-water` value is more than 0.0 kWh and the `cold-hours` value is more than 0.
 - Given no options, when the person runs `sim policy run`, then the `unmet-hot-water` line is `unmet-hot-water   0.0 kWh` and the `cold-hours` line is `cold-hours        0`.
 - Given `--seed 5`, when the person runs `sim policy run` two times, then the two outputs are the same.
@@ -280,17 +281,21 @@ defaults are those of CAP-homesim (home simulation) and CAP-policy (daily-profil
 
 Status: ready · Intents: IN-0008
 
-`sim policy compare` runs four policies on the same weather, and prints one row for each. The
+`sim policy compare` runs five policies on the same weather, and prints one row for each. The
 `thermostat` policy is the static policy with 0 heating hours, so the tank gets only the
-backstop heating. The other rows are the static, the precomputed and the dynamic policy. The
+backstop heating of the thermostat. The next rows are the static, the precomputed and the
+dynamic policy. The `perfect-forecast` row is the precomputed policy with a forecast error of
+0, so that it knows the sun of the day. It shows what a better forecast can gain. The
 header, which is a guess (assumed), is `policy self-consumption-% self-sufficiency-% import-kWh
 export-kWh backstop-kWh`. The columns align by spaces. The command takes the options of `sim policy run`
 except `--policy` and `--seeds`.
 
-- Given no options, when the person runs `sim policy compare`, then it prints the header and the rows `thermostat`, `static`, `precomputed` and `dynamic`, in this order, and exits with 0.
+- Given no options, when the person runs `sim policy compare`, then it prints the header and the rows `thermostat`, `static`, `precomputed`, `dynamic` and `perfect-forecast`, in this order, and exits with 0.
 - Given `--seed 9 --lat 45 --days 90`, when the person runs `sim policy compare`, then each row shows the values of CAP-homesim (home simulation) for its policy and these options, with one decimal.
 - Given `--seed 9 --lat 45`, when the person runs `sim policy compare`, then the `static` row shows the same five values as `sim policy run --seed 9 --lat 45`.
 - Given `--heat-hours 0`, when the person runs `sim policy compare`, then the `static` row shows the same five values as the `thermostat` row.
+- Given `--forecast-error 0`, when the person runs `sim policy compare`, then the `perfect-forecast` row shows the same five values as the `precomputed` row.
+- Given `--seed 9 --lat 45 --days 90`, when the person runs `sim policy compare`, then the `perfect-forecast` row shows the values of CAP-homesim for the precomputed policy with an error scale of 0.
 - Given no options, when the person runs `sim policy compare`, then the `static` self-consumption is more than the `thermostat` self-consumption, and so is the `dynamic` self-consumption.
 - Given `--policy static`, when the person runs `sim policy compare`, then stderr is `error: UNKNOWN_OPTION: --policy`. The exit code is 2. `--seeds 3` gives `error: UNKNOWN_OPTION: --seeds`.
 
@@ -298,14 +303,14 @@ except `--policy` and `--seeds`.
 
 Status: ready · Intents: IN-0008
 
-`sim policy robust` evaluates the four policies of R8 over many weather seeds, from `--seed`,
+`sim policy robust` evaluates the five policies of R8 over many weather seeds, from `--seed`,
 and prints one row for each. The header is `policy mean-self-consumption-%
 worst-self-consumption-% mean-self-sufficiency-% mean-export-kWh mean-backstop-kWh unmet-kWh
 cold-hours safe` (assumed). `unmet-kWh` is the total unmet draw. `safe` is `yes` when no seed has an
 unmet draw and `cold-hours` is 0, and else `no`. `--seeds` is the count of seeds, a whole number
 from 1 to 100, with the default 10 (assumed). The command takes the options of `sim policy compare` and `--seeds`.
 
-- Given no options, when the person runs `sim policy robust`, then it prints the header and the rows `thermostat`, `static`, `precomputed` and `dynamic`, in this order, and exits with 0.
+- Given no options, when the person runs `sim policy robust`, then it prints the header and the rows `thermostat`, `static`, `precomputed`, `dynamic` and `perfect-forecast`, in this order, and exits with 0.
 - Given no options, when the person runs `sim policy robust`, then each row shows the values of CAP-homesim (home simulation) for the evaluation over the seeds 1 to 10, with one decimal.
 - Given `--seeds 1 --seed 4`, when the person runs `sim policy robust`, then the mean and the worst self-consumption of each row are the self-consumption of the same row of `sim policy compare --seed 4`.
 - Given no options, when the person runs `sim policy robust`, then the worst self-consumption of each row is not more than its mean.
@@ -330,7 +335,7 @@ robust` except `--heat-start`, `--heat-hours` and `--discharge-from`, which the 
 - Given `--seeds 2 --days 30`, when the person runs `sim policy tune`, then `heat-start` is from 6 to 16, `heat-hours` is from 1 to 8, and `discharge-from` is from 15 to 22.
 - Given `--seeds 2 --days 30`, when the person runs `sim policy tune`, then the profile equals the best profile of CAP-homesim (home simulation) for these options.
 - Given `--seeds 2 --days 30`, when the person runs `sim policy tune`, then the `static` row equals the `static` row of `sim policy robust` with the same options and the profile as `--heat-start`, `--heat-hours` and `--discharge-from`.
-- Given `--seeds 2 --days 30`, when the person runs `sim policy tune`, then the `thermostat`, `precomputed` and `dynamic` rows equal the same rows of `sim policy robust` with the same options.
+- Given `--seeds 2 --days 30`, when the person runs `sim policy tune`, then the `thermostat`, `precomputed`, `dynamic` and `perfect-forecast` rows equal the same rows of `sim policy robust` with the same options.
 - Given `--seeds 2 --days 30` two times, when the person runs `sim policy tune`, then the two outputs are the same.
 - Given `--heat-start 10`, when the person runs `sim policy tune`, then stderr is `error: UNKNOWN_OPTION: --heat-start`. The exit code is 2. `--heat-hours 4` and `--discharge-from 17` give `UNKNOWN_OPTION` too.
 - Given `--seeds 0`, when the person runs `sim policy tune`, then stderr is `error: OUT_OF_RANGE: --seeds 0 (1 to 100)`. The exit code is 2.
@@ -348,8 +353,10 @@ ranges of the policy options are these (assumed):
 |---|---|---|---|
 | `--tank` | 0 | 50 | no |
 | `--element` | 0 | 20 | no |
+| `--cut-in` | 0 | 50 | no |
 | `--floor` | 0 | 50 | no |
 | `--draw` | 0 | 100 | no |
+| `--draw-cv` | 0 | 1 | no |
 | `--fetches` | 1 | 10 | yes |
 | `--forecast-error` | 0 | 5 | no |
 | `--heat-start` | 0 | 23 | yes |
@@ -361,9 +368,11 @@ ranges of the policy options are these (assumed):
 
 - Given `--tank 0` and `--tank 50`, when the person runs `sim policy run`, then each exits with 0. `--tank 50.1` gives `error: OUT_OF_RANGE: --tank 50.1 (0 to 50)` and exit code 2.
 - Given `--element 0` and `--element 20`, when the person runs `sim policy run`, then each exits with 0. `--element 20.1` gives `error: OUT_OF_RANGE: --element 20.1 (0 to 20)` and exit code 2.
+- Given `--cut-in 0` and `--cut-in 50`, when the person runs `sim policy run`, then each exits with 0. `--cut-in 50.1` gives `error: OUT_OF_RANGE: --cut-in 50.1 (0 to 50)` and exit code 2.
 - Given `--floor 0` and `--floor 50`, when the person runs `sim policy run`, then each exits with 0. `--floor 50.1` gives `error: OUT_OF_RANGE: --floor 50.1 (0 to 50)` and exit code 2.
 - Given `--draw 0` and `--draw 100`, when the person runs `sim policy run`, then each exits with 0. `--draw 100.1` gives `error: OUT_OF_RANGE: --draw 100.1 (0 to 100)` and exit code 2.
 - Given `--fetches 1` and `--fetches 10`, when the person runs `sim policy run --policy precomputed`, then each exits with 0. `--fetches 0` gives `error: OUT_OF_RANGE: --fetches 0 (1 to 10)` and `--fetches 11` gives `error: OUT_OF_RANGE: --fetches 11 (1 to 10)`. The exit code is 2.
+- Given `--draw-cv 0` and `--draw-cv 1`, when the person runs `sim policy run`, then each exits with 0. `--draw-cv 1.1` gives `error: OUT_OF_RANGE: --draw-cv 1.1 (0 to 1)` and exit code 2.
 - Given `--forecast-error 0` and `--forecast-error 5`, when the person runs `sim policy run`, then each exits with 0. `--forecast-error 5.1` gives `error: OUT_OF_RANGE: --forecast-error 5.1 (0 to 5)` and exit code 2.
 - Given `--heat-start 0` and `--heat-start 23`, when the person runs `sim policy run`, then each exits with 0. `--heat-start 24` gives `error: OUT_OF_RANGE: --heat-start 24 (0 to 23)` and exit code 2.
 - Given `--heat-hours 0` and `--heat-hours 24`, when the person runs `sim policy run`, then each exits with 0. `--heat-hours 25` gives `error: OUT_OF_RANGE: --heat-hours 25 (0 to 24)` and exit code 2.
@@ -372,7 +381,7 @@ ranges of the policy options are these (assumed):
 - Given `--min-solar 0` and `--min-solar 10`, when the person runs `sim policy run --policy precomputed`, then each exits with 0. `--min-solar 10.1` gives `error: OUT_OF_RANGE: --min-solar 10.1 (0 to 10)` and exit code 2.
 - Given `--low 0` and `--low 50`, when the person runs `sim policy run --policy dynamic`, then each exits with 0. `--low 50.1` gives `error: OUT_OF_RANGE: --low 50.1 (0 to 50)` and exit code 2.
 - Given `--heat-hours 2.5`, when the person runs `sim policy run`, then stderr is `error: BAD_NUMBER: --heat-hours 2.5`. The exit code is 2. `--fetches 2.5`, `--heat-start 1.5` and `--discharge-from 17.5` give the same error with their own option and value.
-- Given `--tank abc`, when the person runs `sim policy run`, then stderr is `error: BAD_NUMBER: --tank abc`. The exit code is 2. `--element 1e3`, `--floor .5` and `--draw 5kW` give `BAD_NUMBER` with their own option and value.
+- Given `--tank abc`, when the person runs `sim policy run`, then stderr is `error: BAD_NUMBER: --tank abc`. The exit code is 2. `--element 1e3`, `--floor .5`, `--cut-in 3,5`, `--draw-cv x` and `--draw 5kW` give `BAD_NUMBER` with their own option and value.
 - Given `--tank` with no value, when the person runs `sim policy run`, then stderr is `error: MISSING_VALUE: --tank`. The exit code is 2.
 - Given `--tank -1`, when the person runs `sim policy run`, then stderr is `error: OUT_OF_RANGE: --tank -1 (0 to 50)`. The exit code is 2.
 - Given `--tank 5 --tank 12`, when the person runs `sim policy run`, then the result equals the result of `--tank 12`.

@@ -20,11 +20,11 @@ not one lucky year. A caller can search for the best static profile.
 
 - `HomeSetup` · type · `StoragePolicySim/HomeSim.lean` · proposed
   - in: not applicable
-  - out: a structure with `Repr` and `Inhabited`. The fields are `site : Site`, `battery : Battery`, `tank : TankConfig`, `drawKwhPerDay : Float` (the hot water that the household draws in a day), `fetchesPerDay : Nat` and `errorScale : Float` (both for the forecast).
+  - out: a structure with `Repr` and `Inhabited`. The fields are `site : Site`, `battery : Battery`, `tank : TankConfig`, `drawKwhPerDay : Float` (the hot water that the household draws in a day), `drawCv : Float` (the spread of that draw from day to day), `fetchesPerDay : Nat` and `errorScale : Float` (both for the forecast).
   - errors: none
 - `defaultHome : HomeSetup` · constant · `StoragePolicySim/HomeSim.lean` · proposed
   - in: not applicable
-  - out: latitude -41.3, 5 kW of panels, 20 kWh of daily load with 3 kWh flexible, a battery of 10 kWh with 5 kW, `defaultTank`, 6.0 kWh of hot water each day, 10 fetches each day, and an error scale of 1.0
+  - out: latitude -41.3, 5 kW of panels, 20 kWh of daily load with 3 kWh flexible, a battery of 10 kWh with 5 kW, `defaultTank`, 6.0 kWh of hot water each day with a spread of 0.25, 10 fetches each day, and an error scale of 1.0
   - errors: none
 - `HomeHour` · type · `StoragePolicySim/HomeSim.lean` · proposed
   - in: not applicable
@@ -71,14 +71,17 @@ not one lucky year. A caller can search for the best static profile.
 
 Status: ready · Intents: IN-0008
 
-The run starts with a full tank and an empty battery (assumed). In each hour, the policy gives
-an action. The tank takes the draw, the heating and the backstop by CAP-hotwater (hot-water
-tank). The heating and the backstop heating join the house load. The battery then runs the
-hour with its gate, by `stepHourGated`.
+The run starts with a full tank (`startState`) and an empty battery (assumed). In each hour,
+the policy gives an action. The tank takes the draw, the heating and the backstop by
+CAP-hotwater (hot-water tank), with the hour of the day. The heating and the backstop heating
+join the house load. The battery then runs the hour with its gate, by `stepHourGated`. The
+draw of an hour is the `drawKwh` of the home for its day and hour, times the `drawFactor` of
+the seed, the day and the spread `drawCv`.
 
 A static policy uses its profile of the hour. A precomputed policy makes its plan at hour 0
 of each day, from the forecast of the fetch at hour 0, the energy in the tank, and the draw
-that the day is expected to have (assumed). A dynamic policy sees the tank, the battery, the
+that the day is expected to have, which is the sum of the `drawKwh` of its 24 hours, without
+the factor of the day (assumed). A dynamic policy sees the tank, the battery, the
 surplus of the hour (the solar energy less the house load, and never less than 0), and the
 forecast for the rest of the day from the latest fetch. The forecast is made only for a policy that reads it (assumed).
 
@@ -89,9 +92,11 @@ tolerance is 0.000000001 kWh.
 - Given the default run, when it ends, then it has 8760 hours, in order of day, then hour.
 - Given the default run, when each hour is read, then its solar energy and its house load are those of the scenario hour for the same site, seed and days.
 - Given the default run, when each hour is read, then `askKwh` is the heating of its hour in the static profile, and the battery gate is the gate of that hour.
-- Given the default run, when each hour is read, then its tank energy is the `tankStep` result for the tank energy of the hour before, its request and its draw. The first hour starts with 10.5 kWh.
+- Given the default run, when each hour is read, then its tank energy is the `tankStep` result for the tank state of the hour before, its hour of the day, its request and its draw. The first hour starts with `startState` of the tank.
 - Given the default run, when each hour is read, then its flow is the `stepHourGated` flow for the battery energy of the hour before, its gate, its solar energy, and its house load plus its heating plus its backstop heating. The first hour starts with 0 kWh.
-- Given the default run, when each hour is read, then its draw is the `drawKwh` of the home for its day and hour.
+- Given the default run, when each hour is read, then its draw is the `drawKwh` of the home for its day and hour, times the `drawFactor` for seed 7, its day and the spread 0.25.
+- Given the default run with a spread of 0, when each hour is read, then its draw is the `drawKwh` of the home for its day and hour.
+- Given the precomputed policy with `defaultPlan`, 1 fetch each day and seed 7, when each hour of day `d` is read, then its `askKwh` is the `heatKwh` of that hour in `planDay`. The call uses the first 24 values of `hourlyEnergy` of the fetch at hour `24 × d`, the tank energy after hour 23 of day `d - 1` (10.5 kWh for day 0), and the sum of `drawKwh` for the 24 hours of day `d`, without the factor of the day.
 - Given 0 days, when the run ends, then it has no hours.
 
 ### CAP-homesim.R2 · No cold tank
@@ -99,17 +104,21 @@ tolerance is 0.000000001 kWh.
 Status: ready · Intents: IN-0008
 
 The thermostat of the tank keeps the hot water ready for every policy. Thus, no hour has an
-unmet draw, and the tank never ends an hour below its comfort floor (assumed). The backstop
-heating is the price of a policy that lets the tank fall.
+unmet draw, the tank never ends an hour below its floor, and the tank is full at least once
+each day (assumed). The backstop heating is the price of a policy that lets the tank fall.
+The days are different, because the draw changes from day to day. Thus, the lines hold also
+with the spread of 0.25 of the default home, and with a spread of 0.5.
 
 In these lines, the home is `defaultHome`, the run is 365 days, and the tolerance is 0.000000001
 kWh. A policy is the static policy with `defaultStatic`, the precomputed policy with `defaultPlan`,
 or the dynamic policy with `defaultDynamic`.
 
 - Given each policy and the seeds 1 to 5, when the run ends, then the unmet draw is 0 kWh in each hour.
-- Given each policy and the seeds 1 to 5, when the run ends, then the tank holds at least 3.0 kWh after each hour, and `coldHours` is 0.
+- Given each policy and the seeds 1 to 5, when the run ends, then the tank holds at least 2.1 kWh after each hour, and `coldHours` is 0.
+- Given each policy and the seeds 1 to 5, when the run ends, then each day has an hour after which the tank is full, within 0.000000001 kWh.
+- Given each policy, a spread of 0.5 and the seeds 1 to 5, when the run ends, then the unmet draw is 0 kWh in each hour and `coldHours` is 0.
 - Given a static policy with 0 heating hours and seed 7, when the run ends, then the backstop heating is more than 500 kWh and the unmet draw is 0 kWh.
-- Given a home with an element of 0.2 kW, a floor of 3.0 kWh, and the static policy with 0 heating hours, when the run ends, then the unmet draw is more than 0 kWh and `coldHours` is more than 0.
+- Given a home with an element of 0.2 kW, and the static policy with 0 heating hours, when the run ends, then the unmet draw is more than 0 kWh and `coldHours` is more than 0.
 
 ### CAP-homesim.R3 · Totals and ratios
 
@@ -128,7 +137,8 @@ In these lines, the home is `defaultHome`, the policy is the static policy with
 - Given 365 days, when the run ends, then the energy in the full tank at the start plus the heating plus the backstop heating equals the served draw plus the tank loss plus the final tank energy.
 - Given 365 days, when the run ends, then `unmetKwh` plus the served draw equals `drawKwh`. The draw is the sum of the hours.
 - Given 365 days, when the run ends, then the self-consumption is 100 × (solar - export) / solar and the self-sufficiency is 100 × (load - import) / load.
-- Given 365 days, when the run ends, then the draw total is 2190.0 kWh, within 0.1 kWh.
+- Given 365 days and a spread of 0, when the run ends, then the draw total is 2190.0 kWh, within 0.1 kWh.
+- Given 365 days, a spread of 0.25 and each seed from 1 to 5, when the run ends, then the draw total is from 2060 to 2320 kWh.
 - Given 0 kW of panels and 365 days, when the run ends, then the self-consumption is 0%.
 - Given 0 days, when the run ends, then each total is 0 and each ratio is 0%.
 
@@ -146,7 +156,7 @@ otherwise. The tolerance of a solar energy against 0.5 kWh is 0.000001 kWh.
 
 - Given the static policy with `defaultStatic` and seed 7, when each hour is read, then `askKwh` is more than 0 kWh only in hours 10, 11, 12 and 13.
 - Given the precomputed policy with `defaultPlan`, an error scale of 0, 1 fetch each day and seed 7, when each hour is read, then `askKwh` is more than 0 kWh only in hours whose solar energy is at least 0.5 kWh.
-- Given the dynamic policy with `defaultDynamic` and seed 7, when each hour is read, then `askKwh` is more than 0 kWh only in an hour whose solar energy is more than its house load, or whose tank held less than 4.0 kWh before the hour.
+- Given the dynamic policy with `defaultDynamic` and seed 7, when each hour is read, then `askKwh` is more than 0 kWh only in an hour whose solar energy is more than its house load, or whose tank held less than 5.25 kWh before the hour.
 - Given the static policy with `defaultStatic` and the static policy with 0 heating hours, both with seed 7, when the runs end, then the first has a higher self-consumption.
 - Given the dynamic policy with `defaultDynamic` and the static policy with 0 heating hours, both with seed 7, when the runs end, then the dynamic policy has a higher self-consumption.
 - Given the same policy and seed twice, when the runs end, then the two runs have the same hours.

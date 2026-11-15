@@ -163,3 +163,30 @@ hours that is empty has no period in any fetch.
 - Given the same hours, when `forecastOf` runs for the fetch hour 8760, then it has no period.
 - Given no hours, when `forecastOf` runs for the fetch hour 0, then it has no period.
 - Given the same hours and seeds 7 and 8, when `forecastOf` runs for the fetch hour 4000 with the hours of each seed, then at least one estimate differs.
+
+### CAP-forecast.R7 · Shared error of a day
+
+Status: ready · Intents: IN-0008
+
+A forecast that is wrong about one hour of a day is often wrong about the other hours of that
+day, because one cloud front covers the whole day. Thus, the random number of R2 (forecast
+error) of a period has two parts: `sqrt(0.7) × d + sqrt(0.3) × e`, where `d` is a number from
+a normal curve for the day of the period, and `e` is a number from a normal curve for the
+period itself in the fetch (assumed). The number `d` depends only on the seed and the day of
+the run in which the period ends. Thus, two fetches of the same day share `d`. The sum of the
+two parts is still a number from a normal curve, so that the bands of R2 keep their meaning.
+
+The relative error of a sunny period is its estimate less its actual power, divided by the
+actual power and by the spread. For a sunny period in a fetch with the error scale 1, it is
+the random number of the period, except where the estimate is cut to the range of R2.
+
+In these lines, the site is at latitude 45 with 5 kW of panels. The seed is 7, the run is
+365 days, and the error scale is 1, unless the line says otherwise. A fetch at 00:00 is a
+fetch at an hour that is a multiple of 24. The periods that end at 11:30 and 13:30 are those
+whose end is 690 and 810 minutes into the day.
+
+- Given the fetches at 00:00 of the days 0 to 364, when the relative errors of the sunny periods that end at 11:30 and 13:30 of the same day are compared, then their correlation over the days that have both is from 0.55 to 0.85. Days where either estimate is cut to the range of R2 do not count.
+- Given the fetches at 00:00 of the days 0 to 364, when the relative errors of the sunny period that ends at 11:30 of a day and of the next day are compared, then their correlation is from -0.25 to 0.25.
+- Given the fetches at hour 0 and at hour 10 of each day from 0 to 364, when the relative errors of the sunny period that ends at 13:30 of that day are compared, then at least 62% of the days have the same sign in both fetches. Days with a relative error of 0 in either fetch do not count.
+- Given an error scale of 0, when a fetch at hour 0 is made, then each value of each period equals its actual power. The tolerance is 0.000001 kW.
+- Given a fetch at 00:00 of each day, when the sunny periods are compared, then 60% to 95% of them have the actual power in the band.

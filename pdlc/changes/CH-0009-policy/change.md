@@ -45,8 +45,8 @@ The library has three kinds of policy for the hot-water tank and the battery: a 
 
 ### CAP-policy.R4 · Defaults and names
 - Given `defaultStatic`, when it is read, then the heating starts at 10, lasts 4 hours, discharge starts at 17, and the element is 3.0 kW.
-- Given `defaultPlan`, when it is read, then the target is 9.0 kWh, the minimum forecast is 0.5 kWh, and discharge starts at 17.
-- Given `defaultDynamic`, when it is read, then the low level is 4.0 kWh, the target is 9.0 kWh, and discharge starts at 17.
+- Given `defaultPlan`, when it is read, then the target is 10.5 kWh, the minimum forecast is 0.5 kWh, and discharge starts at 17.
+- Given `defaultDynamic`, when it is read, then the low level is 5.25 kWh, the target is 10.5 kWh, and discharge starts at 17.
 - Given a static, a precomputed and a dynamic policy, when the names are read, then they are `static`, `precomputed` and `dynamic`.
 
 ## Relies on
@@ -93,11 +93,11 @@ The library has three kinds of policy for the hot-water tank and the battery: a 
   - errors: none
 - `defaultPlan : PlanParams` · constant · `StoragePolicySim/Policy.lean`
   - in: not applicable
-  - out: a target of 9.0 kWh, a minimum forecast of 0.5 kWh, and discharge from 17:00
+  - out: a target of 10.5 kWh (a full tank), a minimum forecast of 0.5 kWh, and discharge from 17:00
   - errors: none
 - `defaultDynamic : DynamicParams` · constant · `StoragePolicySim/Policy.lean`
   - in: not applicable
-  - out: a low level of 4.0 kWh, a target of 9.0 kWh, and discharge from 17:00
+  - out: a low level of 5.25 kWh, a target of 10.5 kWh (a full tank), and discharge from 17:00
   - errors: none
 - `staticProfile (params : StaticParams) : Array Action` · function · `StoragePolicySim/Policy.lean`
   - in: the parameters of a static policy
@@ -113,11 +113,11 @@ The library has three kinds of policy for the hot-water tank and the battery: a 
   - errors: none
 - `TankConfig` · type · `StoragePolicySim/HotWater.lean`
   - in: not applicable
-  - out: a structure with `Repr` and `Inhabited`. Each field is a `Float`: `capacityKwh`, `elementKw`, `lossPerHour` (the share of the stored energy that the tank loses in one hour) and `floorKwh` (the comfort floor).
+  - out: a structure with `Repr` and `Inhabited`. The fields `capacityKwh`, `elementKw`, `lossPerHour` (the share of the stored energy that the tank loses in one hour), `cutInKwh` (the level below which the thermostat cuts in) and `floorKwh` (the level below which the tank counts as cold) are each a `Float`. The field `guardHour : Nat` is the hour from which the tank must heat to full.
   - errors: none
 - `defaultTank : TankConfig` · constant · `StoragePolicySim/HotWater.lean`
   - in: not applicable
-  - out: a tank of 10.5 kWh with a 3.0 kW element, a loss of 0.004 each hour, and a floor of 3.0 kWh
+  - out: a tank of 10.5 kWh with a 3.0 kW element, a loss of 0.006 each hour, a cut-in of 5.25 kWh, a floor of 2.1 kWh, and a guard hour of 20
   - errors: none
 
 ### Test seams

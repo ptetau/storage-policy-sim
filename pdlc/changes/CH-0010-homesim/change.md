@@ -14,16 +14,20 @@ The library runs a policy over a home with panels, a battery and a hot-water tan
 - Given the default run, when it ends, then it has 8760 hours, in order of day, then hour.
 - Given the default run, when each hour is read, then its solar energy and its house load are those of the scenario hour for the same site, seed and days.
 - Given the default run, when each hour is read, then `askKwh` is the heating of its hour in the static profile, and the battery gate is the gate of that hour.
-- Given the default run, when each hour is read, then its tank energy is the `tankStep` result for the tank energy of the hour before, its request and its draw. The first hour starts with 10.5 kWh.
+- Given the default run, when each hour is read, then its tank energy is the `tankStep` result for the tank state of the hour before, its hour of the day, its request and its draw. The first hour starts with `startState` of the tank.
 - Given the default run, when each hour is read, then its flow is the `stepHourGated` flow for the battery energy of the hour before, its gate, its solar energy, and its house load plus its heating plus its backstop heating. The first hour starts with 0 kWh.
-- Given the default run, when each hour is read, then its draw is the `drawKwh` of the home for its day and hour.
+- Given the default run, when each hour is read, then its draw is the `drawKwh` of the home for its day and hour, times the `drawFactor` for seed 7, its day and the spread 0.25.
+- Given the default run with a spread of 0, when each hour is read, then its draw is the `drawKwh` of the home for its day and hour.
+- Given the precomputed policy with `defaultPlan`, 1 fetch each day and seed 7, when each hour of day `d` is read, then its `askKwh` is the `heatKwh` of that hour in `planDay`. The call uses the first 24 values of `hourlyEnergy` of the fetch at hour `24 × d`, the tank energy after hour 23 of day `d - 1` (10.5 kWh for day 0), and the sum of `drawKwh` for the 24 hours of day `d`, without the factor of the day.
 - Given 0 days, when the run ends, then it has no hours.
 
 ### CAP-homesim.R2 · No cold tank
 - Given each policy and the seeds 1 to 5, when the run ends, then the unmet draw is 0 kWh in each hour.
-- Given each policy and the seeds 1 to 5, when the run ends, then the tank holds at least 3.0 kWh after each hour, and `coldHours` is 0.
+- Given each policy and the seeds 1 to 5, when the run ends, then the tank holds at least 2.1 kWh after each hour, and `coldHours` is 0.
+- Given each policy and the seeds 1 to 5, when the run ends, then each day has an hour after which the tank is full, within 0.000000001 kWh.
+- Given each policy, a spread of 0.5 and the seeds 1 to 5, when the run ends, then the unmet draw is 0 kWh in each hour and `coldHours` is 0.
 - Given a static policy with 0 heating hours and seed 7, when the run ends, then the backstop heating is more than 500 kWh and the unmet draw is 0 kWh.
-- Given a home with an element of 0.2 kW, a floor of 3.0 kWh, and the static policy with 0 heating hours, when the run ends, then the unmet draw is more than 0 kWh and `coldHours` is more than 0.
+- Given a home with an element of 0.2 kW, and the static policy with 0 heating hours, when the run ends, then the unmet draw is more than 0 kWh and `coldHours` is more than 0.
 
 ### CAP-homesim.R3 · Totals and ratios
 - Given 365 days, when the run ends, then each total equals the sum of its hours.
@@ -31,14 +35,15 @@ The library runs a policy over a home with panels, a battery and a hot-water tan
 - Given 365 days, when the run ends, then the energy in the full tank at the start plus the heating plus the backstop heating equals the served draw plus the tank loss plus the final tank energy.
 - Given 365 days, when the run ends, then `unmetKwh` plus the served draw equals `drawKwh`. The draw is the sum of the hours.
 - Given 365 days, when the run ends, then the self-consumption is 100 × (solar - export) / solar and the self-sufficiency is 100 × (load - import) / load.
-- Given 365 days, when the run ends, then the draw total is 2190.0 kWh, within 0.1 kWh.
+- Given 365 days and a spread of 0, when the run ends, then the draw total is 2190.0 kWh, within 0.1 kWh.
+- Given 365 days, a spread of 0.25 and each seed from 1 to 5, when the run ends, then the draw total is from 2060 to 2320 kWh.
 - Given 0 kW of panels and 365 days, when the run ends, then the self-consumption is 0%.
 - Given 0 days, when the run ends, then each total is 0 and each ratio is 0%.
 
 ### CAP-homesim.R4 · Policies at work
 - Given the static policy with `defaultStatic` and seed 7, when each hour is read, then `askKwh` is more than 0 kWh only in hours 10, 11, 12 and 13.
 - Given the precomputed policy with `defaultPlan`, an error scale of 0, 1 fetch each day and seed 7, when each hour is read, then `askKwh` is more than 0 kWh only in hours whose solar energy is at least 0.5 kWh.
-- Given the dynamic policy with `defaultDynamic` and seed 7, when each hour is read, then `askKwh` is more than 0 kWh only in an hour whose solar energy is more than its house load, or whose tank held less than 4.0 kWh before the hour.
+- Given the dynamic policy with `defaultDynamic` and seed 7, when each hour is read, then `askKwh` is more than 0 kWh only in an hour whose solar energy is more than its house load, or whose tank held less than 5.25 kWh before the hour.
 - Given the static policy with `defaultStatic` and the static policy with 0 heating hours, both with seed 7, when the runs end, then the first has a higher self-consumption.
 - Given the dynamic policy with `defaultDynamic` and the static policy with 0 heating hours, both with seed 7, when the runs end, then the dynamic policy has a higher self-consumption.
 - Given the same policy and seed twice, when the runs end, then the two runs have the same hours.
@@ -77,11 +82,11 @@ The library runs a policy over a home with panels, a battery and a hot-water tan
 
 - `HomeSetup` · type · `StoragePolicySim/HomeSim.lean`
   - in: not applicable
-  - out: a structure with `Repr` and `Inhabited`. The fields are `site : Site`, `battery : Battery`, `tank : TankConfig`, `drawKwhPerDay : Float` (the hot water that the household draws in a day), `fetchesPerDay : Nat` and `errorScale : Float` (both for the forecast).
+  - out: a structure with `Repr` and `Inhabited`. The fields are `site : Site`, `battery : Battery`, `tank : TankConfig`, `drawKwhPerDay : Float` (the hot water that the household draws in a day), `drawCv : Float` (the spread of that draw from day to day), `fetchesPerDay : Nat` and `errorScale : Float` (both for the forecast).
   - errors: none
 - `defaultHome : HomeSetup` · constant · `StoragePolicySim/HomeSim.lean`
   - in: not applicable
-  - out: latitude -41.3, 5 kW of panels, 20 kWh of daily load with 3 kWh flexible, a battery of 10 kWh with 5 kW, `defaultTank`, 6.0 kWh of hot water each day, 10 fetches each day, and an error scale of 1.0
+  - out: latitude -41.3, 5 kW of panels, 20 kWh of daily load with 3 kWh flexible, a battery of 10 kWh with 5 kW, `defaultTank`, 6.0 kWh of hot water each day with a spread of 0.25, 10 fetches each day, and an error scale of 1.0
   - errors: none
 - `HomeHour` · type · `StoragePolicySim/HomeSim.lean`
   - in: not applicable
@@ -133,18 +138,26 @@ The library runs a policy over a home with panels, a battery and a hot-water tan
   - errors: none
 - `TankConfig` · type · `StoragePolicySim/HotWater.lean`
   - in: not applicable
-  - out: a structure with `Repr` and `Inhabited`. Each field is a `Float`: `capacityKwh`, `elementKw`, `lossPerHour` (the share of the stored energy that the tank loses in one hour) and `floorKwh` (the comfort floor).
+  - out: a structure with `Repr` and `Inhabited`. The fields `capacityKwh`, `elementKw`, `lossPerHour` (the share of the stored energy that the tank loses in one hour), `cutInKwh` (the level below which the thermostat cuts in) and `floorKwh` (the level below which the tank counts as cold) are each a `Float`. The field `guardHour : Nat` is the hour from which the tank must heat to full.
   - errors: none
 - `defaultTank : TankConfig` · constant · `StoragePolicySim/HotWater.lean`
   - in: not applicable
-  - out: a tank of 10.5 kWh with a 3.0 kW element, a loss of 0.004 each hour, and a floor of 3.0 kWh
+  - out: a tank of 10.5 kWh with a 3.0 kW element, a loss of 0.006 each hour, a cut-in of 5.25 kWh, a floor of 2.1 kWh, and a guard hour of 20
+  - errors: none
+- `TankState` · type · `StoragePolicySim/HotWater.lean`
+  - in: not applicable
+  - out: a structure with `Repr` and `Inhabited`. The fields are `energyKwh : Float` (the energy that the tank holds), `heating : Bool` (the thermostat is on), and `fullToday : Bool` (the tank has been full since hour 0 of the day).
+  - errors: none
+- `startState (cfg : TankConfig) : TankState` · function · `StoragePolicySim/HotWater.lean`
+  - in: a tank
+  - out: the state of a full tank, with the thermostat off and `fullToday` true
   - errors: none
 - `TankStep` · type · `StoragePolicySim/HotWater.lean`
   - in: not applicable
-  - out: a structure with `Repr` and `Inhabited`. Each field is a `Float` in kWh: `lossKwh`, `servedKwh`, `unmetKwh`, `heatKwh` (the heating that the policy asked for), `backstopKwh` and `energyKwh` (the energy that the tank holds after the hour).
+  - out: a structure with `Repr` and `Inhabited`. The fields `lossKwh`, `servedKwh`, `unmetKwh`, `heatKwh` (the heating that the policy asked for) and `backstopKwh` are each a `Float` in kWh. The field `state : TankState` is the state after the hour.
   - errors: none
-- `tankStep (cfg : TankConfig) (energyKwh requestKwh drawKwh : Float) : TankStep` · function · `StoragePolicySim/HotWater.lean`
-  - in: a tank, the energy that it holds, the heating that a policy asks for, and the hot water that the household draws in the hour
+- `tankStep (cfg : TankConfig) (state : TankState) (hour : Nat) (requestKwh drawKwh : Float) : TankStep` · function · `StoragePolicySim/HotWater.lean`
+  - in: a tank, its state, the hour of the day from 0 to 23, the heating that a policy asks for, and the hot water that the household draws in the hour
   - out: the result of the hour
   - errors: none
 - `drawKwh (dailyKwh latitude : Float) (dayOfYear hour : Nat) : Float` · function · `StoragePolicySim/HotWater.lean`
@@ -189,15 +202,19 @@ The library runs a policy over a home with panels, a battery and a hot-water tan
   - errors: none
 - `defaultPlan : PlanParams` · constant · `StoragePolicySim/Policy.lean`
   - in: not applicable
-  - out: a target of 9.0 kWh, a minimum forecast of 0.5 kWh, and discharge from 17:00
+  - out: a target of 10.5 kWh (a full tank), a minimum forecast of 0.5 kWh, and discharge from 17:00
   - errors: none
 - `defaultDynamic : DynamicParams` · constant · `StoragePolicySim/Policy.lean`
   - in: not applicable
-  - out: a low level of 4.0 kWh, a target of 9.0 kWh, and discharge from 17:00
+  - out: a low level of 5.25 kWh, a target of 10.5 kWh (a full tank), and discharge from 17:00
   - errors: none
 - `staticProfile (params : StaticParams) : Array Action` · function · `StoragePolicySim/Policy.lean`
   - in: the parameters of a static policy
   - out: 24 actions, one for each hour of the day
+  - errors: none
+- `drawFactor (seed day : Nat) (cv : Float) : Float` · function · `StoragePolicySim/HotWater.lean`
+  - in: a seed, the day of the run from 0, and the spread of the draw (the coefficient of variation)
+  - out: the factor that scales the draw of that day. It is more than 0.
   - errors: none
 
 ### Test seams
