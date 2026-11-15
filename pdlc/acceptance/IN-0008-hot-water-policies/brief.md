@@ -5,7 +5,7 @@ Write the acceptance checks of this intent, only in the file on its line `Accept
 This brief holds each input of the checks. Read another file only when this brief names
 it, for example an existing check file to match its style.
 
-Made at: 20ba7ba19eca219a9c8ac2e94c5f94ea20117446
+Made at: e251ac9fc2624bfe55206f34b62ed5cece85783c
 
 ## The intent
 
@@ -167,7 +167,7 @@ The library makes a simulated forecast from scenario hours that the caller built
 
 ### CAP-forecast.R7 · Shared error of a day
 - Given the fetches at 00:00 of the days 0 to 364, when the relative errors of the sunny periods that end at 11:30 and 13:30 of the same day are compared, then their correlation over the days that have both is from 0.55 to 0.85. Days where either estimate is cut to the range of R2 do not count.
-- Given the fetches at 00:00 of the days 0 to 364, when the relative errors of the sunny period that ends at 11:30 of a day and of the next day are compared, then their correlation is from -0.25 to 0.25.
+- Given the fetches at 00:00 of the days 0 to 364, when the relative errors of the sunny period that ends at 11:30 of a day and of the next day are compared, each from the fetch at 00:00 of its own day, then their correlation is from -0.25 to 0.25.
 - Given the fetches at hour 0 and at hour 10 of each day from 0 to 364, when the relative errors of the sunny period that ends at 13:30 of that day are compared, then at least 62% of the days have the same sign in both fetches. Days with a relative error of 0 in either fetch do not count.
 - Given an error scale of 0, when a fetch at hour 0 is made, then each value of each period equals its actual power. The tolerance is 0.000001 kW.
 - Given a fetch at 00:00 of each day, when the sunny periods are compared, then 60% to 95% of them have the actual power in the band.
@@ -212,7 +212,6 @@ The library makes a simulated forecast from scenario hours that the caller built
   - errors: none
 
 ### Test seams
-
 - `seed` · seam: randomness · `StoragePolicySim/Forecast.lean`
   - in: the `seed` argument of `forecast`. The same seed gives the same forecast.
   - errors: none
@@ -344,7 +343,7 @@ The library models an electric hot-water tank: heating limits, standby loss, the
   - errors: none
 - `TankStep` · type · `StoragePolicySim/HotWater.lean`
   - in: not applicable
-  - out: a structure with `Repr` and `Inhabited`. The fields `lossKwh`, `servedKwh`, `unmetKwh`, `heatKwh` (the heating that the policy asked for) and `backstopKwh` are each a `Float` in kWh. The field `state : TankState` is the state after the hour.
+  - out: a structure with `Repr` and `Inhabited`. The fields `lossKwh`, `servedKwh`, `unmetKwh`, `heatKwh` (the heating that the tank took for the policy) and `backstopKwh` are each a `Float` in kWh. The field `state : TankState` is the state after the hour.
   - errors: none
 - `tankStep (cfg : TankConfig) (state : TankState) (hour : Nat) (requestKwh drawKwh : Float) : TankStep` · function · `StoragePolicySim/HotWater.lean`
   - in: a tank, its state, the hour of the day from 0 to 23, the heating that a policy asks for, and the hot water that the household draws in the hour
@@ -360,7 +359,6 @@ The library models an electric hot-water tank: heating limits, standby loss, the
   - errors: none
 
 ### Test seams
-
 - `drawSeed` · seam: randomness · `StoragePolicySim/HotWater.lean`
   - in: the `seed` argument of `drawFactor`. The same seed gives the same factors.
   - errors: none
@@ -494,7 +492,6 @@ The library runs an hour of the battery with a gate: charging and discharging ar
   - errors: none
 
 ### Test seams
-
 - `seed` · seam: randomness · `StoragePolicySim/Simulation.lean`
   - in: the `seed` argument of `simulate`. The same seed gives the same weather.
   - errors: none
@@ -650,7 +647,6 @@ The library has three kinds of policy for the hot-water tank and the battery: a 
   - errors: none
 
 ### Test seams
-
 none
 
 ## Files
@@ -739,7 +735,7 @@ The library runs a policy over a home with panels, a battery and a hot-water tan
 - Given 365 days and a spread of 0, when the run ends, then the draw total is 2190.0 kWh, within 0.1 kWh.
 - Given 365 days, a spread of 0.25 and each seed from 1 to 5, when the run ends, then the draw total is from 2060 to 2320 kWh.
 - Given 0 kW of panels and 365 days, when the run ends, then the self-consumption is 0%.
-- Given 0 days, when the run ends, then each total is 0 and each ratio is 0%.
+- Given 0 days, when the run ends, then each total is 0 and each ratio is 0%. The exceptions are `minTankKwh` and `finalTankKwh`, which are 10.5 kWh, the energy of the full tank at the start.
 
 ### CAP-homesim.R4 · Policies at work
 - Given the static policy with `defaultStatic` and seed 7, when each hour is read, then `askKwh` is more than 0 kWh only in hours 10, 11, 12 and 13.
@@ -855,7 +851,7 @@ The library runs a policy over a home with panels, a battery and a hot-water tan
   - errors: none
 - `TankStep` · type · `StoragePolicySim/HotWater.lean`
   - in: not applicable
-  - out: a structure with `Repr` and `Inhabited`. The fields `lossKwh`, `servedKwh`, `unmetKwh`, `heatKwh` (the heating that the policy asked for) and `backstopKwh` are each a `Float` in kWh. The field `state : TankState` is the state after the hour.
+  - out: a structure with `Repr` and `Inhabited`. The fields `lossKwh`, `servedKwh`, `unmetKwh`, `heatKwh` (the heating that the tank took for the policy) and `backstopKwh` are each a `Float` in kWh. The field `state : TankState` is the state after the hour.
   - errors: none
 - `tankStep (cfg : TankConfig) (state : TankState) (hour : Nat) (requestKwh drawKwh : Float) : TankStep` · function · `StoragePolicySim/HotWater.lean`
   - in: a tank, its state, the hour of the day from 0 to 23, the heating that a policy asks for, and the hot water that the household draws in the hour
@@ -919,7 +915,6 @@ The library runs a policy over a home with panels, a battery and a hot-water tan
   - errors: none
 
 ### Test seams
-
 - `homeSeed` · seam: randomness · `StoragePolicySim/HomeSim.lean`
   - in: the `seed` argument of `runHome`, `evaluate` and `tuneStatic`. The same seed gives the same weather and the same forecast.
   - errors: none
@@ -1127,49 +1122,44 @@ A person runs `sim forecast` and `sim policy run`, `compare`, `robust` and `tune
 
 ## Interface
 
-- `sim policy tune [--seeds N] [policy options except the static profile]` · command · `Main.lean`
+- `sim [help | --help]` · command · `Main.lean`
+  - in: no argument, `help` or `--help`, or the name of a command
+  - out: on standard output, the usage. The first line is `usage: sim run [options] | sim compare [options] | sim forecast [options] | sim policy <command> [options]`. Then the options follow, each on a line. The exit code is 0.
+  - errors:
+    - `UNKNOWN_COMMAND` · `error: UNKNOWN_COMMAND: <word>` · exit 2 · stderr
+- `sim forecast [--hour H] [--lon L] [--forecast-error E] [--lat N] [--pv N] [--days N] [--seed N]` · command · `Main.lean`
   - in: the options, each with one value
-  - out: on standard output, the lines `candidates`, `safe`, `heat-start`, `heat-hours` and `discharge-from`, a blank line, and the table of `sim policy robust` with the best static profile in the row `static`. The exit code is 0.
+  - out: on standard output, the Solcast JSON of CAP-forecast for one fetch, and a line break. The exit code is 0.
   - errors:
     - `UNKNOWN_OPTION` · `error: UNKNOWN_OPTION: <word>` · exit 2 · stderr
     - `MISSING_VALUE` · `error: MISSING_VALUE: <option>` · exit 2 · stderr
     - `BAD_NUMBER` · `error: BAD_NUMBER: <option> <value>` · exit 2 · stderr
     - `OUT_OF_RANGE` · `error: OUT_OF_RANGE: <option> <value> (<lowest> to <highest>)` · exit 2 · stderr
-- `sim policy tune [--seeds N] [policy options except the static profile]` · command · `Main.lean`
+- `sim policy [help]` · command · `Main.lean`
+  - in: no argument, or `help`
+  - out: on standard output, the line `usage: sim policy run|compare|robust|tune [options]` and the options. The exit code is 0.
+  - errors:
+    - `UNKNOWN_COMMAND` · `error: UNKNOWN_COMMAND: <word>` · exit 2 · stderr
+- `sim policy run [--policy NAME] [policy options]` · command · `Main.lean`
   - in: the options, each with one value
-  - out: on standard output, the lines `candidates`, `safe`, `heat-start`, `heat-hours` and `discharge-from`, a blank line, and the table of `sim policy robust` with the best static profile in the row `static`. The exit code is 0.
+  - out: on standard output, 13 lines. Each line is a label, spaces to column 19, and a value. The labels are `policy`, `days`, `seed`, `solar`, `load`, `import`, `export`, `heating`, `backstop`, `unmet-hot-water`, `cold-hours`, `self-consumption` and `self-sufficiency`. The exit code is 0.
   - errors:
     - `UNKNOWN_OPTION` · `error: UNKNOWN_OPTION: <word>` · exit 2 · stderr
     - `MISSING_VALUE` · `error: MISSING_VALUE: <option>` · exit 2 · stderr
     - `BAD_NUMBER` · `error: BAD_NUMBER: <option> <value>` · exit 2 · stderr
     - `OUT_OF_RANGE` · `error: OUT_OF_RANGE: <option> <value> (<lowest> to <highest>)` · exit 2 · stderr
-- `sim policy tune [--seeds N] [policy options except the static profile]` · command · `Main.lean`
+    - `UNKNOWN_POLICY` · `error: UNKNOWN_POLICY: <name> (static, precomputed, dynamic)` · exit 2 · stderr
+- `sim policy compare [policy options]` · command · `Main.lean`
   - in: the options, each with one value
-  - out: on standard output, the lines `candidates`, `safe`, `heat-start`, `heat-hours` and `discharge-from`, a blank line, and the table of `sim policy robust` with the best static profile in the row `static`. The exit code is 0.
+  - out: on standard output, the header `policy self-consumption-% self-sufficiency-% import-kWh export-kWh backstop-kWh`, and one row for each of `thermostat`, `static`, `precomputed`, `dynamic` and `perfect-forecast`, in this order. The exit code is 0.
   - errors:
     - `UNKNOWN_OPTION` · `error: UNKNOWN_OPTION: <word>` · exit 2 · stderr
     - `MISSING_VALUE` · `error: MISSING_VALUE: <option>` · exit 2 · stderr
     - `BAD_NUMBER` · `error: BAD_NUMBER: <option> <value>` · exit 2 · stderr
     - `OUT_OF_RANGE` · `error: OUT_OF_RANGE: <option> <value> (<lowest> to <highest>)` · exit 2 · stderr
-- `sim policy tune [--seeds N] [policy options except the static profile]` · command · `Main.lean`
+- `sim policy robust [--seeds N] [policy options]` · command · `Main.lean`
   - in: the options, each with one value
-  - out: on standard output, the lines `candidates`, `safe`, `heat-start`, `heat-hours` and `discharge-from`, a blank line, and the table of `sim policy robust` with the best static profile in the row `static`. The exit code is 0.
-  - errors:
-    - `UNKNOWN_OPTION` · `error: UNKNOWN_OPTION: <word>` · exit 2 · stderr
-    - `MISSING_VALUE` · `error: MISSING_VALUE: <option>` · exit 2 · stderr
-    - `BAD_NUMBER` · `error: BAD_NUMBER: <option> <value>` · exit 2 · stderr
-    - `OUT_OF_RANGE` · `error: OUT_OF_RANGE: <option> <value> (<lowest> to <highest>)` · exit 2 · stderr
-- `sim policy tune [--seeds N] [policy options except the static profile]` · command · `Main.lean`
-  - in: the options, each with one value
-  - out: on standard output, the lines `candidates`, `safe`, `heat-start`, `heat-hours` and `discharge-from`, a blank line, and the table of `sim policy robust` with the best static profile in the row `static`. The exit code is 0.
-  - errors:
-    - `UNKNOWN_OPTION` · `error: UNKNOWN_OPTION: <word>` · exit 2 · stderr
-    - `MISSING_VALUE` · `error: MISSING_VALUE: <option>` · exit 2 · stderr
-    - `BAD_NUMBER` · `error: BAD_NUMBER: <option> <value>` · exit 2 · stderr
-    - `OUT_OF_RANGE` · `error: OUT_OF_RANGE: <option> <value> (<lowest> to <highest>)` · exit 2 · stderr
-- `sim policy tune [--seeds N] [policy options except the static profile]` · command · `Main.lean`
-  - in: the options, each with one value
-  - out: on standard output, the lines `candidates`, `safe`, `heat-start`, `heat-hours` and `discharge-from`, a blank line, and the table of `sim policy robust` with the best static profile in the row `static`. The exit code is 0.
+  - out: on standard output, the header `policy mean-self-consumption-% worst-self-consumption-% mean-self-sufficiency-% mean-export-kWh mean-backstop-kWh unmet-kWh cold-hours safe`, and one row for each of `thermostat`, `static`, `precomputed`, `dynamic` and `perfect-forecast`, in this order. The exit code is 0.
   - errors:
     - `UNKNOWN_OPTION` · `error: UNKNOWN_OPTION: <word>` · exit 2 · stderr
     - `MISSING_VALUE` · `error: MISSING_VALUE: <option>` · exit 2 · stderr
@@ -1273,7 +1263,6 @@ A person runs `sim forecast` and `sim policy run`, `compare`, `robust` and `tune
   - errors: none
 
 ### Test seams
-
 - `--seed` · seam: randomness · `Main.lean`
   - in: a whole number. The same seed gives the same weather and the same forecast.
   - errors: none
@@ -1534,7 +1523,7 @@ fetch at an hour that is a multiple of 24. The periods that end at 11:30 and 13:
 whose end is 690 and 810 minutes into the day.
 
 - Given the fetches at 00:00 of the days 0 to 364, when the relative errors of the sunny periods that end at 11:30 and 13:30 of the same day are compared, then their correlation over the days that have both is from 0.55 to 0.85. Days where either estimate is cut to the range of R2 do not count.
-- Given the fetches at 00:00 of the days 0 to 364, when the relative errors of the sunny period that ends at 11:30 of a day and of the next day are compared, then their correlation is from -0.25 to 0.25.
+- Given the fetches at 00:00 of the days 0 to 364, when the relative errors of the sunny period that ends at 11:30 of a day and of the next day are compared, each from the fetch at 00:00 of its own day, then their correlation is from -0.25 to 0.25.
 - Given the fetches at hour 0 and at hour 10 of each day from 0 to 364, when the relative errors of the sunny period that ends at 13:30 of that day are compared, then at least 62% of the days have the same sign in both fetches. Days with a relative error of 0 in either fetch do not count.
 - Given an error scale of 0, when a fetch at hour 0 is made, then each value of each period equals its actual power. The tolerance is 0.000001 kW.
 - Given a fetch at 00:00 of each day, when the sunny periods are compared, then 60% to 95% of them have the actual power in the band.
@@ -1580,7 +1569,7 @@ that changes with the season, and with a random factor for each day.
   - errors: none
 - `TankStep` · type · `StoragePolicySim/HotWater.lean` · proposed
   - in: not applicable
-  - out: a structure with `Repr` and `Inhabited`. The fields `lossKwh`, `servedKwh`, `unmetKwh`, `heatKwh` (the heating that the policy asked for) and `backstopKwh` are each a `Float` in kWh. The field `state : TankState` is the state after the hour.
+  - out: a structure with `Repr` and `Inhabited`. The fields `lossKwh`, `servedKwh`, `unmetKwh`, `heatKwh` (the heating that the tank took for the policy) and `backstopKwh` are each a `Float` in kWh. The field `state : TankState` is the state after the hour.
   - errors: none
 - `tankStep (cfg : TankConfig) (state : TankState) (hour : Nat) (requestKwh drawKwh : Float) : TankStep` · function · `StoragePolicySim/HotWater.lean` · proposed
   - in: a tank, its state, the hour of the day from 0 to 23, the heating that a policy asks for, and the hot water that the household draws in the hour
@@ -2033,8 +2022,8 @@ A dynamic policy decides each hour from what it sees. First it soaks up surplus:
 hour has a solar surplus and the tank holds less than the target, the tank asks for the
 smallest of the element power, the surplus and the room to the target. If not, and the tank
 holds less than the low level, and the forecast for the rest of the day is less than the
-energy that the tank lacks, the tank asks for the smaller of the element power and that
-lack. In every other case the tank asks for 0 kWh. The battery rules are those of R1, with
+lack, the tank asks for the smaller of the element power and the lack. The lack is the low
+level less the energy in the tank. In every other case the tank asks for 0 kWh. The battery rules are those of R1, with
 `dischargeFrom` of the policy. The surplus is 0 or more (assumed).
 
 In these lines, the tank is the default tank and the parameters are `defaultDynamic` with a low
@@ -2153,7 +2142,7 @@ of each day, from the forecast of the fetch at hour 0, the energy in the tank, a
 that the day is expected to have, which is the sum of the `drawKwh` of its 24 hours, without
 the factor of the day (assumed). A dynamic policy sees the tank, the battery, the
 surplus of the hour (the solar energy less the house load, and never less than 0), and the
-forecast for the rest of the day from the latest fetch. The forecast is made only for a policy that reads it (assumed).
+forecast for the rest of the day from the latest fetch. The forecast is made only for a policy that reads it (assumed). It uses the seed of the run.
 
 In these lines, the home is `defaultHome`, the policy is the static policy with
 `defaultStatic`, the seed is 7, and the run is 365 days, unless the line says otherwise. The
@@ -2210,7 +2199,7 @@ In these lines, the home is `defaultHome`, the policy is the static policy with
 - Given 365 days and a spread of 0, when the run ends, then the draw total is 2190.0 kWh, within 0.1 kWh.
 - Given 365 days, a spread of 0.25 and each seed from 1 to 5, when the run ends, then the draw total is from 2060 to 2320 kWh.
 - Given 0 kW of panels and 365 days, when the run ends, then the self-consumption is 0%.
-- Given 0 days, when the run ends, then each total is 0 and each ratio is 0%.
+- Given 0 days, when the run ends, then each total is 0 and each ratio is 0%. The exceptions are `minTankKwh` and `finalTankKwh`, which are 10.5 kWh, the energy of the full tank at the start.
 
 ### CAP-homesim.R4 · Policies at work
 
@@ -3108,6 +3097,7 @@ checks yet keeps its checks in `tests/`.
 
 ## The check files that exist now
 
+- tests/acceptance/IN-0008.acceptance.lean
 - tests/CAP-scenario.lean
 - tests/CAP-simulation.lean
 - tests/CAP-strategies.lean

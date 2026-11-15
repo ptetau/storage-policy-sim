@@ -144,7 +144,8 @@ def monthHeader : List String :=
 def compareHeader : List String :=
   ["strategy", "self-consumption-%", "self-sufficiency-%", "import-kWh", "export-kWh"]
 
-def usage : String := "usage: sim run [options] | sim compare [options]"
+def usage : String :=
+  "usage: sim run [options] | sim compare [options] | sim forecast [options] | sim policy <command> [options]"
 
 def firstWords (out : String) : List String :=
   (lines out).map (fun l => (words l).head?.getD "")

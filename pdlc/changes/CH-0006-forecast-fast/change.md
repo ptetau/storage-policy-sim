@@ -19,7 +19,7 @@ The library makes a simulated forecast from scenario hours that the caller built
 
 ### CAP-forecast.R7 · Shared error of a day
 - Given the fetches at 00:00 of the days 0 to 364, when the relative errors of the sunny periods that end at 11:30 and 13:30 of the same day are compared, then their correlation over the days that have both is from 0.55 to 0.85. Days where either estimate is cut to the range of R2 do not count.
-- Given the fetches at 00:00 of the days 0 to 364, when the relative errors of the sunny period that ends at 11:30 of a day and of the next day are compared, then their correlation is from -0.25 to 0.25.
+- Given the fetches at 00:00 of the days 0 to 364, when the relative errors of the sunny period that ends at 11:30 of a day and of the next day are compared, each from the fetch at 00:00 of its own day, then their correlation is from -0.25 to 0.25.
 - Given the fetches at hour 0 and at hour 10 of each day from 0 to 364, when the relative errors of the sunny period that ends at 13:30 of that day are compared, then at least 62% of the days have the same sign in both fetches. Days with a relative error of 0 in either fetch do not count.
 - Given an error scale of 0, when a fetch at hour 0 is made, then each value of each period equals its actual power. The tolerance is 0.000001 kW.
 - Given a fetch at 00:00 of each day, when the sunny periods are compared, then 60% to 95% of them have the actual power in the band.
@@ -64,7 +64,6 @@ The library makes a simulated forecast from scenario hours that the caller built
   - errors: none
 
 ### Test seams
-
 - `seed` · seam: randomness · `StoragePolicySim/Forecast.lean`
   - in: the `seed` argument of `forecast`. The same seed gives the same forecast.
   - errors: none

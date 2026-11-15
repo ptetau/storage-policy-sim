@@ -38,7 +38,7 @@ The library runs a policy over a home with panels, a battery and a hot-water tan
 - Given 365 days and a spread of 0, when the run ends, then the draw total is 2190.0 kWh, within 0.1 kWh.
 - Given 365 days, a spread of 0.25 and each seed from 1 to 5, when the run ends, then the draw total is from 2060 to 2320 kWh.
 - Given 0 kW of panels and 365 days, when the run ends, then the self-consumption is 0%.
-- Given 0 days, when the run ends, then each total is 0 and each ratio is 0%.
+- Given 0 days, when the run ends, then each total is 0 and each ratio is 0%. The exceptions are `minTankKwh` and `finalTankKwh`, which are 10.5 kWh, the energy of the full tank at the start.
 
 ### CAP-homesim.R4 · Policies at work
 - Given the static policy with `defaultStatic` and seed 7, when each hour is read, then `askKwh` is more than 0 kWh only in hours 10, 11, 12 and 13.
@@ -154,7 +154,7 @@ The library runs a policy over a home with panels, a battery and a hot-water tan
   - errors: none
 - `TankStep` · type · `StoragePolicySim/HotWater.lean`
   - in: not applicable
-  - out: a structure with `Repr` and `Inhabited`. The fields `lossKwh`, `servedKwh`, `unmetKwh`, `heatKwh` (the heating that the policy asked for) and `backstopKwh` are each a `Float` in kWh. The field `state : TankState` is the state after the hour.
+  - out: a structure with `Repr` and `Inhabited`. The fields `lossKwh`, `servedKwh`, `unmetKwh`, `heatKwh` (the heating that the tank took for the policy) and `backstopKwh` are each a `Float` in kWh. The field `state : TankState` is the state after the hour.
   - errors: none
 - `tankStep (cfg : TankConfig) (state : TankState) (hour : Nat) (requestKwh drawKwh : Float) : TankStep` · function · `StoragePolicySim/HotWater.lean`
   - in: a tank, its state, the hour of the day from 0 to 23, the heating that a policy asks for, and the hot water that the household draws in the hour
@@ -218,7 +218,6 @@ The library runs a policy over a home with panels, a battery and a hot-water tan
   - errors: none
 
 ### Test seams
-
 - `homeSeed` · seam: randomness · `StoragePolicySim/HomeSim.lean`
   - in: the `seed` argument of `runHome`, `evaluate` and `tuneStatic`. The same seed gives the same weather and the same forecast.
   - errors: none

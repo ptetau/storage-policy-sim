@@ -83,7 +83,7 @@ of each day, from the forecast of the fetch at hour 0, the energy in the tank, a
 that the day is expected to have, which is the sum of the `drawKwh` of its 24 hours, without
 the factor of the day (assumed). A dynamic policy sees the tank, the battery, the
 surplus of the hour (the solar energy less the house load, and never less than 0), and the
-forecast for the rest of the day from the latest fetch. The forecast is made only for a policy that reads it (assumed).
+forecast for the rest of the day from the latest fetch. The forecast is made only for a policy that reads it (assumed). It uses the seed of the run.
 
 In these lines, the home is `defaultHome`, the policy is the static policy with
 `defaultStatic`, the seed is 7, and the run is 365 days, unless the line says otherwise. The
@@ -140,7 +140,7 @@ In these lines, the home is `defaultHome`, the policy is the static policy with
 - Given 365 days and a spread of 0, when the run ends, then the draw total is 2190.0 kWh, within 0.1 kWh.
 - Given 365 days, a spread of 0.25 and each seed from 1 to 5, when the run ends, then the draw total is from 2060 to 2320 kWh.
 - Given 0 kW of panels and 365 days, when the run ends, then the self-consumption is 0%.
-- Given 0 days, when the run ends, then each total is 0 and each ratio is 0%.
+- Given 0 days, when the run ends, then each total is 0 and each ratio is 0%. The exceptions are `minTankKwh` and `finalTankKwh`, which are 10.5 kWh, the energy of the full tank at the start.
 
 ### CAP-homesim.R4 · Policies at work
 

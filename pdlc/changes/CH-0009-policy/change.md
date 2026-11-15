@@ -121,7 +121,6 @@ The library has three kinds of policy for the hot-water tank and the battery: a 
   - errors: none
 
 ### Test seams
-
 none
 
 ## Files

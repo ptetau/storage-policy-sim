@@ -128,8 +128,8 @@ A dynamic policy decides each hour from what it sees. First it soaks up surplus:
 hour has a solar surplus and the tank holds less than the target, the tank asks for the
 smallest of the element power, the surplus and the room to the target. If not, and the tank
 holds less than the low level, and the forecast for the rest of the day is less than the
-energy that the tank lacks, the tank asks for the smaller of the element power and that
-lack. In every other case the tank asks for 0 kWh. The battery rules are those of R1, with
+lack, the tank asks for the smaller of the element power and the lack. The lack is the low
+level less the energy in the tank. In every other case the tank asks for 0 kWh. The battery rules are those of R1, with
 `dischargeFrom` of the policy. The surplus is 0 or more (assumed).
 
 In these lines, the tank is the default tank and the parameters are `defaultDynamic` with a low

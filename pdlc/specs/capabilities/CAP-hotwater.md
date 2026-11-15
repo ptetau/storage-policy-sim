@@ -35,7 +35,7 @@ that changes with the season, and with a random factor for each day.
   - errors: none
 - `TankStep` · type · `StoragePolicySim/HotWater.lean` · proposed
   - in: not applicable
-  - out: a structure with `Repr` and `Inhabited`. The fields `lossKwh`, `servedKwh`, `unmetKwh`, `heatKwh` (the heating that the policy asked for) and `backstopKwh` are each a `Float` in kWh. The field `state : TankState` is the state after the hour.
+  - out: a structure with `Repr` and `Inhabited`. The fields `lossKwh`, `servedKwh`, `unmetKwh`, `heatKwh` (the heating that the tank took for the policy) and `backstopKwh` are each a `Float` in kWh. The field `state : TankState` is the state after the hour.
   - errors: none
 - `tankStep (cfg : TankConfig) (state : TankState) (hour : Nat) (requestKwh drawKwh : Float) : TankStep` · function · `StoragePolicySim/HotWater.lean` · proposed
   - in: a tank, its state, the hour of the day from 0 to 23, the heating that a policy asks for, and the hot water that the household draws in the hour

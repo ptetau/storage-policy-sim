@@ -69,7 +69,6 @@ The library runs an hour of the battery with a gate: charging and discharging ar
   - errors: none
 
 ### Test seams
-
 - `seed` · seam: randomness · `StoragePolicySim/Simulation.lean`
   - in: the `seed` argument of `simulate`. The same seed gives the same weather.
   - errors: none

@@ -143,49 +143,44 @@ A person runs `sim forecast` and `sim policy run`, `compare`, `robust` and `tune
 
 ## Interface
 
-- `sim policy tune [--seeds N] [policy options except the static profile]` · command · `Main.lean`
+- `sim [help | --help]` · command · `Main.lean`
+  - in: no argument, `help` or `--help`, or the name of a command
+  - out: on standard output, the usage. The first line is `usage: sim run [options] | sim compare [options] | sim forecast [options] | sim policy <command> [options]`. Then the options follow, each on a line. The exit code is 0.
+  - errors:
+    - `UNKNOWN_COMMAND` · `error: UNKNOWN_COMMAND: <word>` · exit 2 · stderr
+- `sim forecast [--hour H] [--lon L] [--forecast-error E] [--lat N] [--pv N] [--days N] [--seed N]` · command · `Main.lean`
   - in: the options, each with one value
-  - out: on standard output, the lines `candidates`, `safe`, `heat-start`, `heat-hours` and `discharge-from`, a blank line, and the table of `sim policy robust` with the best static profile in the row `static`. The exit code is 0.
+  - out: on standard output, the Solcast JSON of CAP-forecast for one fetch, and a line break. The exit code is 0.
   - errors:
     - `UNKNOWN_OPTION` · `error: UNKNOWN_OPTION: <word>` · exit 2 · stderr
     - `MISSING_VALUE` · `error: MISSING_VALUE: <option>` · exit 2 · stderr
     - `BAD_NUMBER` · `error: BAD_NUMBER: <option> <value>` · exit 2 · stderr
     - `OUT_OF_RANGE` · `error: OUT_OF_RANGE: <option> <value> (<lowest> to <highest>)` · exit 2 · stderr
-- `sim policy tune [--seeds N] [policy options except the static profile]` · command · `Main.lean`
+- `sim policy [help]` · command · `Main.lean`
+  - in: no argument, or `help`
+  - out: on standard output, the line `usage: sim policy run|compare|robust|tune [options]` and the options. The exit code is 0.
+  - errors:
+    - `UNKNOWN_COMMAND` · `error: UNKNOWN_COMMAND: <word>` · exit 2 · stderr
+- `sim policy run [--policy NAME] [policy options]` · command · `Main.lean`
   - in: the options, each with one value
-  - out: on standard output, the lines `candidates`, `safe`, `heat-start`, `heat-hours` and `discharge-from`, a blank line, and the table of `sim policy robust` with the best static profile in the row `static`. The exit code is 0.
+  - out: on standard output, 13 lines. Each line is a label, spaces to column 19, and a value. The labels are `policy`, `days`, `seed`, `solar`, `load`, `import`, `export`, `heating`, `backstop`, `unmet-hot-water`, `cold-hours`, `self-consumption` and `self-sufficiency`. The exit code is 0.
   - errors:
     - `UNKNOWN_OPTION` · `error: UNKNOWN_OPTION: <word>` · exit 2 · stderr
     - `MISSING_VALUE` · `error: MISSING_VALUE: <option>` · exit 2 · stderr
     - `BAD_NUMBER` · `error: BAD_NUMBER: <option> <value>` · exit 2 · stderr
     - `OUT_OF_RANGE` · `error: OUT_OF_RANGE: <option> <value> (<lowest> to <highest>)` · exit 2 · stderr
-- `sim policy tune [--seeds N] [policy options except the static profile]` · command · `Main.lean`
+    - `UNKNOWN_POLICY` · `error: UNKNOWN_POLICY: <name> (static, precomputed, dynamic)` · exit 2 · stderr
+- `sim policy compare [policy options]` · command · `Main.lean`
   - in: the options, each with one value
-  - out: on standard output, the lines `candidates`, `safe`, `heat-start`, `heat-hours` and `discharge-from`, a blank line, and the table of `sim policy robust` with the best static profile in the row `static`. The exit code is 0.
+  - out: on standard output, the header `policy self-consumption-% self-sufficiency-% import-kWh export-kWh backstop-kWh`, and one row for each of `thermostat`, `static`, `precomputed`, `dynamic` and `perfect-forecast`, in this order. The exit code is 0.
   - errors:
     - `UNKNOWN_OPTION` · `error: UNKNOWN_OPTION: <word>` · exit 2 · stderr
     - `MISSING_VALUE` · `error: MISSING_VALUE: <option>` · exit 2 · stderr
     - `BAD_NUMBER` · `error: BAD_NUMBER: <option> <value>` · exit 2 · stderr
     - `OUT_OF_RANGE` · `error: OUT_OF_RANGE: <option> <value> (<lowest> to <highest>)` · exit 2 · stderr
-- `sim policy tune [--seeds N] [policy options except the static profile]` · command · `Main.lean`
+- `sim policy robust [--seeds N] [policy options]` · command · `Main.lean`
   - in: the options, each with one value
-  - out: on standard output, the lines `candidates`, `safe`, `heat-start`, `heat-hours` and `discharge-from`, a blank line, and the table of `sim policy robust` with the best static profile in the row `static`. The exit code is 0.
-  - errors:
-    - `UNKNOWN_OPTION` · `error: UNKNOWN_OPTION: <word>` · exit 2 · stderr
-    - `MISSING_VALUE` · `error: MISSING_VALUE: <option>` · exit 2 · stderr
-    - `BAD_NUMBER` · `error: BAD_NUMBER: <option> <value>` · exit 2 · stderr
-    - `OUT_OF_RANGE` · `error: OUT_OF_RANGE: <option> <value> (<lowest> to <highest>)` · exit 2 · stderr
-- `sim policy tune [--seeds N] [policy options except the static profile]` · command · `Main.lean`
-  - in: the options, each with one value
-  - out: on standard output, the lines `candidates`, `safe`, `heat-start`, `heat-hours` and `discharge-from`, a blank line, and the table of `sim policy robust` with the best static profile in the row `static`. The exit code is 0.
-  - errors:
-    - `UNKNOWN_OPTION` · `error: UNKNOWN_OPTION: <word>` · exit 2 · stderr
-    - `MISSING_VALUE` · `error: MISSING_VALUE: <option>` · exit 2 · stderr
-    - `BAD_NUMBER` · `error: BAD_NUMBER: <option> <value>` · exit 2 · stderr
-    - `OUT_OF_RANGE` · `error: OUT_OF_RANGE: <option> <value> (<lowest> to <highest>)` · exit 2 · stderr
-- `sim policy tune [--seeds N] [policy options except the static profile]` · command · `Main.lean`
-  - in: the options, each with one value
-  - out: on standard output, the lines `candidates`, `safe`, `heat-start`, `heat-hours` and `discharge-from`, a blank line, and the table of `sim policy robust` with the best static profile in the row `static`. The exit code is 0.
+  - out: on standard output, the header `policy mean-self-consumption-% worst-self-consumption-% mean-self-sufficiency-% mean-export-kWh mean-backstop-kWh unmet-kWh cold-hours safe`, and one row for each of `thermostat`, `static`, `precomputed`, `dynamic` and `perfect-forecast`, in this order. The exit code is 0.
   - errors:
     - `UNKNOWN_OPTION` · `error: UNKNOWN_OPTION: <word>` · exit 2 · stderr
     - `MISSING_VALUE` · `error: MISSING_VALUE: <option>` · exit 2 · stderr
@@ -289,7 +284,6 @@ A person runs `sim forecast` and `sim policy run`, `compare`, `robust` and `tune
   - errors: none
 
 ### Test seams
-
 - `--seed` · seam: randomness · `Main.lean`
   - in: a whole number. The same seed gives the same weather and the same forecast.
   - errors: none
