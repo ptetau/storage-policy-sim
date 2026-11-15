@@ -32,6 +32,7 @@ Acceptance-Passed: none
 ## Notes
 
 - Awaits approval: found reviewing CH-0002 (security, specification)
+- Awaits approval: found reviewing CH-0006 (security): `forecast` and `forecastOf` take any error scale, so a NaN scale gives NaN estimates and a negative scale swaps the 10% and 90% bands. Also, a very large `days` makes `scenario` build 24 × days hours, with no size cap.
 
 ## Handoff
 
