@@ -2,7 +2,7 @@
 
 Intent: IN-0008 · Scope: CAP-forecast · Status: testing · Ticket: none · Branch: pdlc/CH-0006-forecast-fast · Base: pdlc/CH-0005-forecast
 
-Tests-Locked: none
+Tests-Locked: 608aff7
 
 ## Delivers
 
