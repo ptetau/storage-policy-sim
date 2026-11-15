@@ -1,0 +1,132 @@
+{
+  "kind": "terminal",
+  "title": "CH-0005 \u00b7 Simulated Solcast forecast",
+  "width": 1100,
+  "height": 700,
+  "steps": [
+    {
+      "caption": "CAP-forecast \u00b7 setup: build the library",
+      "run": "lake build 2>&1 | tail -1"
+    },
+    {
+      "caption": "CAP-forecast.R1 \u00b7 a fetch at hour 0 has 96 periods, ending 30, 60 and up to 2880 minutes",
+      "run": "lake env lean --run pdlc/changes/CH-0005-forecast/demo.lean r1-1"
+    },
+    {
+      "caption": "CAP-forecast.R1 \u00b7 a fetch at hour 100: first period ends at 6030 minutes, last at 8880",
+      "run": "lake env lean --run pdlc/changes/CH-0005-forecast/demo.lean r1-2"
+    },
+    {
+      "caption": "CAP-forecast.R1 \u00b7 a fetch at hour 8750 has 20 periods, because the run ends after 10 hours",
+      "run": "lake env lean --run pdlc/changes/CH-0005-forecast/demo.lean r1-3"
+    },
+    {
+      "caption": "CAP-forecast.R1 \u00b7 a fetch at hour 8760 has no period",
+      "run": "lake env lean --run pdlc/changes/CH-0005-forecast/demo.lean r1-4"
+    },
+    {
+      "caption": "CAP-forecast.R1 \u00b7 no 10% band is above its estimate, and no estimate is above its 90% band",
+      "run": "lake env lean --run pdlc/changes/CH-0005-forecast/demo.lean r1-5"
+    },
+    {
+      "caption": "CAP-forecast.R1 \u00b7 each value of a daily fetch at 00:00 is from 0 to 5 kW",
+      "run": "lake env lean --run pdlc/changes/CH-0005-forecast/demo.lean r1-6"
+    },
+    {
+      "caption": "CAP-forecast.R1 \u00b7 each period with no actual power has 0 kW in all three values",
+      "run": "lake env lean --run pdlc/changes/CH-0005-forecast/demo.lean r1-7"
+    },
+    {
+      "caption": "CAP-forecast.R2 \u00b7 error scale 0: each value equals its actual power",
+      "run": "lake env lean --run pdlc/changes/CH-0005-forecast/demo.lean r2-1"
+    },
+    {
+      "caption": "CAP-forecast.R2 \u00b7 seed 7 gives the same forecast two times",
+      "run": "lake env lean --run pdlc/changes/CH-0005-forecast/demo.lean r2-2"
+    },
+    {
+      "caption": "CAP-forecast.R2 \u00b7 seeds 7 and 8 give a different estimate at hour 4000",
+      "run": "lake env lean --run pdlc/changes/CH-0005-forecast/demo.lean r2-3"
+    },
+    {
+      "caption": "CAP-forecast.R2 \u00b7 the error 24 to 48 hours ahead is more than 0 to 4 hours ahead",
+      "run": "lake env lean --run pdlc/changes/CH-0005-forecast/demo.lean r2-4"
+    },
+    {
+      "caption": "CAP-forecast.R2 \u00b7 60% to 95% of sunny periods have the actual power in the band",
+      "run": "lake env lean --run pdlc/changes/CH-0005-forecast/demo.lean r2-5"
+    },
+    {
+      "caption": "CAP-forecast.R3 \u00b7 10 fetches a day are at hours 0, 2, 4, 7, 9, 12, 14, 16, 19 and 21",
+      "run": "lake env lean --run pdlc/changes/CH-0005-forecast/demo.lean r3-1"
+    },
+    {
+      "caption": "CAP-forecast.R3 \u00b7 3 fetches a day are at hours 0, 8 and 16",
+      "run": "lake env lean --run pdlc/changes/CH-0005-forecast/demo.lean r3-2"
+    },
+    {
+      "caption": "CAP-forecast.R3 \u00b7 1 fetch a day is at hour 0",
+      "run": "lake env lean --run pdlc/changes/CH-0005-forecast/demo.lean r3-3"
+    },
+    {
+      "caption": "CAP-forecast.R3 \u00b7 10 fetches a day: the latest fetch for hour 27 is at hour 26",
+      "run": "lake env lean --run pdlc/changes/CH-0005-forecast/demo.lean r3-4"
+    },
+    {
+      "caption": "CAP-forecast.R3 \u00b7 10 fetches a day: the latest fetch for hour 26 is 26, and for hour 25 it is 24",
+      "run": "lake env lean --run pdlc/changes/CH-0005-forecast/demo.lean r3-5"
+    },
+    {
+      "caption": "CAP-forecast.R3 \u00b7 1 fetch a day: the latest fetch for hour 47 is at hour 24",
+      "run": "lake env lean --run pdlc/changes/CH-0005-forecast/demo.lean r3-6"
+    },
+    {
+      "caption": "CAP-forecast.R4 \u00b7 longitude 0: the first period ends at 2025-01-01T00:30:00.0000000Z",
+      "run": "lake env lean --run pdlc/changes/CH-0005-forecast/demo.lean r4-1"
+    },
+    {
+      "caption": "CAP-forecast.R4 \u00b7 longitude 174.8: the first period ends at 2024-12-31T13:00:00.0000000Z",
+      "run": "lake env lean --run pdlc/changes/CH-0005-forecast/demo.lean r4-2"
+    },
+    {
+      "caption": "CAP-forecast.R4 \u00b7 longitude -75: the first period ends at 2025-01-01T05:30:00.0000000Z",
+      "run": "lake env lean --run pdlc/changes/CH-0005-forecast/demo.lean r4-3"
+    },
+    {
+      "caption": "CAP-forecast.R4 \u00b7 longitude 0, fetch at hour 8759: the last period ends at 2026-01-01T00:00:00.0000000Z",
+      "run": "lake env lean --run pdlc/changes/CH-0005-forecast/demo.lean r4-4"
+    },
+    {
+      "caption": "CAP-forecast.R4 \u00b7 each pv_estimate has four decimals",
+      "run": "lake env lean --run pdlc/changes/CH-0005-forecast/demo.lean r4-5"
+    },
+    {
+      "caption": "CAP-forecast.R4 \u00b7 each period has the five fields in order, and \"period\":\"PT30M\"",
+      "run": "lake env lean --run pdlc/changes/CH-0005-forecast/demo.lean r4-6"
+    },
+    {
+      "caption": "CAP-forecast.R5 \u00b7 error scale 0: value j equals the solar output of hour j",
+      "run": "lake env lean --run pdlc/changes/CH-0005-forecast/demo.lean r5-1"
+    },
+    {
+      "caption": "CAP-forecast.R5 \u00b7 a fetch at hour 4116 gives 48 values, each from 0 to 5 kWh",
+      "run": "lake env lean --run pdlc/changes/CH-0005-forecast/demo.lean r5-2"
+    },
+    {
+      "caption": "CAP-forecast.R5 \u00b7 a fetch at hour 8750 gives 48 values, and values 10 to 47 are 0",
+      "run": "lake env lean --run pdlc/changes/CH-0005-forecast/demo.lean r5-3"
+    },
+    {
+      "caption": "CAP-forecast.R5 \u00b7 a fetch at hour 8760 gives 48 values, each 0 kWh",
+      "run": "lake env lean --run pdlc/changes/CH-0005-forecast/demo.lean r5-4"
+    },
+    {
+      "caption": "CAP-forecast.R5 \u00b7 the sum of the 48 values is 0.5 times the sum of the estimates",
+      "run": "lake env lean --run pdlc/changes/CH-0005-forecast/demo.lean r5-5"
+    },
+    {
+      "caption": "CH-0005 \u00b7 all acceptance checks pass",
+      "run": "for f in tests/*.lean tests/acceptance/*.lean; do lake env lean --run \"$f\" | grep 'checks,'; done"
+    }
+  ]
+}
