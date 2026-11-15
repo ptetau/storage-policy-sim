@@ -82,7 +82,7 @@ the day of the run. -/
 private def dayDraw (seed day : Nat) : Float :=
   normalOfKey (mix (mix (mix (mix seed.toUInt64) + dayStream) + day.toUInt64))
 
-/-- The random number of a period. It has the variance of a normal curve. It adds the shared
+/-- The random number of a period. It has a variance of 1. It adds the shared
 part of its day and the part of the period. -/
 private def normalDraw (seed fetchHour period day : Nat) : Float :=
   Float.sqrt sharedShare * dayDraw seed day + Float.sqrt ownShare * periodDraw seed fetchHour period

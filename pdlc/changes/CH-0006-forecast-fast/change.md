@@ -6,7 +6,7 @@ Tests-Locked: 608aff7
 
 ## Delivers
 
-The library makes a simulated forecast from scenario hours that the caller built once. The result equals the result of the older call, and it is fast enough for a run with many fetches. The forecast error of a day is shared by the periods of that day, as in real forecasts.
+The library makes a simulated forecast from scenario hours that the caller built once. The result equals the result of `forecast`, and it is fast enough for a run with many fetches. The forecast error of a day is shared by the periods of that day, as in real forecasts.
 
 ## Requirements
 
@@ -65,7 +65,7 @@ The library makes a simulated forecast from scenario hours that the caller built
 
 ### Test seams
 - `seed` · seam: randomness · `StoragePolicySim/Forecast.lean`
-  - in: the `seed` argument of `forecast`. The same seed gives the same forecast.
+  - in: the `seed` argument of `forecast` and of `forecastOf`. The same seed gives the same forecast.
   - errors: none
 
 ## Files
