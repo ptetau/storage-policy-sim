@@ -2,7 +2,30 @@
 
 Judge only what is in this packet. Write your result next to it, in result.md.
 
-Made at: 13e9afc67c3f284106fcfa26a0a05251777f3d41
+Made at: 82a9457d5673d2f9b96115682de4f15233dfd69d
+
+## Re-review
+
+Earlier review: 13e9afc67c3f284106fcfa26a0a05251777f3d41
+
+An earlier review of this remit judged this change at 13e9afc67c3f. Judge only these two things:
+
+1. Each earlier problem below. If the problem is not fixed, list it again under "Problems".
+2. The changes since the earlier review, in the diff below. List a new problem only
+   where a changed line causes the problem.
+
+Do not raise a new problem on material that did not change. This rule also applies
+to a problem that the earlier review missed.
+
+### Earlier problems
+
+- frames/24.png · The step prints "each pv_estimate has four decimals: false". This is an error on screen, and the frame shows the opposite of its caption. The sample line "[2.3112,, 2.3112,, 2.2016,, 2.2016,]" has doubled commas. Its four values each have four decimals, so the check disagrees with the values on screen. The script takes the text "up to the next comma" with the comma included, and the check probably counts that comma. The frame also shows only four values, not each `pv_estimate`. · CAP-forecast.R4 (Solcast JSON), line "Given an error scale of 0 and a fetch at hour 4116, when the JSON is made, then each `pv_estimate` has four decimals"; remit rule "an error on screen is a problem" · script
+- frames/25.png · The caption says "each period has the five fields in order". The frame shows only the first period of the JSON, and that period is a night period with 0.0000 in all three values. One period of 96 does not show "each period". · CAP-forecast.R4 (Solcast JSON), line "Given a fetch at hour 0, when the JSON is made, then each period has the five fields in the order above, and `"period":"PT30M"`" · script
+- frames/30.png · The sums print as "53.357 kWh" and "53.357 kWh", with three decimals. The line needs equality within 0.000001 kWh. A difference below 0.0005 kWh would look the same on screen. Frames 9 and 26 print the difference with six decimals and "(0.000001 or less)"; this frame does not. · CAP-forecast.R5 (hourly forecast energy), line "Given a fetch at hour 4116, when the hourly energy is made, then the sum of the 48 values is 0.5 times the sum of the estimates of the 96 periods. The tolerance is 0.000001 kWh" · script
+
+### Changes since the earlier review
+
+Nothing changed.
 
 # Remit: visual
 
@@ -508,29 +531,29 @@ value 0 (assumed).
 
 Read each frame:
 
-- pdlc/changes/CH-0005-forecast/frames/01.png
-- pdlc/changes/CH-0005-forecast/frames/02.png
-- pdlc/changes/CH-0005-forecast/frames/03.png
-- pdlc/changes/CH-0005-forecast/frames/04.png
-- pdlc/changes/CH-0005-forecast/frames/05.png
-- pdlc/changes/CH-0005-forecast/frames/06.png
-- pdlc/changes/CH-0005-forecast/frames/07.png
-- pdlc/changes/CH-0005-forecast/frames/08.png
-- pdlc/changes/CH-0005-forecast/frames/09.png
-- pdlc/changes/CH-0005-forecast/frames/10.png
-- pdlc/changes/CH-0005-forecast/frames/11.png
-- pdlc/changes/CH-0005-forecast/frames/12.png
-- pdlc/changes/CH-0005-forecast/frames/13.png
-- pdlc/changes/CH-0005-forecast/frames/14.png
-- pdlc/changes/CH-0005-forecast/frames/15.png
-- pdlc/changes/CH-0005-forecast/frames/16.png
-- pdlc/changes/CH-0005-forecast/frames/17.png
-- pdlc/changes/CH-0005-forecast/frames/18.png
-- pdlc/changes/CH-0005-forecast/frames/19.png
-- pdlc/changes/CH-0005-forecast/frames/20.png
-- pdlc/changes/CH-0005-forecast/frames/21.png
-- pdlc/changes/CH-0005-forecast/frames/22.png
-- pdlc/changes/CH-0005-forecast/frames/23.png
+- pdlc/changes/CH-0005-forecast/frames/01.png (unchanged since the earlier review)
+- pdlc/changes/CH-0005-forecast/frames/02.png (unchanged since the earlier review)
+- pdlc/changes/CH-0005-forecast/frames/03.png (unchanged since the earlier review)
+- pdlc/changes/CH-0005-forecast/frames/04.png (unchanged since the earlier review)
+- pdlc/changes/CH-0005-forecast/frames/05.png (unchanged since the earlier review)
+- pdlc/changes/CH-0005-forecast/frames/06.png (unchanged since the earlier review)
+- pdlc/changes/CH-0005-forecast/frames/07.png (unchanged since the earlier review)
+- pdlc/changes/CH-0005-forecast/frames/08.png (unchanged since the earlier review)
+- pdlc/changes/CH-0005-forecast/frames/09.png (unchanged since the earlier review)
+- pdlc/changes/CH-0005-forecast/frames/10.png (unchanged since the earlier review)
+- pdlc/changes/CH-0005-forecast/frames/11.png (unchanged since the earlier review)
+- pdlc/changes/CH-0005-forecast/frames/12.png (unchanged since the earlier review)
+- pdlc/changes/CH-0005-forecast/frames/13.png (unchanged since the earlier review)
+- pdlc/changes/CH-0005-forecast/frames/14.png (unchanged since the earlier review)
+- pdlc/changes/CH-0005-forecast/frames/15.png (unchanged since the earlier review)
+- pdlc/changes/CH-0005-forecast/frames/16.png (unchanged since the earlier review)
+- pdlc/changes/CH-0005-forecast/frames/17.png (unchanged since the earlier review)
+- pdlc/changes/CH-0005-forecast/frames/18.png (unchanged since the earlier review)
+- pdlc/changes/CH-0005-forecast/frames/19.png (unchanged since the earlier review)
+- pdlc/changes/CH-0005-forecast/frames/20.png (unchanged since the earlier review)
+- pdlc/changes/CH-0005-forecast/frames/21.png (unchanged since the earlier review)
+- pdlc/changes/CH-0005-forecast/frames/22.png (unchanged since the earlier review)
+- pdlc/changes/CH-0005-forecast/frames/23.png (unchanged since the earlier review)
 - pdlc/changes/CH-0005-forecast/frames/24.png
 - pdlc/changes/CH-0005-forecast/frames/25.png
 - pdlc/changes/CH-0005-forecast/frames/26.png
