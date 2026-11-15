@@ -1,6 +1,6 @@
 # IN-0002 · Simulated Solcast forecast for policies
 
-Status: ready · Ticket: none · Branch: pdlc/IN-0002-solcast-forecast · Added: 2026-10-31
+Status: building · Ticket: none · Branch: pdlc/IN-0002-solcast-forecast · Added: 2026-10-31
 
 The pdlc scripts read each header field. Thus, a header field holds only its bare value.
 Do not add a name in brackets, and do not add backticks. For example, write
@@ -19,8 +19,11 @@ sunlight". IN-0008 (hot-water policy simulation) builds those policies. They rea
 
 ## Requirements
 
-- CAP-forecast.R1: added
-- CAP-forecast.R5: added
+- CAP-forecast.R1 (forecast periods): added
+- CAP-forecast.R2 (forecast error): added
+- CAP-forecast.R3 (fetch limit): added
+- CAP-forecast.R4 (Solcast JSON): added
+- CAP-forecast.R5 (hourly forecast energy): added
 
 ## Changes
 
@@ -28,7 +31,7 @@ sunlight". IN-0008 (hot-water policy simulation) builds those policies. They rea
 
 ## Acceptance checks
 
-Acceptance-File: none
+Acceptance-File: tests/acceptance/IN-0002.acceptance.lean
 Acceptance-Locked: none
 Acceptance-Passed: none
 
@@ -40,33 +43,37 @@ Acceptance-Passed: none
 - CAP-forecast.R5: What value has an hour with no period? → 0 kWh (assumed).
 - CAP-strategies.R5 (load shift into sun): was "the three hours with the most forecast solar energy", now removed from this intent. The old strategies do not read the forecast. IN-0003 (shift into sunny hours that are apart) keeps the old rule.
 
+- CAP-forecast.R2: What is a sunny period? → a period with an actual power of more than 0 kW (assumed).
+- CAP-forecast.R4: How does the UTC time round on a tie? → up (assumed).
+
 ## Handoff
 
-Handoff · IN-0002 · change → acceptance
+Handoff · IN-0002 · acceptance → tests
 
-Time: 2026-11-15T10:00:17+00:00
+Time: 2026-11-15T10:16:45+00:00
 
 ### Done
 
-- Change planned one change: CH-0005 (forecast), for CAP-forecast (simulated Solcast forecasts), in `StoragePolicySim/Forecast.lean`.
-- The change copies the Interface entries of CAP-forecast, and the entries `Site`, `Hour`, `Sky` and `scenario` of CAP-scenario (sun, weather and load).
+- The test writer wrote 55 checks in `tests/acceptance/IN-0002.acceptance.lean`, for R1 (forecast periods) to R5 (hourly forecast energy).
+- IN-0002 has one change, so this file is also the check file of CH-0005 (forecast). The test writer found three gaps in the spec, and the skill closed them.
 
 ### Decided on defaults
 
-- none
+- CAP-forecast.R2: What is a sunny period? → a period with an actual power of more than 0 kW (assumed).
+- CAP-forecast.R4: How does the UTC time round on a tie? → up (assumed).
 
 ### Open
 
-- none
+- The acceptance file runs 250 forecasts of a 365-day scenario. If the library is slow, the test writer lowers the number of days between fetches.
 
 ### Look here
 
-- `pdlc/changes/CH-0005-forecast/change.md`
+- `tests/acceptance/IN-0002.acceptance.lean`
 
 ### Don't redo
 
-- The requirements and the Interface of CAP-forecast.
+- The spec text and the Interface of CAP-forecast.
 
 ### Next: do this first
 
-Write the acceptance checks of IN-0002 in `tests/acceptance/IN-0002.acceptance.lean`. They call the library functions of CAP-forecast, because the forecast has no command yet.
+Start CH-0005 (forecast). Its checks are the acceptance checks.

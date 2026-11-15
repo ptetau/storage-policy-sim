@@ -6,8 +6,7 @@ Tests-Locked: acceptance
 
 ## Delivers
 
-The library makes a simulated Solcast rooftop forecast for a scenario: periods with growing
-error and bands, the fetch hours of a day, the hourly forecast energy that a policy reads, and the Solcast JSON.
+The library makes a simulated Solcast rooftop forecast for a scenario. Each fetch has periods with growing error and bands. The library also gives the fetch hours of a day, the hourly forecast energy that a policy reads, and the Solcast JSON.
 
 ## Requirements
 
@@ -62,7 +61,7 @@ error and bands, the fetch hours of a day, the hourly forecast energy that a pol
 
 - `Period` · type · `StoragePolicySim/Forecast.lean`
   - in: not applicable
-  - out: a structure with `endMinute : Nat` (the end of the period, in minutes from the start of the run), and `estimateKw`, `p10Kw` and `p90Kw`, each a `Float` (a mean power in kW)
+  - out: a structure with `Repr` and `Inhabited`, and the fields `endMinute : Nat` (the end of the period, in minutes from the start of the run), and `estimateKw`, `p10Kw` and `p90Kw`, each a `Float` (a mean power in kW)
   - errors: none
 - `forecast (site : Site) (seed days : Nat) (errorScale : Float) (fetchHour : Nat) : Array Period` · function · `StoragePolicySim/Forecast.lean`
   - in: a site, a seed, the days of the run, the error scale, and the hour of the run at which the fetch is made

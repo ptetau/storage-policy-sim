@@ -21,7 +21,7 @@ policy reads the forecast as the solar energy of each coming hour.
 
 - `Period` · type · `StoragePolicySim/Forecast.lean` · proposed
   - in: not applicable
-  - out: a structure with `endMinute : Nat` (the end of the period, in minutes from the start of the run), and `estimateKw`, `p10Kw` and `p90Kw`, each a `Float` (a mean power in kW)
+  - out: a structure with `Repr` and `Inhabited`, and the fields `endMinute : Nat` (the end of the period, in minutes from the start of the run), and `estimateKw`, `p10Kw` and `p90Kw`, each a `Float` (a mean power in kW)
   - errors: none
 - `forecast (site : Site) (seed days : Nat) (errorScale : Float) (fetchHour : Nat) : Array Period` · function · `StoragePolicySim/Forecast.lean` · proposed
   - in: a site, a seed, the days of the run, the error scale, and the hour of the run at which the fetch is made
@@ -87,7 +87,7 @@ The 10% band is the estimate times 1 less 1.28 times the error scale times the s
 90% band uses 1 plus that amount (assumed). Each value stays from 0 to the panel power. The
 seed of the run gives the random numbers, and the forecast does not change the weather. The
 error of a set of periods is the mean of the absolute differences from the actual power
-(assumed).
+(assumed). A sunny period is a period with an actual power of more than 0 kW (assumed).
 
 - Given an error scale of 0, when a fetch at hour 0 is made, then each value of each period equals its actual power. The tolerance is 0.000001 kW.
 - Given seed 7, when the same fetch is made two times, then the two forecasts are the same.
@@ -121,7 +121,7 @@ A forecast shows as the JSON of the Solcast hobbyist rooftop forecast reply. The
 
 Each value has four decimals (assumed). The run starts on 1 January 2025 at 00:00 solar
 time (assumed). The UTC time is the solar time less the longitude divided by 15 hours,
-rounded to the nearest 30 minutes (assumed). The time has the form
+rounded to the nearest 30 minutes, and a tie rounds up (assumed). The time has the form
 `2025-01-01T00:30:00.0000000Z`.
 
 - Given longitude 0 and a fetch at hour 0, when the JSON is made, then the first period ends at `2025-01-01T00:30:00.0000000Z`.
