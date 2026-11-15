@@ -51,7 +51,7 @@ Do not add a name in brackets, and do not add backticks. For example, write
 ## Acceptance checks
 
 Acceptance-File: tests/acceptance/IN-0008.acceptance.lean
-Acceptance-Locked: none
+Acceptance-Locked: c05d3df
 Acceptance-Passed: none
 
 ## Notes
