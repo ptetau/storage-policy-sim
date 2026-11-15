@@ -27,6 +27,10 @@ policy reads the forecast as the solar energy of each coming hour.
   - in: a site, a seed, the days of the run, the error scale, and the hour of the run at which the fetch is made
   - out: the periods of the fetch, in order of time. The array is empty when the fetch hour is not inside the run.
   - errors: none
+- `forecastOf (hours : Array Hour) (site : Site) (seed : Nat) (errorScale : Float) (fetchHour : Nat) : Array Period` · function · `StoragePolicySim/Forecast.lean` · proposed
+  - in: the hours of `scenario site seed days`, built once by the caller, the same site and seed, the error scale, and the hour of the run at which the fetch is made
+  - out: the same periods as `forecast site seed days errorScale fetchHour`, where `days` is the count of hours divided by 24
+  - errors: none
 - `fetchHours (fetchesPerDay : Nat) : Array Nat` · function · `StoragePolicySim/Forecast.lean`
   - in: the fetches of one day, from 1 to 10
   - out: the hour of the day of each fetch, in order
@@ -145,3 +149,17 @@ value 0 (assumed).
 - Given a fetch at hour 8750, when the hourly energy is made, then it has 48 values. Values 10 to 47 are 0 kWh.
 - Given a fetch at hour 8760, when the hourly energy is made, then it has 48 values, each 0 kWh.
 - Given a fetch at hour 4116, when the hourly energy is made, then the sum of the 48 values is 0.5 times the sum of the estimates of the 96 periods. The tolerance is 0.000001 kWh.
+
+### CAP-forecast.R6 · Forecast from built hours
+
+Status: ready · Intents: IN-0008
+
+A caller that makes many fetches builds the hours of the scenario once. `forecastOf` gives the
+same periods as `forecast`, from these hours, and does not build the scenario again. A set of
+hours that is empty has no period in any fetch.
+
+- Given the hours of `scenario` for seed 7 and 365 days at latitude 45 with 5 kW of panels, and an error scale of 1, when `forecastOf` runs for the fetch hours 0, 4116 and 8750, then each result has the same periods as `forecast` for the same arguments. Each period has the same end and the same three values.
+- Given the same hours and an error scale of 0, when `forecastOf` runs for the fetch hour 4000, then each value of each period equals its actual power. The tolerance is 0.000001 kW.
+- Given the same hours, when `forecastOf` runs for the fetch hour 8760, then it has no period.
+- Given no hours, when `forecastOf` runs for the fetch hour 0, then it has no period.
+- Given the same hours and seeds 7 and 8, when `forecastOf` runs for the fetch hour 4000 with the hours of each seed, then at least one estimate differs.

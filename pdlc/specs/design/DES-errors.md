@@ -16,6 +16,7 @@ exact error.
 | `BAD_NUMBER` | The value of a number option is not a number of the right form | caller | no |
 | `OUT_OF_RANGE` | A number is outside the range of its option | caller | no |
 | `UNKNOWN_STRATEGY` | The name of the strategy is not in the list of strategies | caller | no |
+| `UNKNOWN_POLICY` | The name of the policy is not in the list of policies | caller | no |
 
 When a requirement needs a new error, add a row. When the meaning is the same, use the
 existing code again.

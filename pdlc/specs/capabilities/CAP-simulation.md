@@ -9,6 +9,9 @@ a battery. It gives the energy flows of each hour, the totals, and the totals of
 month. The totals include the self-consumption and the self-sufficiency, so that a caller
 can compare strategies on the same weather.
 
+A caller can also gate the battery by hour: charging and discharging are each allowed or
+not allowed. A policy uses this gate to plan the battery with the hot-water tank.
+
 ## Code map
 
 - `StoragePolicySim/Simulation.lean`
@@ -50,6 +53,10 @@ can compare strategies on the same weather.
 - `simulate (site : Site) (battery : Battery) (strategy : Strategy) (seed days : Nat) : Result` · function · `StoragePolicySim/Simulation.lean`
   - in: a site, a battery, a strategy, a seed, and the days of the run
   - out: the hours, the totals and the months of the run
+  - errors: none
+- `stepHourGated (battery : Battery) (socKwh : Float) (allowCharge allowDischarge : Bool) (pvKwh loadKwh : Float) : Flow` · function · `StoragePolicySim/Simulation.lean` · proposed
+  - in: a battery, the energy that it holds, whether it may charge, whether it may discharge, and the solar energy and the load of the hour
+  - out: the flows of the hour, with the same rules as `stepHour`. The battery charges only when it may charge, and discharges only when it may discharge.
   - errors: none
 
 ### Test seams
@@ -136,3 +143,22 @@ daily load, 3 kWh of it flexible. The seed is 7, and each run is 365 days.
 - Given a battery of 10 kWh with 5 kW of power, when `none` and `greedy` run, then `greedy` has the higher self-consumption.
 - Given a battery of 10 kWh with 5 kW of power, when `evening` and `greedy` run, then `evening` has a self-consumption no higher than `greedy`.
 - Given a battery of 0 kWh, when `none` and `shift` run, then `shift` has the higher self-consumption.
+
+### CAP-simulation.R6 · Allowed battery use
+
+Status: ready · Intents: IN-0008
+
+`stepHourGated` runs an hour as `stepHour` does with the `greedy` strategy, but a battery
+that may not charge keeps the surplus as export, and a battery that may not discharge leaves
+the shortfall as import. The battery limits of R1 and R2 still hold. In these lines, the
+battery holds 10 kWh with 5 kW of power, unless the line says otherwise. The tolerance is
+0.000000001 kWh.
+
+- Given an empty battery that may charge and discharge, when the hour has 3 kWh of solar and 1 kWh of load, then 1 kWh is direct and 2 kWh charges. The battery then holds 1.9 kWh.
+- Given an empty battery that may not charge, when the hour has 3 kWh of solar and 1 kWh of load, then 0 kWh charges and 2 kWh is export. The battery still holds 0 kWh.
+- Given 1.9 kWh stored and a battery that may discharge, when the hour has 0 kWh of solar and 2 kWh of load, then the battery gives 1.805 kWh and the import is 0.195 kWh.
+- Given 1.9 kWh stored and a battery that may not discharge, when the hour has 0 kWh of solar and 2 kWh of load, then the battery gives 0 kWh and the import is 2.0 kWh. The battery still holds 1.9 kWh.
+- Given 9.05 kWh stored and a battery that may charge, when the hour has a surplus of 2 kWh, then 1 kWh charges and 1 kWh is export. The battery then holds 10 kWh.
+- Given a battery that may not charge and may not discharge, when an hour has a surplus of 2 kWh, then the export is 2 kWh. When the hour has a shortfall of 2 kWh, then the import is 2 kWh.
+- Given a battery that may charge and discharge, when each of the 24 hours of day 100 of a run with latitude 45 and seed 7 runs with the battery energy of the hour before, then each flow equals the flow of `stepHour` with `greedy`. The tolerance is 0.000000001 kWh.
+- Given a battery that may charge, and may discharge only from 17:00, when the same 24 hours run, then each flow equals the flow of `stepHour` with `evening`. The tolerance is 0.000000001 kWh.
