@@ -1,6 +1,6 @@
 # IN-0008 · Hot-water policy simulation
 
-Status: ready · Ticket: none · Branch: pdlc/IN-0008-hot-water-policies · Added: 2026-11-15
+Status: building · Ticket: none · Branch: pdlc/IN-0008-hot-water-policies · Added: 2026-11-15
 
 The pdlc scripts read each header field. Thus, a header field holds only its bare value.
 Do not add a name in brackets, and do not add backticks. For example, write
@@ -87,41 +87,38 @@ Acceptance-Passed: none
 
 ## Handoff
 
-Handoff · IN-0008 · change → acceptance
+Handoff · IN-0008 · acceptance → tests
 
-Time: 2026-11-15T11:10:02+00:00
+Time: 2026-11-15T11:59:42+00:00
 
 ### Done
 
-- Change planned six changes, in the order of their entries: CH-0006 (forecast-fast), CH-0007 (hotwater), CH-0008 (gated-battery), CH-0009 (policy), CH-0010 (homesim) and CH-0011 (policy-commands).
-- Research of the problem changed the model before any check was written. CAP-hotwater now has a thermostat with a cut-in level and a daily full heating (R3, R5), a loss that matches the average New Zealand tank (R1), and a random draw for each day (R6).
-- CAP-forecast.R7 (shared error of a day) is new. CAP-policy.R4 (defaults and names) now targets a full tank. CAP-homesim.R1 to R3 follow the new tank, and JOB-simulate.R7 to R11 add `--cut-in`, `--draw-cv` and the `perfect-forecast` row.
-- The skill added the Interface of CAP-strategies (battery and load strategies) from the code, because the checks of CH-0008 call a strategy. No behaviour changed.
+- The test writer wrote 216 checks in `tests/acceptance/IN-0008.acceptance.lean`, for CAP-forecast.R6 and R7, CAP-hotwater.R1 to R6, CAP-simulation.R6, CAP-policy.R1 to R4, CAP-homesim.R1 to R6, and JOB-simulate.R5 to R11.
+- The file compiles against stubs of the new modules, and 187 of the 216 checks fail there. The other checks pass on zero defaults, as expected. The review passed in round 2. Round 1 found two problems: a check that wanted 0 for `minTankKwh` and `finalTankKwh` of a run of 0 days, and robust-evaluation checks that used no run with an unmet draw.
+- The acceptance file of IN-0001 changed in one place: the constant `usage` holds the new usage line of JOB-simulate.R5.
+- The test writer found gaps in the specs, and the skill closed them: the meaning of `heatKwh` in `TankStep`, the lack in CAP-policy.R3, the fetch of CAP-forecast.R7, the seed of the forecast in CAP-homesim.R1, and the values of `minTankKwh` and `finalTankKwh` for 0 days.
 
 ### Decided on defaults
 
-- CAP-forecast.R7: How do the errors of the periods of one day relate? → they share 70% of their variance with the day, and the sum is still normal, because one weather front is wrong for the whole day (assumed)
-- CAP-hotwater.R1: How much of its energy does the tank lose in an hour? → 0.6% of the stored energy, which is 1.5 kWh in a day for a full tank, near the New Zealand average (assumed)
-- CAP-hotwater.R3: When does the thermostat heat the tank? → when the tank holds less than half of its capacity, and then until the tank is full, like a real thermostat with a dead band (assumed)
-- CAP-hotwater.R5: When must the tank be full? → at least once each day, with the thermostat on from 20:00 if it has not been, because stored water below 60 °C can grow legionella bacteria (assumed)
-- CAP-hotwater.R6: How does the draw change from day to day? → a random factor of mean 1 and a spread of 0.25, so that the checks of no cold tank test more than the average day (assumed)
-- CAP-policy.R4: What are the default parameters of the policies? → a full tank as the target, so that the sun does the daily full heating, and a sensible start for the default tank otherwise (assumed)
-- CAP-homesim.R1: What does a run start with, and when does a precomputed policy plan? → a full tank and an empty battery, and a plan at hour 0 from the fetch at hour 0 and the expected draw without the factor of the day, with the forecast made only for a policy that reads it (assumed)
-- CAP-homesim.R2: What does no cold tank mean? → no unmet draw, the tank ends each hour at or above the floor of 2.1 kWh, and the tank is full at least once each day (assumed)
+- none
 
 ### Open
 
-- none
+- The file needs minutes to run: the 704 candidates of CAP-homesim.R6, the runs of 365 days over seeds 1 to 5 in CAP-homesim.R2, and the evaluation over 10 seeds in JOB-simulate.R9. If the library is slow, the builder lowers nothing in the checks, and speeds up the library (CH-0006 gives `forecastOf` for this).
+- `tests/JOB-simulate.lean` line 102 still holds the old usage constant. CH-0011 (policy-commands) must update it.
+- The component checks of CH-0011 must cover MISSING_VALUE and BAD_NUMBER of `sim policy compare`, `robust` and `tune`, and UNKNOWN_OPTION of `sim policy robust`. The acceptance file has no check for them.
+- The reviewer lists follow-ups: acceptance lines for rules that only the prose of the specs state (the thermostat reads the level after the draw, the tuner fallback and its tie order, the `cold-hours` half of `safe`), and the lower edge of each option range. /pdlc:verify files them as new intents.
 
 ### Look here
 
-- The Interface of each change spec in `pdlc/changes/`.
-- `pdlc/acceptance/IN-0008-hot-water-policies/brief.md` is stale. Rewrite it from the new specs before the test writer starts.
+- `tests/acceptance/IN-0008.acceptance.lean`
+- `pdlc/acceptance/IN-0008-hot-water-policies/review/tests/result.md`
 
 ### Don't redo
 
-- The six change specs and their order.
+- The spec text and the Interface of the six changes.
+- The checks of the acceptance file, which are locked.
 
 ### Next: do this first
 
-Write the acceptance checks of IN-0008 in `tests/acceptance/IN-0008.acceptance.lean`. They prove the commands through the `sim` process, and the capabilities through the library.
+Start CH-0006 (forecast-fast). Write its component checks, then the six changes in order. The acceptance checks pass only when CH-0011 is built.
