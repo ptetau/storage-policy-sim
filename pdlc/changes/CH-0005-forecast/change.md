@@ -1,6 +1,6 @@
 # CH-0005 · Simulated Solcast forecast
 
-Intent: IN-0002 · Scope: CAP-forecast · Status: building · Ticket: none · Branch: pdlc/CH-0005-forecast · Base: pdlc/CH-0004-sim-command
+Intent: IN-0002 · Scope: CAP-forecast · Status: in review · Ticket: none · Branch: pdlc/CH-0005-forecast · Base: pdlc/CH-0004-sim-command
 
 Tests-Locked: acceptance
 
@@ -154,3 +154,4 @@ none
 
 - Planned as the only change of IN-0002 (Solcast forecast). The policies of IN-0008 (hot-water policy simulation) read it.
 - Build: the 57 acceptance checks of IN-0002 pass, with the earlier files. No check changed since the lock.
+- Verify round 1: each remit passed. The change is `in review`.

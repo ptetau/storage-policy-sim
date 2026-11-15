@@ -1,11 +1,12 @@
-# Handoff · CH-0005 · build → verify
+# Handoff · CH-0005 · verify → show
 
-Time: 2026-11-15T10:37:40+00:00
+Time: 2026-11-15T10:40:44+00:00
 
 ### Done
 
-- The builder wrote `StoragePolicySim/Forecast.lean`. The 57 acceptance checks of IN-0002 pass, and so do the earlier check files.
-- CAP-forecast.R1 (forecast periods) to R5 (hourly forecast energy) are now `built`.
+- All 57 acceptance checks pass, and no check changed since the lock.
+- Each remit passed in round 1: specification, security, quality and privacy. Compliance does not apply.
+- CAP-forecast.R1 (forecast periods) to R5 (hourly forecast energy) are `verified`. The Interface entries lost their mark.
 
 ### Decided on defaults
 
@@ -13,16 +14,16 @@ Time: 2026-11-15T10:37:40+00:00
 
 ### Open
 
-- Each `forecast` call builds the scenario again, about 30 ms in the interpreter. A policy that fetches many times needs a call that takes the built hours. IN-0008 (hot-water policy simulation) adds one.
+- The last change of IN-0002 (Solcast forecast) is this one, so its acceptance checks passed here.
 
 ### Look here
 
-- `StoragePolicySim/Forecast.lean`
+- `pdlc/changes/CH-0005-forecast/review/`
 
 ### Don't redo
 
-- The code and the checks.
+- The code and the reviews.
 
 ### Next: do this first
 
-Make the review packets with `make_packets.py CH-0005 --verify`.
+Record the GIF in a terminal, with a short Lean script that prints forecasts.

@@ -33,7 +33,7 @@ sunlight". IN-0008 (hot-water policy simulation) builds those policies. They rea
 
 Acceptance-File: tests/acceptance/IN-0002.acceptance.lean
 Acceptance-Locked: 3456206
-Acceptance-Passed: none
+Acceptance-Passed: 7dd2d92
 
 ## Notes
 

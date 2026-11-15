@@ -19,34 +19,34 @@ policy reads the forecast as the solar energy of each coming hour.
 
 ## Interface
 
-- `Period` · type · `StoragePolicySim/Forecast.lean` · proposed
+- `Period` · type · `StoragePolicySim/Forecast.lean`
   - in: not applicable
   - out: a structure with `Repr` and `Inhabited`, and the fields `endMinute : Nat` (the end of the period, in minutes from the start of the run), and `estimateKw`, `p10Kw` and `p90Kw`, each a `Float` (a mean power in kW)
   - errors: none
-- `forecast (site : Site) (seed days : Nat) (errorScale : Float) (fetchHour : Nat) : Array Period` · function · `StoragePolicySim/Forecast.lean` · proposed
+- `forecast (site : Site) (seed days : Nat) (errorScale : Float) (fetchHour : Nat) : Array Period` · function · `StoragePolicySim/Forecast.lean`
   - in: a site, a seed, the days of the run, the error scale, and the hour of the run at which the fetch is made
   - out: the periods of the fetch, in order of time. The array is empty when the fetch hour is not inside the run.
   - errors: none
-- `fetchHours (fetchesPerDay : Nat) : Array Nat` · function · `StoragePolicySim/Forecast.lean` · proposed
+- `fetchHours (fetchesPerDay : Nat) : Array Nat` · function · `StoragePolicySim/Forecast.lean`
   - in: the fetches of one day, from 1 to 10
   - out: the hour of the day of each fetch, in order
   - errors: none
-- `latestFetch (fetchesPerDay hour : Nat) : Nat` · function · `StoragePolicySim/Forecast.lean` · proposed
+- `latestFetch (fetchesPerDay hour : Nat) : Nat` · function · `StoragePolicySim/Forecast.lean`
   - in: the fetches of one day, from 1 to 10, and an hour of the run
   - out: the hour of the run of the latest fetch at or before that hour
   - errors: none
-- `hourlyEnergy (periods : Array Period) (fetchHour : Nat) : Array Float` · function · `StoragePolicySim/Forecast.lean` · proposed
+- `hourlyEnergy (periods : Array Period) (fetchHour : Nat) : Array Float` · function · `StoragePolicySim/Forecast.lean`
   - in: the periods of a fetch, and the hour of that fetch
   - out: 48 values in kWh. Value `j` is the forecast solar energy of hour `fetchHour + j` of the run.
   - errors: none
-- `forecastJson (periods : Array Period) (longitude : Float) : String` · function · `StoragePolicySim/Forecast.lean` · proposed
+- `forecastJson (periods : Array Period) (longitude : Float) : String` · function · `StoragePolicySim/Forecast.lean`
   - in: the periods of a fetch, and a longitude in degrees, east is positive
   - out: the Solcast reply as one line of JSON text
   - errors: none
 
 ### Test seams
 
-- `seed` · seam: randomness · `StoragePolicySim/Forecast.lean` · proposed
+- `seed` · seam: randomness · `StoragePolicySim/Forecast.lean`
   - in: the `seed` argument of `forecast`. The same seed gives the same forecast.
   - errors: none
 
@@ -54,7 +54,7 @@ policy reads the forecast as the solar energy of each coming hour.
 
 ### CAP-forecast.R1 · Forecast periods
 
-Status: built · Intents: IN-0002
+Status: verified · Intents: IN-0002
 
 A fetch at the start of hour `h` of a run gives the periods of the next 48 hours (assumed).
 Period `k`, for `k` from 1 to 96, is 30 minutes long and ends `60 × h + 30 × k` minutes
@@ -77,7 +77,7 @@ In these lines, the site is at latitude 45 with 5 kW of panels. The seed is 7, t
 
 ### CAP-forecast.R2 · Forecast error
 
-Status: built · Intents: IN-0002
+Status: verified · Intents: IN-0002
 
 The estimate is the actual power, times 1 plus the error scale times a spread times a random
 number from a normal curve (assumed). The spread is 0.05 plus 0.10 for each 24 hours of lead
@@ -97,7 +97,7 @@ error of a set of periods is the mean of the absolute differences from the actua
 
 ### CAP-forecast.R3 · Fetch limit
 
-Status: built · Intents: IN-0002
+Status: verified · Intents: IN-0002
 
 A day has from 1 to 10 fetches, because a Solcast hobbyist account has 10 calls each day
 (assumed). Fetch `i` of `n` is at hour `i × 24 / n` of each day, rounded down (assumed), for
@@ -113,7 +113,7 @@ before that hour.
 
 ### CAP-forecast.R4 · Solcast JSON
 
-Status: built · Intents: IN-0002
+Status: verified · Intents: IN-0002
 
 A forecast shows as the JSON of the Solcast hobbyist rooftop forecast reply. The text is
 `{"forecasts":[` and the periods, split by commas, then `]}`, with no spaces or line breaks
@@ -133,7 +133,7 @@ rounded to the nearest 30 minutes, and a tie rounds up (assumed). The time has t
 
 ### CAP-forecast.R5 · Hourly forecast energy
 
-Status: built · Intents: IN-0002
+Status: verified · Intents: IN-0002
 
 A policy reads a fetch as the forecast solar energy of each coming hour. Value `j` is the
 estimate of the first period of hour `fetchHour + j`, plus the estimate of the second, each
