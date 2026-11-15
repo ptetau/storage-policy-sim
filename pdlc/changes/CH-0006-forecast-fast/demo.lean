@@ -140,6 +140,7 @@ def run : String → IO Unit
     | some p => say s!"first period with sun ends {p.endMinute}: estimate {f3 p.estimateKw} kW, actual {f3 (actualKw p)} kW"
     | none => say "no period with sun"
   | "r6-3" => do
+    say s!"hours of the run: {hours7.size}"
     say s!"forecastOf, fetch at hour 8760: {(fo 1.0 8760).size} periods"
   | "r6-4" => do
     let ps := forecastOf (#[] : Array Hour) site 7 1.0 0

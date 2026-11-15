@@ -17,7 +17,7 @@
       "run": "lake env lean --run pdlc/changes/CH-0006-forecast-fast/demo.lean r6-2"
     },
     {
-      "caption": "CAP-forecast.R6 \u00b7 a fetch at hour 8760 has no period",
+      "caption": "CAP-forecast.R6 \u00b7 hours of a run of 8760 hours: a fetch at hour 8760 has no period",
       "run": "lake env lean --run pdlc/changes/CH-0006-forecast-fast/demo.lean r6-3"
     },
     {
