@@ -1,6 +1,6 @@
 # CH-0007 · Hot-water tank with a thermostat
 
-Intent: IN-0008 · Scope: CAP-hotwater · Status: testing · Ticket: none · Branch: pdlc/CH-0007-hotwater · Base: pdlc/CH-0006-forecast-fast
+Intent: IN-0008 · Scope: CAP-hotwater · Status: building · Ticket: none · Branch: pdlc/CH-0007-hotwater · Base: pdlc/CH-0006-forecast-fast
 
 Tests-Locked: ae785cd
 
