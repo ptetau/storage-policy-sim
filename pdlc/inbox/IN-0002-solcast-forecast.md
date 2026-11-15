@@ -24,7 +24,7 @@ sunlight". IN-0008 (hot-water policy simulation) builds those policies. They rea
 
 ## Changes
 
-- none yet
+- CH-0005 (forecast): CAP-forecast (simulated Solcast forecasts)
 
 ## Acceptance checks
 
@@ -42,20 +42,18 @@ Acceptance-Passed: none
 
 ## Handoff
 
-Handoff · IN-0002 · ready → change
+Handoff · IN-0002 · change → acceptance
 
-Time: 2026-11-15T09:58:57+00:00
+Time: 2026-11-15T10:00:17+00:00
 
 ### Done
 
-- Ready re-scoped IN-0002 (Solcast forecast) to CAP-forecast (simulated Solcast forecasts) only. The old strategies do not read the forecast.
-- Ready added R5 (hourly forecast energy) and an "Interface" section in the form of pdlc 0.6.0. The five requirements are now `ready`.
-- Ready removed the patches of CAP-strategies (battery and load strategies), CAP-simulation (hourly energy flows) and JOB-simulate (the sim command). IN-0008 (hot-water policy simulation) holds the commands.
+- Change planned one change: CH-0005 (forecast), for CAP-forecast (simulated Solcast forecasts), in `StoragePolicySim/Forecast.lean`.
+- The change copies the Interface entries of CAP-forecast, and the entries `Site`, `Hour`, `Sky` and `scenario` of CAP-scenario (sun, weather and load).
 
 ### Decided on defaults
 
-- CAP-forecast.R1: How far ahead does a fetch look? → 48 hours of 30-minute periods (assumed).
-- CAP-forecast.R5: What value has an hour with no period? → 0 kWh (assumed).
+- none
 
 ### Open
 
@@ -63,12 +61,12 @@ Time: 2026-11-15T09:58:57+00:00
 
 ### Look here
 
-- `pdlc/specs/capabilities/CAP-forecast.md`
+- `pdlc/changes/CH-0005-forecast/change.md`
 
 ### Don't redo
 
-- The requirements R1 to R5 and the Solcast field names.
+- The requirements and the Interface of CAP-forecast.
 
 ### Next: do this first
 
-Plan one change for CAP-forecast. Plan the changes of IN-0008 (hot-water policy simulation) after it.
+Write the acceptance checks of IN-0002 in `tests/acceptance/IN-0002.acceptance.lean`. They call the library functions of CAP-forecast, because the forecast has no command yet.
