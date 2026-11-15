@@ -2,7 +2,70 @@
 
 Judge only what is in this packet. Write your result next to it, in result.md.
 
-Made at: 60a9ca81f300f31fd6543d9c3a0ef96b034e6e9e
+Made at: dc53548140e8f8e11e68dfddd34a809bccce45e1
+
+## Re-review
+
+Earlier review: d9e3a86
+
+An earlier review of this remit judged the checks locked at d9e3a86. Judge only these two things:
+
+1. Each earlier problem below. If the problem is not fixed, list it again under "Problems".
+2. The changes since the earlier review, in the diff below. List a new problem only
+   where a changed line causes the problem.
+
+Do not raise a new problem on material that did not change. This rule also applies
+to a problem that the earlier review missed.
+Write a "Wrong versions" line only for each check that changed. If no check
+changed, write "none" under "Wrong versions".
+
+### Earlier problems
+
+- tests/CAP-hotwater.lean:692 · The check "CAP-hotwater.R6 the seeds 7 and 8 do not give the same stream shifted by one day" can fail a correct app. The spec says only that z depends on the seed and the day, and that seeds 7 and 8 differ on at least 300 of 365 days. It leaves open how the seed and the day combine. An app that takes z from a hash of seed + day passes every R6 (daily draw factor) line and has the right statistics. In that app, seed 8 on day d equals seed 7 on day d + 1, so both parts of this check fail. Remove the check, or limit it to what the spec says · remit rule "A correct app passes each check", CAP-hotwater.R6 (daily draw factor)
+- tests/CAP-hotwater.lean:583 · The check "CAP-hotwater.R5 the start state of the default tank is full with the thermostat off and fullToday true" tests `startState` with the default tank only. A `startState` that ignores its tank and returns 10.5 kWh passes it. The Interface says `startState` takes a tank and gives the state of a full tank. The file already tests each other field of the tank with a non-default value. Add a check with a capacity other than 10.5 kWh, for example 6.0 kWh, that expects that capacity in `energyKwh` · remit rule "A rule about every member of a class that the check tests without a non-member", CAP-hotwater.R5 (daily full heating) and the Interface entry `startState`
+
+### Changes since the earlier review
+
+````
+diff --git a/tests/CAP-hotwater.lean b/tests/CAP-hotwater.lean
+index c384fb5..a7fe895 100644
+--- a/tests/CAP-hotwater.lean
++++ b/tests/CAP-hotwater.lean
+@@ -587,6 +587,14 @@ def checks : List Check := [
+         (near st.energyKwh 10.5 1e-9, s!"the tank holds {st.energyKwh} kWh"),
+         (st.heating == false, "the thermostat is on"),
+         (st.fullToday == true, "fullToday is false")] },
++  -- A version that ignores its tank and returns 10.5 kWh fails here.
++  { name := "CAP-hotwater.R5 the start state of a tank with a capacity of 6.0 kWh holds 6.0 kWh with the thermostat off and fullToday true",
++    run := do
++      let st := startState { defaultTank with capacityKwh := 6.0 }
++      return firstFail [
++        (near st.energyKwh 6.0 1e-9, s!"the tank holds {st.energyKwh} kWh"),
++        (st.heating == false, "the thermostat is on"),
++        (st.fullToday == true, "fullToday is false")] },
+   -- fullToday stays true to the end of the day. A version that sets it from the energy at the end
+   -- of each hour sets it to false here.
+   { name := "CAP-hotwater.R5 fullToday stays true in an hour after which the tank is no longer full",
+@@ -687,18 +695,6 @@ def checks : List Check := [
+   { name := "CAP-hotwater.R6 the seeds 0, 1 and 99991 give factors above 0 with a mean from 0.98 to 1.02 and a standard deviation from 0.23 to 0.27",
+     run := do
+       return firstSome [seedStatsBad 0, seedStatsBad 1, seedStatsBad 99991] },
+-  -- A version that makes the factors of seed 8 from the factors of seed 7, shifted by one day,
+-  -- passes the line of the seeds 7 and 8 and fails here.
+-  { name := "CAP-hotwater.R6 the seeds 7 and 8 do not give the same stream shifted by one day",
+-    run := do
+-      let a := factorsOf 7 0.25 365
+-      let b := factorsOf 8 0.25 365
+-      let n1 := ((a.tail.zip b).filter (fun p => !(p.1 == p.2))).length
+-      let n2 := ((b.tail.zip a).filter (fun p => !(p.1 == p.2))).length
+-      return firstFail [
+-        (a.length == 365 && b.length == 365, s!"{a.length} and {b.length} factors"),
+-        (n1 ≥ 300, s!"seed 7 on day d + 1 and seed 8 on day d differ on {n1} of 364 days"),
+-        (n2 ≥ 300, s!"seed 8 on day d + 1 and seed 7 on day d differ on {n2} of 364 days")] },
+   -- The factor of a day comes from the day. A version that keeps a number for several days fails here.
+   { name := "CAP-hotwater.R6 seed 7 gives a different factor on at least 300 of the 364 days that follow a day",
+     run := do
+````
 
 # Remit: tests
 
@@ -101,7 +164,7 @@ Write "Wrong versions" for the acceptance checks in the same way as for other ch
 
 Intent: IN-0008 · Scope: CAP-hotwater · Status: testing · Ticket: none · Branch: pdlc/CH-0007-hotwater · Base: pdlc/CH-0006-forecast-fast
 
-Tests-Locked: d9e3a86
+Tests-Locked: ae785cd
 
 ## Delivers
 
@@ -623,10 +686,10 @@ port.
 ````
 diff --git a/tests/CAP-hotwater.lean b/tests/CAP-hotwater.lean
 new file mode 100644
-index 0000000..c384fb5
+index 0000000..a7fe895
 --- /dev/null
 +++ b/tests/CAP-hotwater.lean
-@@ -0,0 +1,746 @@
+@@ -0,0 +1,742 @@
 +/-
 +Component checks of CAP-hotwater (hot-water tank with a thermostat), for CH-0007 (hot-water tank
 +with a thermostat).
@@ -1216,6 +1279,14 @@ index 0000000..c384fb5
 +        (near st.energyKwh 10.5 1e-9, s!"the tank holds {st.energyKwh} kWh"),
 +        (st.heating == false, "the thermostat is on"),
 +        (st.fullToday == true, "fullToday is false")] },
++  -- A version that ignores its tank and returns 10.5 kWh fails here.
++  { name := "CAP-hotwater.R5 the start state of a tank with a capacity of 6.0 kWh holds 6.0 kWh with the thermostat off and fullToday true",
++    run := do
++      let st := startState { defaultTank with capacityKwh := 6.0 }
++      return firstFail [
++        (near st.energyKwh 6.0 1e-9, s!"the tank holds {st.energyKwh} kWh"),
++        (st.heating == false, "the thermostat is on"),
++        (st.fullToday == true, "fullToday is false")] },
 +  -- fullToday stays true to the end of the day. A version that sets it from the energy at the end
 +  -- of each hour sets it to false here.
 +  { name := "CAP-hotwater.R5 fullToday stays true in an hour after which the tank is no longer full",
@@ -1316,18 +1387,6 @@ index 0000000..c384fb5
 +  { name := "CAP-hotwater.R6 the seeds 0, 1 and 99991 give factors above 0 with a mean from 0.98 to 1.02 and a standard deviation from 0.23 to 0.27",
 +    run := do
 +      return firstSome [seedStatsBad 0, seedStatsBad 1, seedStatsBad 99991] },
-+  -- A version that makes the factors of seed 8 from the factors of seed 7, shifted by one day,
-+  -- passes the line of the seeds 7 and 8 and fails here.
-+  { name := "CAP-hotwater.R6 the seeds 7 and 8 do not give the same stream shifted by one day",
-+    run := do
-+      let a := factorsOf 7 0.25 365
-+      let b := factorsOf 8 0.25 365
-+      let n1 := ((a.tail.zip b).filter (fun p => !(p.1 == p.2))).length
-+      let n2 := ((b.tail.zip a).filter (fun p => !(p.1 == p.2))).length
-+      return firstFail [
-+        (a.length == 365 && b.length == 365, s!"{a.length} and {b.length} factors"),
-+        (n1 ≥ 300, s!"seed 7 on day d + 1 and seed 8 on day d differ on {n1} of 364 days"),
-+        (n2 ≥ 300, s!"seed 8 on day d + 1 and seed 7 on day d differ on {n2} of 364 days")] },
 +  -- The factor of a day comes from the day. A version that keeps a number for several days fails here.
 +  { name := "CAP-hotwater.R6 seed 7 gives a different factor on at least 300 of the 364 days that follow a day",
 +    run := do
@@ -1967,6 +2026,14 @@ def checks : List Check := [
         (near st.energyKwh 10.5 1e-9, s!"the tank holds {st.energyKwh} kWh"),
         (st.heating == false, "the thermostat is on"),
         (st.fullToday == true, "fullToday is false")] },
+  -- A version that ignores its tank and returns 10.5 kWh fails here.
+  { name := "CAP-hotwater.R5 the start state of a tank with a capacity of 6.0 kWh holds 6.0 kWh with the thermostat off and fullToday true",
+    run := do
+      let st := startState { defaultTank with capacityKwh := 6.0 }
+      return firstFail [
+        (near st.energyKwh 6.0 1e-9, s!"the tank holds {st.energyKwh} kWh"),
+        (st.heating == false, "the thermostat is on"),
+        (st.fullToday == true, "fullToday is false")] },
   -- fullToday stays true to the end of the day. A version that sets it from the energy at the end
   -- of each hour sets it to false here.
   { name := "CAP-hotwater.R5 fullToday stays true in an hour after which the tank is no longer full",
@@ -2067,18 +2134,6 @@ def checks : List Check := [
   { name := "CAP-hotwater.R6 the seeds 0, 1 and 99991 give factors above 0 with a mean from 0.98 to 1.02 and a standard deviation from 0.23 to 0.27",
     run := do
       return firstSome [seedStatsBad 0, seedStatsBad 1, seedStatsBad 99991] },
-  -- A version that makes the factors of seed 8 from the factors of seed 7, shifted by one day,
-  -- passes the line of the seeds 7 and 8 and fails here.
-  { name := "CAP-hotwater.R6 the seeds 7 and 8 do not give the same stream shifted by one day",
-    run := do
-      let a := factorsOf 7 0.25 365
-      let b := factorsOf 8 0.25 365
-      let n1 := ((a.tail.zip b).filter (fun p => !(p.1 == p.2))).length
-      let n2 := ((b.tail.zip a).filter (fun p => !(p.1 == p.2))).length
-      return firstFail [
-        (a.length == 365 && b.length == 365, s!"{a.length} and {b.length} factors"),
-        (n1 ≥ 300, s!"seed 7 on day d + 1 and seed 8 on day d differ on {n1} of 364 days"),
-        (n2 ≥ 300, s!"seed 8 on day d + 1 and seed 7 on day d differ on {n2} of 364 days")] },
   -- The factor of a day comes from the day. A version that keeps a number for several days fails here.
   { name := "CAP-hotwater.R6 seed 7 gives a different factor on at least 300 of the 364 days that follow a day",
     run := do
