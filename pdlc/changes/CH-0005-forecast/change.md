@@ -1,6 +1,6 @@
 # CH-0005 · Simulated Solcast forecast
 
-Intent: IN-0002 · Scope: CAP-forecast · Status: testing · Ticket: none · Branch: pdlc/CH-0005-forecast · Base: pdlc/CH-0004-sim-command
+Intent: IN-0002 · Scope: CAP-forecast · Status: building · Ticket: none · Branch: pdlc/CH-0005-forecast · Base: pdlc/CH-0004-sim-command
 
 Tests-Locked: acceptance
 
