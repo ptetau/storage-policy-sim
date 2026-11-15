@@ -2,12 +2,132 @@
 
 Judge only what is in this packet. Write your result next to it, in result.md.
 
-Made at: fd121c2f8d354c138d83ef44e620965278b2e68e
+Made at: 423b91a35833ec8a8ed2b198657a8f71184b6745
 
-Acceptance-Locked: c05d3df
+Acceptance-Locked: d27aea8
 
 These are the acceptance checks of an intent. Judge them by the section "Acceptance
 checks of an intent" of the remit below, and by its "Wrong versions".
+
+## Re-review
+
+Earlier review: c05d3df
+
+An earlier review of this remit judged the checks locked at c05d3df. Judge only these two things:
+
+1. Each earlier problem below. If the problem is not fixed, list it again under "Problems".
+2. The changes since the earlier review, in the diff below. List a new problem only
+   where a changed line causes the problem.
+
+Do not raise a new problem on material that did not change. This rule also applies
+to a problem that the earlier review missed.
+Write a "Wrong versions" line only for each check that changed. If no check
+changed, write "none" under "Wrong versions".
+
+### Earlier problems
+
+- tests/acceptance/IN-0008.acceptance.lean:1477 (also :1478) · The check "CAP-homesim.R3 0 days give a total of 0 and a ratio of 0% in each field" puts `minTankKwh` and `finalTankKwh` in its list of fields that must be 0 (`!(v == 0.0)` fails the check). The line says these two fields are 10.5 kWh, the full tank at the start. A correct app fails this check, and an app that returns 0 for these two fields passes it. The comment above the check ("the line says that each total is 0") no longer matches the line · CAP-homesim.R3 (totals and ratios), last line: "The exceptions are `minTankKwh` and `finalTankKwh`, which are 10.5 kWh"
+- tests/acceptance/IN-0008.acceptance.lean:1560 (also :1567, :1568) · The checks for the lines "the total unmet draw is their sum" and "`unmetSeeds` and `coldHours` are 0" use the default home with the static policy and the seeds 3 to 6. Each of these runs has an unmet draw of 0 kWh and 0 cold hours. Thus the sum, the mean, the maximum and the last run of the unmet draw are all 0, and a count that never counts also gives 0. No check evaluates a home with an unmet draw (for example an element of 0.2 kW) and compares `totalUnmetKwh`, `unmetSeeds` and `coldHours` with the runs. The check "CAP-homesim.R3 unmetKwh plus the served draw equals drawKwh" does use such a run, but only for `runHome`. The check "JOB-simulate.R9 --element 0.2 --days 90" reads only "more than 0.0" and "no" · CAP-homesim.R5 (robust evaluation), lines 4 and 5, and the remit rule that each check fails on a plausible wrong version
+
+### Changes since the earlier review
+
+````
+diff --git a/tests/acceptance/IN-0008.acceptance.lean b/tests/acceptance/IN-0008.acceptance.lean
+index 1f5b02d..8a0a3e6 100644
+--- a/tests/acceptance/IN-0008.acceptance.lean
++++ b/tests/acceptance/IN-0008.acceptance.lean
+@@ -437,6 +437,14 @@ def evalS3x4b : Evaluation := evaluate defaultHome pStatic 3 4 365
+ def evalS3x1 : Evaluation := evaluate defaultHome pStatic 3 1 365
+ def evalS3x0 : Evaluation := evaluate defaultHome pStatic 3 0 365
+ 
++/-- Runs of a home with an unmet draw: an element of 0.2 kW, the static policy with 0 heating
++hours, the seeds 3 to 6 and 30 days. The lines of CAP-homesim.R5 use them to prove that
++`evaluate` counts and sums. -/
++def runsE36 : List HomeResult :=
++  (List.range 4).map (fun i => runHome homeElem02 pThermo (3 + i) 30)
++
++def evalE3x4 : Evaluation := evaluate homeElem02 pThermo 3 4 30
++
+ /-- The grid of the tuner: a start from 6 to 16, from 1 to 8 heating hours, and discharge from
+ 15 to 22, with the element of the home tank. -/
+ def accGrid : List StaticParams :=
+@@ -772,8 +780,9 @@ def forecastChecks : List Check := [
+         return some s!"only {n} days have both periods"
+       return if c ≥ 0.55 && c ≤ 0.85 then none
+         else some s!"correlation {c} over {n} days" },
+-  -- The line does not say if the two periods come from the fetch of the first day or from the
+-  -- fetch of their own day. Both readings must give a correlation from -0.25 to 0.25.
++  -- The line says that each period comes from the fetch at 00:00 of its own day. The variable `a`
++  -- reads the line so. The variable `b` also takes both periods from the fetch of the first
++  -- day. Both readings must give a correlation from -0.25 to 0.25.
+   { name := "CAP-forecast.R7 the errors of the periods that end at 11:30 of a day and of the next day have a correlation from -0.25 to 0.25",
+     run := do
+       let a := pairsNextFetch
+@@ -1466,20 +1475,22 @@ def homesimChecks : List Check := [
+         (runPv0.hours.size == 8760, s!"{runPv0.hours.size} hours"),
+         (near t.pvKwh 0.0 1e-9, s!"solar {t.pvKwh}"),
+         (near t.selfConsumption 0.0 1e-9, s!"self-consumption {t.selfConsumption}")] },
+-  -- A run of 0 days has no hours. The line says that each total is 0, so the check includes
+-  -- `minTankKwh` and `finalTankKwh`.
+-  { name := "CAP-homesim.R3 0 days give a total of 0 and a ratio of 0% in each field",
++  -- A run of 0 days has no hours. Each total and each ratio is 0, except `minTankKwh` and
++  -- `finalTankKwh`. These two are 10.5 kWh, the energy of the full tank at the start.
++  { name := "CAP-homesim.R3 0 days give a total of 0 and a ratio of 0% in each field, and 10.5 kWh in the tank",
+     run := do
+       let t := (runHome defaultHome pStatic 7 0).totals
+       let zero := [("solar", t.pvKwh), ("load", t.loadKwh), ("import", t.importKwh),
+         ("export", t.exportKwh), ("battery loss", t.batteryLossKwh),
+         ("tank loss", t.tankLossKwh), ("heating", t.heatKwh), ("backstop", t.backstopKwh),
+-        ("draw", t.drawKwh), ("unmet", t.unmetKwh), ("lowest tank", t.minTankKwh),
+-        ("final tank", t.finalTankKwh), ("self-consumption", t.selfConsumption),
++        ("draw", t.drawKwh), ("unmet", t.unmetKwh), ("self-consumption", t.selfConsumption),
+         ("self-sufficiency", t.selfSufficiency)]
+-      return match zero.find? (fun (_, v) => !(v == 0.0)) with
+-        | some (n, v) => some s!"{n} is {v}, want 0"
+-        | none => if t.coldHours == 0 then none else some s!"cold hours {t.coldHours}" },
++      return firstSome [
++        (match zero.find? (fun (_, v) => !(v == 0.0)) with
++          | some (n, v) => some s!"{n} is {v}, want 0"
++          | none => none),
++        valsIs 1e-9 [("lowest tank", t.minTankKwh, 10.5), ("final tank", t.finalTankKwh, 10.5)],
++        if t.coldHours == 0 then none else some s!"cold hours {t.coldHours}"] },
+ 
+   -- CAP-homesim.R4
+   { name := "CAP-homesim.R4 the static policy asks for heating only in hours 10, 11, 12 and 13",
+@@ -1566,6 +1577,32 @@ def homesimChecks : List Check := [
+         (e.seeds == 4, s!"seeds {e.seeds}"),
+         (e.unmetSeeds == 0, s!"unmetSeeds {e.unmetSeeds}"),
+         (e.coldHours == 0, s!"coldHours {e.coldHours}")] },
++  -- The runs of the default home have an unmet draw of 0 kWh. Thus the two checks below use a
++  -- home with an element of 0.2 kW and no heating hours. A version of `evaluate` that never
++  -- counts, or that takes a mean where the line says a sum, fails them.
++  { name := "CAP-homesim.R5 for a home with an unmet draw the total unmet draw is the sum of the unmet draws of the runs",
++    run := do
++      let e := evalE3x4
++      let us := runsE36.map (·.totals.unmetKwh)
++      return firstFail [
++        (us.length == 4, s!"{us.length} runs"),
++        (sumF us > 0.0, "the runs have no unmet draw, so the check proves nothing"),
++        (e.totalUnmetKwh > 0.0, s!"total unmet draw {e.totalUnmetKwh}"),
++        (near e.totalUnmetKwh (sumF us) 1e-9,
++          s!"total unmet draw {e.totalUnmetKwh}, the sum of the runs is {sumF us}")] },
++  { name := "CAP-homesim.R5 for a home with an unmet draw unmetSeeds counts the runs with an unmet draw and coldHours is the sum of their cold hours",
++    run := do
++      let e := evalE3x4
++      let ts := runsE36.map (·.totals)
++      let n := (ts.filter (fun t => t.unmetKwh > 0.0)).length
++      let cold := ts.foldl (fun acc t => acc + t.coldHours) (0 : Nat)
++      return firstFail [
++        (ts.length == 4, s!"{ts.length} runs"),
++        (n > 0, "no run has an unmet draw, so the check proves nothing"),
++        (cold > 0, "no run has a cold hour, so the check proves nothing"),
++        (e.unmetSeeds > 0, s!"unmetSeeds {e.unmetSeeds}"),
++        (e.unmetSeeds == n, s!"unmetSeeds {e.unmetSeeds}, the runs with an unmet draw are {n}"),
++        (e.coldHours == cold, s!"coldHours {e.coldHours}, the sum of the runs is {cold}")] },
+   { name := "CAP-homesim.R5 0 seeds give 0 in each field",
+     run := do
+       let e := evalS3x0
+````
 
 # Remit: tests
 
@@ -155,7 +275,7 @@ Do not add a name in brackets, and do not add backticks. For example, write
 ## Acceptance checks
 
 Acceptance-File: tests/acceptance/IN-0008.acceptance.lean
-Acceptance-Locked: c05d3df
+Acceptance-Locked: d27aea8
 Acceptance-Passed: none
 
 ## Notes
@@ -3179,6 +3299,14 @@ def evalS3x4b : Evaluation := evaluate defaultHome pStatic 3 4 365
 def evalS3x1 : Evaluation := evaluate defaultHome pStatic 3 1 365
 def evalS3x0 : Evaluation := evaluate defaultHome pStatic 3 0 365
 
+/-- Runs of a home with an unmet draw: an element of 0.2 kW, the static policy with 0 heating
+hours, the seeds 3 to 6 and 30 days. The lines of CAP-homesim.R5 use them to prove that
+`evaluate` counts and sums. -/
+def runsE36 : List HomeResult :=
+  (List.range 4).map (fun i => runHome homeElem02 pThermo (3 + i) 30)
+
+def evalE3x4 : Evaluation := evaluate homeElem02 pThermo 3 4 30
+
 /-- The grid of the tuner: a start from 6 to 16, from 1 to 8 heating hours, and discharge from
 15 to 22, with the element of the home tank. -/
 def accGrid : List StaticParams :=
@@ -3514,8 +3642,9 @@ def forecastChecks : List Check := [
         return some s!"only {n} days have both periods"
       return if c ≥ 0.55 && c ≤ 0.85 then none
         else some s!"correlation {c} over {n} days" },
-  -- The line does not say if the two periods come from the fetch of the first day or from the
-  -- fetch of their own day. Both readings must give a correlation from -0.25 to 0.25.
+  -- The line says that each period comes from the fetch at 00:00 of its own day. The variable `a`
+  -- reads the line so. The variable `b` also takes both periods from the fetch of the first
+  -- day. Both readings must give a correlation from -0.25 to 0.25.
   { name := "CAP-forecast.R7 the errors of the periods that end at 11:30 of a day and of the next day have a correlation from -0.25 to 0.25",
     run := do
       let a := pairsNextFetch
@@ -4208,20 +4337,22 @@ def homesimChecks : List Check := [
         (runPv0.hours.size == 8760, s!"{runPv0.hours.size} hours"),
         (near t.pvKwh 0.0 1e-9, s!"solar {t.pvKwh}"),
         (near t.selfConsumption 0.0 1e-9, s!"self-consumption {t.selfConsumption}")] },
-  -- A run of 0 days has no hours. The line says that each total is 0, so the check includes
-  -- `minTankKwh` and `finalTankKwh`.
-  { name := "CAP-homesim.R3 0 days give a total of 0 and a ratio of 0% in each field",
+  -- A run of 0 days has no hours. Each total and each ratio is 0, except `minTankKwh` and
+  -- `finalTankKwh`. These two are 10.5 kWh, the energy of the full tank at the start.
+  { name := "CAP-homesim.R3 0 days give a total of 0 and a ratio of 0% in each field, and 10.5 kWh in the tank",
     run := do
       let t := (runHome defaultHome pStatic 7 0).totals
       let zero := [("solar", t.pvKwh), ("load", t.loadKwh), ("import", t.importKwh),
         ("export", t.exportKwh), ("battery loss", t.batteryLossKwh),
         ("tank loss", t.tankLossKwh), ("heating", t.heatKwh), ("backstop", t.backstopKwh),
-        ("draw", t.drawKwh), ("unmet", t.unmetKwh), ("lowest tank", t.minTankKwh),
-        ("final tank", t.finalTankKwh), ("self-consumption", t.selfConsumption),
+        ("draw", t.drawKwh), ("unmet", t.unmetKwh), ("self-consumption", t.selfConsumption),
         ("self-sufficiency", t.selfSufficiency)]
-      return match zero.find? (fun (_, v) => !(v == 0.0)) with
-        | some (n, v) => some s!"{n} is {v}, want 0"
-        | none => if t.coldHours == 0 then none else some s!"cold hours {t.coldHours}" },
+      return firstSome [
+        (match zero.find? (fun (_, v) => !(v == 0.0)) with
+          | some (n, v) => some s!"{n} is {v}, want 0"
+          | none => none),
+        valsIs 1e-9 [("lowest tank", t.minTankKwh, 10.5), ("final tank", t.finalTankKwh, 10.5)],
+        if t.coldHours == 0 then none else some s!"cold hours {t.coldHours}"] },
 
   -- CAP-homesim.R4
   { name := "CAP-homesim.R4 the static policy asks for heating only in hours 10, 11, 12 and 13",
@@ -4308,6 +4439,32 @@ def homesimChecks : List Check := [
         (e.seeds == 4, s!"seeds {e.seeds}"),
         (e.unmetSeeds == 0, s!"unmetSeeds {e.unmetSeeds}"),
         (e.coldHours == 0, s!"coldHours {e.coldHours}")] },
+  -- The runs of the default home have an unmet draw of 0 kWh. Thus the two checks below use a
+  -- home with an element of 0.2 kW and no heating hours. A version of `evaluate` that never
+  -- counts, or that takes a mean where the line says a sum, fails them.
+  { name := "CAP-homesim.R5 for a home with an unmet draw the total unmet draw is the sum of the unmet draws of the runs",
+    run := do
+      let e := evalE3x4
+      let us := runsE36.map (·.totals.unmetKwh)
+      return firstFail [
+        (us.length == 4, s!"{us.length} runs"),
+        (sumF us > 0.0, "the runs have no unmet draw, so the check proves nothing"),
+        (e.totalUnmetKwh > 0.0, s!"total unmet draw {e.totalUnmetKwh}"),
+        (near e.totalUnmetKwh (sumF us) 1e-9,
+          s!"total unmet draw {e.totalUnmetKwh}, the sum of the runs is {sumF us}")] },
+  { name := "CAP-homesim.R5 for a home with an unmet draw unmetSeeds counts the runs with an unmet draw and coldHours is the sum of their cold hours",
+    run := do
+      let e := evalE3x4
+      let ts := runsE36.map (·.totals)
+      let n := (ts.filter (fun t => t.unmetKwh > 0.0)).length
+      let cold := ts.foldl (fun acc t => acc + t.coldHours) (0 : Nat)
+      return firstFail [
+        (ts.length == 4, s!"{ts.length} runs"),
+        (n > 0, "no run has an unmet draw, so the check proves nothing"),
+        (cold > 0, "no run has a cold hour, so the check proves nothing"),
+        (e.unmetSeeds > 0, s!"unmetSeeds {e.unmetSeeds}"),
+        (e.unmetSeeds == n, s!"unmetSeeds {e.unmetSeeds}, the runs with an unmet draw are {n}"),
+        (e.coldHours == cold, s!"coldHours {e.coldHours}, the sum of the runs is {cold}")] },
   { name := "CAP-homesim.R5 0 seeds give 0 in each field",
     run := do
       let e := evalS3x0
@@ -5002,20 +5159,5 @@ def main (args : List String) : IO UInt32 := do
 
 ## Checks removed from earlier intents
 
-````
-diff --git a/tests/acceptance/IN-0001.acceptance.lean b/tests/acceptance/IN-0001.acceptance.lean
-index 949babc..9688300 100644
---- a/tests/acceptance/IN-0001.acceptance.lean
-+++ b/tests/acceptance/IN-0001.acceptance.lean
-@@ -144,7 +144,8 @@ def monthHeader : List String :=
- def compareHeader : List String :=
-   ["strategy", "self-consumption-%", "self-sufficiency-%", "import-kWh", "export-kWh"]
- 
--def usage : String := "usage: sim run [options] | sim compare [options]"
-+def usage : String :=
-+  "usage: sim run [options] | sim compare [options] | sim forecast [options] | sim policy <command> [options]"
- 
- def firstWords (out : String) : List String :=
-   (lines out).map (fun l => (words l).head?.getD "")
-````
+None. The lock changed no acceptance file of an earlier intent.
 
