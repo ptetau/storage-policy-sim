@@ -24,6 +24,7 @@ search for the best static profile with `sim policy tune`.
 ## Code map
 
 - `Main.lean`
+- `StoragePolicySim/PolicyCommands.lean`
 - `lakefile.toml: the sim executable`
 
 ## Interface

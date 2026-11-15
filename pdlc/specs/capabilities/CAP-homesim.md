@@ -61,7 +61,7 @@ not one lucky year. A caller can search for the best static profile.
 
 ### Test seams
 
-- `seed` · seam: randomness · `StoragePolicySim/HomeSim.lean` · proposed
+- `homeSeed` · seam: randomness · `StoragePolicySim/HomeSim.lean` · proposed
   - in: the `seed` argument of `runHome`, `evaluate` and `tuneStatic`. The same seed gives the same weather and the same forecast.
   - errors: none
 

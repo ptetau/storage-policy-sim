@@ -19,6 +19,41 @@ The four strategies are these:
 
 - `StoragePolicySim/Strategy.lean`
 
+## Interface
+
+- `Strategy` · type · `StoragePolicySim/Strategy.lean`
+  - in: not applicable
+  - out: `none`, `greedy`, `evening` or `shift`, with `BEq`, `Repr` and `Inhabited`. Write a value in full, for example `Strategy.none`, so that it does not mean `Option.none`.
+  - errors: none
+- `Strategy.all : List Strategy` · constant · `StoragePolicySim/Strategy.lean`
+  - in: not applicable
+  - out: `[.none, .greedy, .evening, .shift]`
+  - errors: none
+- `Strategy.name (strategy : Strategy) : String` · function · `StoragePolicySim/Strategy.lean`
+  - in: a strategy
+  - out: `"none"`, `"greedy"`, `"evening"` or `"shift"`
+  - errors: none
+- `Strategy.ofName? (name : String) : Option Strategy` · function · `StoragePolicySim/Strategy.lean`
+  - in: a name
+  - out: the strategy whose name matches exactly, or `Option.none`
+  - errors: none
+- `Request` · type · `StoragePolicySim/Strategy.lean`
+  - in: not applicable
+  - out: a structure with `Repr`, and the fields `chargeKwh : Float` and `dischargeKwh : Float`
+  - errors: none
+- `Strategy.decide (strategy : Strategy) (hour : Nat) (surplusKwh shortfallKwh : Float) : Request` · function · `StoragePolicySim/Strategy.lean`
+  - in: a strategy, the hour of the day, and the surplus and the shortfall of the hour
+  - out: the energy that the strategy asks the battery to charge and to discharge
+  - errors: none
+- `Strategy.placeFlex (strategy : Strategy) (pvKwh flexKwh : Array Float) : Array Float` · function · `StoragePolicySim/Strategy.lean`
+  - in: a strategy, the solar energy of the 24 hours of a day, and the flexible load of the 24 hours at its default hours
+  - out: the flexible load of the 24 hours after the strategy places it
+  - errors: none
+
+### Test seams
+
+none
+
 ## Requirements
 
 ### CAP-strategies.R1 · Strategy names
