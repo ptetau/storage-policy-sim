@@ -15,15 +15,25 @@ error code. The `seed` argument of `forecast` is the only test seam. No check us
 Terms of the checks:
 - The actual power of a period is the solar output of its hour in the scenario with the same
   site, seed and days. The hour of a period that ends at minute `e` is `(e - 30) / 60`.
-- A sunny period is a period in an hour with the sky `sunny` and a solar output above 0 kWh.
-  A night period has no sun, so no statistical check counts it.
+- A sunny period is a period with an actual power of more than 0 kW, as CAP-forecast.R2
+  says. The sky does not matter. A night period is not sunny, so no statistical check counts
+  it. A period at dawn or at dusk, and a period under an overcast sky, is sunny.
 
 The statistical checks use seed 7, a run of 365 days and an error scale of 1. They use a fetch
-on every fourth day, at 00:00 and at 10:00. Each fetch costs one scenario of 365 days. The
-model of the spec puts about 80% of the sunny periods in the band. It gives an error 24 to 48
-hours ahead that is about 2.5 times the error 0 to 4 hours ahead. A version with no band, or
-with no growth of the error, fails these checks. The bounds keep a margin of more than four
-standard errors for the model, and they hold for the spread as a step or as a slope.
+on every fourth day, at 00:00 and at 10:00. Each fetch costs one scenario of 365 days.
+- Coverage: under the model of the spec, about 80% of the sunny periods have the actual power
+  in the band. This share does not depend on the sky or on the size of the actual power, except
+  for a small effect of the cut at 5 kW. The checks keep the 60% to 95% of the spec. A version
+  with no band scores about 0%.
+- Growth: the groups of the growth check use only the sunny periods that end from 10:30 to
+  14:00 of their day, so both groups have the same hours of the day. The mean absolute error
+  is the line of the spec. It also depends on how much sun the days of each group have, so a
+  version with no growth can pass it. Thus a second check compares the mean error as a share
+  of the actual power, which does not depend on the sky. The model gives about 2.5 times, and
+  the check requires 1.5 times.
+- Error size: the mean error as a share of the actual power is the spread times 0.80, for any
+  sky. The bounds keep a margin of more than four standard errors, and they hold for the
+  spread as a step or as a slope.
 -/
 import StoragePolicySim.Scenario
 import StoragePolicySim.Forecast
@@ -104,9 +114,8 @@ def hourOf (e : Nat) : Nat := (e - 30) / 60
 /-- The actual power of a period in kW: the solar energy of its hour, per hour. -/
 def actualKw (e : Nat) : Float := scen7[hourOf e]!.pvKwh
 
-def isSunny (e : Nat) : Bool :=
-  let h := scen7[hourOf e]!
-  h.sky == Sky.sunny && h.pvKwh > 0.0
+/-- A sunny period has an actual power of more than 0 kW. The sky does not matter. -/
+def isSunny (e : Nat) : Bool := actualKw e > 0.0
 
 /-- The lead time of a period in minutes, from a fetch at hour `f`. -/
 def leadMin (f : Nat) (p : Period) : Nat := p.endMinute - 60 * f
@@ -166,13 +175,14 @@ def badOrder (fs : List (Nat × Array Period)) : Option String :=
         !(p.p10Kw ≤ p.estimateKw + 1e-9 && p.estimateKw ≤ p.p90Kw + 1e-9))).map
       (fun p => s!"fetch {f} end {p.endMinute}: 10% {p.p10Kw}, estimate {p.estimateKw}, 90% {p.p90Kw}"))
 
-/-- A sunny period has its 10% band below its estimate, and its 90% band above it unless the
-estimate has reached the panel power. -/
+/-- A sunny period has its 10% band below its estimate and its 90% band above it, unless the
+estimate is at the panel power. A version can form the bands from the estimate before the cut
+at 5 kW and then cut each value, which gives 10% = estimate = 90% = 5 kW. -/
 def badStraddle (fs : List (Nat × Array Period)) : Option String :=
   fs.findSome? (fun (f, ps) =>
     (ps.toList.find? (fun p =>
         isSunny p.endMinute && p.estimateKw > 1e-6 &&
-        !(p.p10Kw < p.estimateKw && (p.p90Kw > p.estimateKw || p.estimateKw ≥ 5.0 - 1e-9)))).map
+        !(p.estimateKw ≥ 5.0 - 1e-9 || (p.p10Kw < p.estimateKw && p.p90Kw > p.estimateKw)))).map
       (fun p => s!"fetch {f} end {p.endMinute}: 10% {p.p10Kw}, estimate {p.estimateKw}, 90% {p.p90Kw}"))
 
 def badRange (fs : List (Nat × Array Period)) : Option String :=
@@ -417,12 +427,12 @@ def checks : List Check := [
       return firstSome [
         badOrder fetches0,
         if maxEst fetches0 > 1.0 then none else some s!"the largest estimate is {maxEst fetches0}"] },
-  { name := "CAP-forecast.R1 each sunny period of a daily fetch at 00:00 has its 10% band below and its 90% band above its estimate",
+  { name := "CAP-forecast.R1 each sunny period of a daily fetch at 00:00 has its 10% band below and its 90% band above its estimate unless the estimate is 5 kW",
     run := do
       let n := (sunnyPeriods fetches0).length
       return firstSome [
         badStraddle fetches0,
-        if n ≥ 300 then none else some s!"only {n} sunny periods"] },
+        if n ≥ 1000 then none else some s!"only {n} sunny periods"] },
   { name := "CAP-forecast.R1 each value of a daily fetch at 00:00 is from 0 to 5 kW",
     run := do
       return firstSome [
@@ -498,25 +508,40 @@ def checks : List Check := [
         (a.size == 96 && b.size == 96, s!"{a.size} and {b.size} periods"),
         (usable.length ≥ 10, s!"only {usable.length} periods with sun and an uncut estimate in both"),
         (differ.length ≥ 10, s!"the error differs in {differ.length} of {usable.length} periods")] },
-  -- The model gives about 2.5 times. A version with no growth gives about 1 time, with a
-  -- spread of 0.1 at most. The bound of 1.5 times leaves a large margin on both sides.
-  { name := "CAP-forecast.R2 the error of sunny periods 24 to 48 hours ahead is more than 1.5 times the error 0 to 4 hours ahead",
+  -- The line of the spec. The two groups have the same hours of the day, but the days of each
+  -- group can have a different amount of sun. Thus a version with no growth can also pass
+  -- this check. The next check does not have this gap.
+  { name := "CAP-forecast.R2 the error of sunny periods 24 to 48 hours ahead is more than the error 0 to 4 hours ahead",
     run := do
       let both := fetches0 ++ fetches10
       let a := noonValues both 0 240 absErr
       let b := noonValues both 1440 2880 absErr
-      if a.length < 30 || b.length < 30 then
+      if a.length < 100 || b.length < 100 then
+        return some s!"too few sunny periods: {a.length} and {b.length}"
+      let ma := meanOf a
+      let mb := meanOf b
+      return if mb > ma then none
+        else some s!"error 0 to 4 hours ahead {ma} kW, 24 to 48 hours ahead {mb} kW" },
+  -- The mean error as a share of the actual power is the spread times 0.80 for any sky. The
+  -- model gives about 2.5 times. A version with no growth gives about 1 time, and the number
+  -- of periods moves that by less than 0.1. The bound of 1.5 times leaves a large margin.
+  { name := "CAP-forecast.R2 the error of sunny periods 24 to 48 hours ahead is more than 1.5 times the error 0 to 4 hours ahead as a share of the actual power",
+    run := do
+      let both := fetches0 ++ fetches10
+      let a := noonValues both 0 240 relErr
+      let b := noonValues both 1440 2880 relErr
+      if a.length < 100 || b.length < 100 then
         return some s!"too few sunny periods: {a.length} and {b.length}"
       let ma := meanOf a
       let mb := meanOf b
       return if mb > 1.5 * ma then none
-        else some s!"error 0 to 4 hours ahead {ma} kW, 24 to 48 hours ahead {mb} kW" },
+        else some s!"share 0 to 4 hours ahead {ma}, 24 to 48 hours ahead {mb}" },
   -- The spread is 0.05 to 0.067 at 0 to 4 hours ahead. The mean of |z| for a normal curve is
   -- 0.80, so the mean relative error is 0.04 to 0.05.
   { name := "CAP-forecast.R2 the error of sunny periods 0 to 4 hours ahead is 3% to 6.5% of the actual power",
     run := do
       let a := noonValues (fetches0 ++ fetches10) 0 240 relErr
-      if a.length < 30 then return some s!"too few sunny periods: {a.length}"
+      if a.length < 100 then return some s!"too few sunny periods: {a.length}"
       let m := meanOf a
       return if m ≥ 0.030 && m ≤ 0.065 then none else some s!"mean relative error {m}" },
   -- The spread is 0.15 to 0.21 at 24 to 38 hours ahead. The mean relative error is 0.11 to
@@ -524,15 +549,17 @@ def checks : List Check := [
   { name := "CAP-forecast.R2 the error of sunny periods 24 to 48 hours ahead is 8% to 20% of the actual power",
     run := do
       let b := noonValues (fetches0 ++ fetches10) 1440 2880 relErr
-      if b.length < 30 then return some s!"too few sunny periods: {b.length}"
+      if b.length < 100 then return some s!"too few sunny periods: {b.length}"
       let m := meanOf b
       return if m ≥ 0.08 && m ≤ 0.20 then none else some s!"mean relative error {m}" },
+  -- A sunny period has an actual power of more than 0 kW, so the periods of dawn, dusk and
+  -- overcast skies count. The share of the model is about 80% for each of them.
   { name := "CAP-forecast.R2 60% to 95% of sunny periods of a daily fetch at 00:00 have the actual power in the band",
     run := do
       let xs := sunnyPeriods fetches0
       let n := xs.length
       let k := (xs.filter (fun (_, p) => inBand p)).length
-      if n < 300 then return some s!"only {n} sunny periods"
+      if n < 1000 then return some s!"only {n} sunny periods"
       return if k.toFloat ≥ 0.6 * n.toFloat && k.toFloat ≤ 0.95 * n.toFloat then none
         else some s!"{k} of {n} sunny periods have the actual power in the band" },
   { name := "CAP-forecast.R2 the bands are 1.28 times the error scale times the spread on each side of the estimate",
@@ -664,6 +691,23 @@ def checks : List Check := [
       let cases : List (Float × String) := [
         (12.0, "2024-12-31T23:30:00.0000000Z"), (-12.0, "2025-01-01T01:30:00.0000000Z"),
         (100.0, "2024-12-31T18:00:00.0000000Z"), (-100.0, "2025-01-01T07:00:00.0000000Z")]
+      return cases.findSome? (fun (lon, want) =>
+        if endAt30 lon == some want then none
+        else some s!"longitude {lon}: got {endAt30 lon}, want {want}") },
+  -- A tie rounds up, to the later time. The period ends at 00:30 solar time. A longitude of
+  -- 3.75 gives a shift of exactly 15 minutes, 11.25 gives 45 and 18.75 gives 75. The UTC time
+  -- is then 00:15, 23:45 and 23:15, each half way between two marks. A negative longitude
+  -- gives the UTC times 00:45, 01:15 and 01:45. A version that rounds a tie down, that rounds
+  -- the shift instead of the UTC time, or that rounds a tie away from 0, gets a time wrong.
+  -- A longitude 0.01 degrees from a tie is not a tie, and it rounds to the near mark.
+  { name := "CAP-forecast.R4 a tie of the UTC time rounds up",
+    run := do
+      let cases : List (Float × String) := [
+        (3.75, "2025-01-01T00:30:00.0000000Z"), (11.25, "2025-01-01T00:00:00.0000000Z"),
+        (18.75, "2024-12-31T23:30:00.0000000Z"), (-3.75, "2025-01-01T01:00:00.0000000Z"),
+        (-11.25, "2025-01-01T01:30:00.0000000Z"), (-18.75, "2025-01-01T02:00:00.0000000Z"),
+        (3.74, "2025-01-01T00:30:00.0000000Z"), (3.76, "2025-01-01T00:00:00.0000000Z"),
+        (-3.74, "2025-01-01T00:30:00.0000000Z"), (-3.76, "2025-01-01T01:00:00.0000000Z")]
       return cases.findSome? (fun (lon, want) =>
         if endAt30 lon == some want then none
         else some s!"longitude {lon}: got {endAt30 lon}, want {want}") },
