@@ -1,6 +1,6 @@
 # IN-0002 · Simulated Solcast forecast for policies
 
-Status: building · Ticket: none · Branch: pdlc/IN-0002-solcast-forecast · Added: 2026-10-31
+Status: in review · Ticket: none · Branch: pdlc/IN-0002-solcast-forecast · Added: 2026-10-31
 
 The pdlc scripts read each header field. Thus, a header field holds only its bare value.
 Do not add a name in brackets, and do not add backticks. For example, write
