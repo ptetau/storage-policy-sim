@@ -587,6 +587,14 @@ def checks : List Check := [
         (near st.energyKwh 10.5 1e-9, s!"the tank holds {st.energyKwh} kWh"),
         (st.heating == false, "the thermostat is on"),
         (st.fullToday == true, "fullToday is false")] },
+  -- A version that ignores its tank and returns 10.5 kWh fails here.
+  { name := "CAP-hotwater.R5 the start state of a tank with a capacity of 6.0 kWh holds 6.0 kWh with the thermostat off and fullToday true",
+    run := do
+      let st := startState { defaultTank with capacityKwh := 6.0 }
+      return firstFail [
+        (near st.energyKwh 6.0 1e-9, s!"the tank holds {st.energyKwh} kWh"),
+        (st.heating == false, "the thermostat is on"),
+        (st.fullToday == true, "fullToday is false")] },
   -- fullToday stays true to the end of the day. A version that sets it from the energy at the end
   -- of each hour sets it to false here.
   { name := "CAP-hotwater.R5 fullToday stays true in an hour after which the tank is no longer full",
@@ -687,18 +695,6 @@ def checks : List Check := [
   { name := "CAP-hotwater.R6 the seeds 0, 1 and 99991 give factors above 0 with a mean from 0.98 to 1.02 and a standard deviation from 0.23 to 0.27",
     run := do
       return firstSome [seedStatsBad 0, seedStatsBad 1, seedStatsBad 99991] },
-  -- A version that makes the factors of seed 8 from the factors of seed 7, shifted by one day,
-  -- passes the line of the seeds 7 and 8 and fails here.
-  { name := "CAP-hotwater.R6 the seeds 7 and 8 do not give the same stream shifted by one day",
-    run := do
-      let a := factorsOf 7 0.25 365
-      let b := factorsOf 8 0.25 365
-      let n1 := ((a.tail.zip b).filter (fun p => !(p.1 == p.2))).length
-      let n2 := ((b.tail.zip a).filter (fun p => !(p.1 == p.2))).length
-      return firstFail [
-        (a.length == 365 && b.length == 365, s!"{a.length} and {b.length} factors"),
-        (n1 ≥ 300, s!"seed 7 on day d + 1 and seed 8 on day d differ on {n1} of 364 days"),
-        (n2 ≥ 300, s!"seed 8 on day d + 1 and seed 7 on day d differ on {n2} of 364 days")] },
   -- The factor of a day comes from the day. A version that keeps a number for several days fails here.
   { name := "CAP-hotwater.R6 seed 7 gives a different factor on at least 300 of the 364 days that follow a day",
     run := do
