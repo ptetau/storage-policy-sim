@@ -78,13 +78,13 @@ The library makes a simulated forecast from scenario hours that the caller built
 
 ## Steps
 
-### Step 1 · Forecast from built hours · [ ]
+### Step 1 · Forecast from built hours · [x]
 
 - Requirement: CAP-forecast.R6
 - Check: the checks named `CAP-forecast.R6 …` in `tests/CAP-forecast.lean`
 - Done when: the checks pass
 
-### Step 2 · Shared error of a day · [ ]
+### Step 2 · Shared error of a day · [x]
 
 - Requirement: CAP-forecast.R7
 - Check: the checks named `CAP-forecast.R7 …` in `tests/CAP-forecast.lean`
@@ -97,3 +97,4 @@ none
 ## Progress log
 
 - Planned first in IN-0008 (hot-water policy simulation), because the home simulation fetches the forecast many times.
+- Build: the 15 checks of `tests/CAP-forecast.lean` pass, with the earlier component checks and the acceptance files of IN-0001 and IN-0002. The three usage checks of IN-0001 fail until CH-0011, as expected. No check changed since the lock.

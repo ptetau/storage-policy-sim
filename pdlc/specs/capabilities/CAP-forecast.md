@@ -152,7 +152,7 @@ value 0 (assumed).
 
 ### CAP-forecast.R6 · Forecast from built hours
 
-Status: ready · Intents: IN-0008
+Status: built · Intents: IN-0008
 
 A caller that makes many fetches builds the hours of the scenario once. `forecastOf` gives the
 same periods as `forecast`, from these hours, and does not build the scenario again. A set of
@@ -166,7 +166,7 @@ hours that is empty has no period in any fetch.
 
 ### CAP-forecast.R7 · Shared error of a day
 
-Status: ready · Intents: IN-0008
+Status: built · Intents: IN-0008
 
 A forecast that is wrong about one hour of a day is often wrong about the other hours of that
 day, because one cloud front covers the whole day. Thus, the random number of R2 (forecast
