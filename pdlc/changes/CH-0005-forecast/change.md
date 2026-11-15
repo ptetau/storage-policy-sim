@@ -116,31 +116,31 @@ The library makes a simulated Solcast rooftop forecast for a scenario. Each fetc
 
 ## Steps
 
-### Step 1 · Forecast periods · [ ]
+### Step 1 · Forecast periods · [x]
 
 - Requirement: CAP-forecast.R1
 - Check: the checks named `CAP-forecast.R1 …` in `tests/acceptance/IN-0002.acceptance.lean`
 - Done when: the checks pass
 
-### Step 2 · Forecast error · [ ]
+### Step 2 · Forecast error · [x]
 
 - Requirement: CAP-forecast.R2
 - Check: the checks named `CAP-forecast.R2 …` in `tests/acceptance/IN-0002.acceptance.lean`
 - Done when: the checks pass
 
-### Step 3 · Fetch limit · [ ]
+### Step 3 · Fetch limit · [x]
 
 - Requirement: CAP-forecast.R3
 - Check: the checks named `CAP-forecast.R3 …` in `tests/acceptance/IN-0002.acceptance.lean`
 - Done when: the checks pass
 
-### Step 4 · Solcast JSON · [ ]
+### Step 4 · Solcast JSON · [x]
 
 - Requirement: CAP-forecast.R4
 - Check: the checks named `CAP-forecast.R4 …` in `tests/acceptance/IN-0002.acceptance.lean`
 - Done when: the checks pass
 
-### Step 5 · Hourly forecast energy · [ ]
+### Step 5 · Hourly forecast energy · [x]
 
 - Requirement: CAP-forecast.R5
 - Check: the checks named `CAP-forecast.R5 …` in `tests/acceptance/IN-0002.acceptance.lean`
@@ -153,3 +153,4 @@ none
 ## Progress log
 
 - Planned as the only change of IN-0002 (Solcast forecast). The policies of IN-0008 (hot-water policy simulation) read it.
+- Build: the 57 acceptance checks of IN-0002 pass, with the earlier files. No check changed since the lock.

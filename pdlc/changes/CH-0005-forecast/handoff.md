@@ -1,10 +1,11 @@
-# Handoff · CH-0005 · tests → build
+# Handoff · CH-0005 · build → verify
 
-Time: 2026-11-15T10:31:37+00:00
+Time: 2026-11-15T10:37:40+00:00
 
 ### Done
 
-- The acceptance checks of IN-0002 are also the checks of CH-0005 (forecast). The file has 57 checks, locked at `3456206`, and the review passed.
+- The builder wrote `StoragePolicySim/Forecast.lean`. The 57 acceptance checks of IN-0002 pass, and so do the earlier check files.
+- CAP-forecast.R1 (forecast periods) to R5 (hourly forecast energy) are now `built`.
 
 ### Decided on defaults
 
@@ -12,17 +13,16 @@ Time: 2026-11-15T10:31:37+00:00
 
 ### Open
 
-- none
+- Each `forecast` call builds the scenario again, about 30 ms in the interpreter. A policy that fetches many times needs a call that takes the built hours. IN-0008 (hot-water policy simulation) adds one.
 
 ### Look here
 
-- `tests/acceptance/IN-0002.acceptance.lean`
-- The Interface in `pdlc/changes/CH-0005-forecast/change.md`
+- `StoragePolicySim/Forecast.lean`
 
 ### Don't redo
 
-- The checks and their lock.
+- The code and the checks.
 
 ### Next: do this first
 
-Write `StoragePolicySim/Forecast.lean`. A static policy does not need it, but the library must stay fast: a forecast call must not rebuild the whole scenario more than once.
+Make the review packets with `make_packets.py CH-0005 --verify`.

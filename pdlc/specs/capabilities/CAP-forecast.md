@@ -54,7 +54,7 @@ policy reads the forecast as the solar energy of each coming hour.
 
 ### CAP-forecast.R1 · Forecast periods
 
-Status: ready · Intents: IN-0002
+Status: built · Intents: IN-0002
 
 A fetch at the start of hour `h` of a run gives the periods of the next 48 hours (assumed).
 Period `k`, for `k` from 1 to 96, is 30 minutes long and ends `60 × h + 30 × k` minutes
@@ -77,7 +77,7 @@ In these lines, the site is at latitude 45 with 5 kW of panels. The seed is 7, t
 
 ### CAP-forecast.R2 · Forecast error
 
-Status: ready · Intents: IN-0002
+Status: built · Intents: IN-0002
 
 The estimate is the actual power, times 1 plus the error scale times a spread times a random
 number from a normal curve (assumed). The spread is 0.05 plus 0.10 for each 24 hours of lead
@@ -97,7 +97,7 @@ error of a set of periods is the mean of the absolute differences from the actua
 
 ### CAP-forecast.R3 · Fetch limit
 
-Status: ready · Intents: IN-0002
+Status: built · Intents: IN-0002
 
 A day has from 1 to 10 fetches, because a Solcast hobbyist account has 10 calls each day
 (assumed). Fetch `i` of `n` is at hour `i × 24 / n` of each day, rounded down (assumed), for
@@ -113,7 +113,7 @@ before that hour.
 
 ### CAP-forecast.R4 · Solcast JSON
 
-Status: ready · Intents: IN-0002
+Status: built · Intents: IN-0002
 
 A forecast shows as the JSON of the Solcast hobbyist rooftop forecast reply. The text is
 `{"forecasts":[` and the periods, split by commas, then `]}`, with no spaces or line breaks
@@ -133,7 +133,7 @@ rounded to the nearest 30 minutes, and a tie rounds up (assumed). The time has t
 
 ### CAP-forecast.R5 · Hourly forecast energy
 
-Status: ready · Intents: IN-0002
+Status: built · Intents: IN-0002
 
 A policy reads a fetch as the forecast solar energy of each coming hour. Value `j` is the
 estimate of the first period of hour `fetchHour + j`, plus the estimate of the second, each
