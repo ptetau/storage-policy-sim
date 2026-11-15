@@ -16,6 +16,43 @@ load and a flexible load that a strategy can move.
 - `lean-toolchain`
 - `lake-manifest.json`
 
+## Interface
+
+- `Sky` · type · `StoragePolicySim/Scenario.lean`
+  - in: not applicable
+  - out: `sunny`, `cloudy` or `overcast`, with `BEq`, `Repr` and `Inhabited`
+  - errors: none
+- `Sky.factor (sky : Sky) : Float` · function · `StoragePolicySim/Scenario.lean`
+  - in: a sky
+  - out: 1.0 for `sunny`, 0.5 for `cloudy`, and 0.15 for `overcast`
+  - errors: none
+- `Site` · type · `StoragePolicySim/Scenario.lean`
+  - in: not applicable
+  - out: a structure with `Repr` and `Inhabited`, and the fields `latitude`, `pvKw`, `dailyLoadKwh` and `flexKwh`, each a `Float`
+  - errors: none
+- `Hour` · type · `StoragePolicySim/Scenario.lean`
+  - in: not applicable
+  - out: a structure with `Repr` and `Inhabited`. Its fields are `day`, `dayOfYear` and `hour` (each a `Nat`), `sky : Sky`, and `pvKwh`, `baseLoadKwh` and `flexKwh` (each a `Float`).
+  - errors: none
+- `daysInYear : Nat` · constant · `StoragePolicySim/Scenario.lean`
+  - in: not applicable
+  - out: 365
+  - errors: none
+- `pvOutput (site : Site) (dayOfYear hour : Nat) (sky : Sky) : Float` · function · `StoragePolicySim/Scenario.lean`
+  - in: a site, the day of the year from 0, the hour of the day from 0 to 23, and a sky
+  - out: the solar energy of the hour in kWh. It reads only `latitude` and `pvKw` of the site.
+  - errors: none
+- `scenario (site : Site) (seed days : Nat) : Array Hour` · function · `StoragePolicySim/Scenario.lean`
+  - in: a site, a seed, and the days of the run
+  - out: `24 × days` hours, in order of day, then hour. The same arguments give the same array.
+  - errors: none
+
+### Test seams
+
+- `seed` · seam: randomness · `StoragePolicySim/Scenario.lean`
+  - in: the `seed` argument of `scenario`. The same seed gives the same skies.
+  - errors: none
+
 ## Requirements
 
 ### CAP-scenario.R1 · Seasonal sun

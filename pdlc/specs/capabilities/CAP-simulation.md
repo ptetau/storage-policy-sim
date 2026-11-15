@@ -13,6 +13,51 @@ can compare strategies on the same weather.
 
 - `StoragePolicySim/Simulation.lean`
 
+## Interface
+
+- `Battery` · type · `StoragePolicySim/Simulation.lean`
+  - in: not applicable
+  - out: a structure with `Repr` and `Inhabited`, and the fields `capacityKwh` and `powerKw`, each a `Float`
+  - errors: none
+- `efficiency : Float` · constant · `StoragePolicySim/Simulation.lean`
+  - in: not applicable
+  - out: 0.95
+  - errors: none
+- `Flow` · type · `StoragePolicySim/Simulation.lean`
+  - in: not applicable
+  - out: a structure with `Repr` and `Inhabited`. Each field is a `Float` in kWh: `directKwh`, `chargeKwh`, `dischargeKwh`, `exportKwh`, `importKwh`, `lossKwh` and `socKwh`.
+  - errors: none
+- `stepHour (battery : Battery) (socKwh : Float) (strategy : Strategy) (hour : Nat) (pvKwh loadKwh : Float) : Flow` · function · `StoragePolicySim/Simulation.lean`
+  - in: a battery, the energy that it holds, a strategy, the hour of the day, and the solar energy and the load of the hour
+  - out: the flows of the hour. `socKwh` of the flow is the energy that the battery holds after the hour.
+  - errors: none
+- `HourResult` · type · `StoragePolicySim/Simulation.lean`
+  - in: not applicable
+  - out: a structure with `Repr` and `Inhabited`, and the fields `hour : Hour`, `loadKwh : Float` and `flow : Flow`
+  - errors: none
+- `Totals` · type · `StoragePolicySim/Simulation.lean`
+  - in: not applicable
+  - out: a structure with `Repr` and `Inhabited`. Each field is a `Float`: `pvKwh`, `loadKwh`, `selfUsedKwh`, `importKwh`, `exportKwh`, `lossKwh`, `finalSocKwh`, `selfConsumption` and `selfSufficiency`.
+  - errors: none
+- `Month` · type · `StoragePolicySim/Simulation.lean`
+  - in: not applicable
+  - out: a structure with `Repr` and `Inhabited`, and the fields `name : String`, `days : Nat` and `totals : Totals`
+  - errors: none
+- `Result` · type · `StoragePolicySim/Simulation.lean`
+  - in: not applicable
+  - out: a structure with `Repr` and `Inhabited`, and the fields `hours : Array HourResult`, `totals : Totals` and `months : Array Month`
+  - errors: none
+- `simulate (site : Site) (battery : Battery) (strategy : Strategy) (seed days : Nat) : Result` · function · `StoragePolicySim/Simulation.lean`
+  - in: a site, a battery, a strategy, a seed, and the days of the run
+  - out: the hours, the totals and the months of the run
+  - errors: none
+
+### Test seams
+
+- `seed` · seam: randomness · `StoragePolicySim/Simulation.lean`
+  - in: the `seed` argument of `simulate`. The same seed gives the same weather.
+  - errors: none
+
 ## Requirements
 
 ### CAP-simulation.R1 · Energy flows of an hour
