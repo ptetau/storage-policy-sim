@@ -1,6 +1,6 @@
 # CH-0006 · Forecast from built hours
 
-Intent: IN-0008 · Scope: CAP-forecast · Status: testing · Ticket: none · Branch: pdlc/CH-0006-forecast-fast · Base: pdlc/CH-0005-forecast
+Intent: IN-0008 · Scope: CAP-forecast · Status: building · Ticket: none · Branch: pdlc/CH-0006-forecast-fast · Base: pdlc/CH-0005-forecast
 
 Tests-Locked: 608aff7
 
