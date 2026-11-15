@@ -2,7 +2,42 @@
 
 Judge only what is in this packet. Write your result next to it, in result.md.
 
-Made at: d7dbf829a49d17fc6223723bb6d7980613201f3f
+Made at: 0fa9339d28100beb4d9913c4b17a3c7279142f74
+
+## Re-review
+
+Earlier review: d7dbf829a49d17fc6223723bb6d7980613201f3f
+
+An earlier review of this remit judged this change at d7dbf829a49d. Judge only these two things:
+
+1. Each earlier problem below. If the problem is not fixed, list it again under "Problems".
+2. The changes since the earlier review, in the diff below. List a new problem only
+   where a changed line causes the problem.
+
+Do not raise a new problem on material that did not change. This rule also applies
+to a problem that the earlier review missed.
+
+### Earlier problems
+
+- frames/04.png · The frame shows "forecastOf, fetch at hour 8760: 0 periods" and nothing about the hours. The same line would show for no hours, so the frame does not prove that a full run of 8760 hours ends at hour 8760. Frame 2 prints "8760 hours built once" for r6-1, but frame 4 comes from a separate command (r6-3) that prints no hour count. · CAP-forecast.R6, third line ("Given the same hours, when `forecastOf` runs for the fetch hour 8760, then it has no period") and the remit rule that each part of a caption is visible on screen · script
+
+### Changes since the earlier review
+
+````
+diff --git a/pdlc/changes/CH-0006-forecast-fast/visual.json b/pdlc/changes/CH-0006-forecast-fast/visual.json
+index 6d2df79..7617188 100644
+--- a/pdlc/changes/CH-0006-forecast-fast/visual.json
++++ b/pdlc/changes/CH-0006-forecast-fast/visual.json
+@@ -17,7 +17,7 @@
+       "run": "lake env lean --run pdlc/changes/CH-0006-forecast-fast/demo.lean r6-2"
+     },
+     {
+-      "caption": "CAP-forecast.R6 \u00b7 a fetch at hour 8760 has no period",
++      "caption": "CAP-forecast.R6 \u00b7 hours of a run of 8760 hours: a fetch at hour 8760 has no period",
+       "run": "lake env lean --run pdlc/changes/CH-0006-forecast-fast/demo.lean r6-3"
+     },
+     {
+````
 
 # Remit: visual
 
@@ -286,7 +321,7 @@ whose end is 690 and 810 minutes into the day.
       "run": "lake env lean --run pdlc/changes/CH-0006-forecast-fast/demo.lean r6-2"
     },
     {
-      "caption": "CAP-forecast.R6 \u00b7 a fetch at hour 8760 has no period",
+      "caption": "CAP-forecast.R6 \u00b7 hours of a run of 8760 hours: a fetch at hour 8760 has no period",
       "run": "lake env lean --run pdlc/changes/CH-0006-forecast-fast/demo.lean r6-3"
     },
     {
@@ -329,9 +364,9 @@ whose end is 690 and 810 minutes into the day.
 
 Read each frame:
 
-- pdlc/changes/CH-0006-forecast-fast/frames/01.png
-- pdlc/changes/CH-0006-forecast-fast/frames/02.png
-- pdlc/changes/CH-0006-forecast-fast/frames/03.png
+- pdlc/changes/CH-0006-forecast-fast/frames/01.png (unchanged since the earlier review)
+- pdlc/changes/CH-0006-forecast-fast/frames/02.png (unchanged since the earlier review)
+- pdlc/changes/CH-0006-forecast-fast/frames/03.png (unchanged since the earlier review)
 - pdlc/changes/CH-0006-forecast-fast/frames/04.png
 - pdlc/changes/CH-0006-forecast-fast/frames/05.png
 - pdlc/changes/CH-0006-forecast-fast/frames/06.png
