@@ -1,6 +1,6 @@
 # CH-0006 · Forecast from built hours
 
-Intent: IN-0008 · Scope: CAP-forecast · Status: building · Ticket: none · Branch: pdlc/CH-0006-forecast-fast · Base: pdlc/CH-0005-forecast
+Intent: IN-0008 · Scope: CAP-forecast · Status: in review · Ticket: none · Branch: pdlc/CH-0006-forecast-fast · Base: pdlc/CH-0005-forecast
 
 Tests-Locked: 608aff7
 
@@ -98,3 +98,4 @@ none
 
 - Planned first in IN-0008 (hot-water policy simulation), because the home simulation fetches the forecast many times.
 - Build: the 15 checks of `tests/CAP-forecast.lean` pass, with the earlier component checks and the acceptance files of IN-0001 and IN-0002. The three usage checks of IN-0001 fail until CH-0011, as expected. No check changed since the lock.
+- Verify: round 1 failed on the specification remit (two points of wording). Round 2 passed in all remits. The security remit filed two follow-ups into IN-0005 (guards on library inputs). The pass commit of the intent comes with its last change.
