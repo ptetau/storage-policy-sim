@@ -2,7 +2,42 @@
 
 Judge only what is in this packet. Write your result next to it, in result.md.
 
-Made at: bde71c519e8061afa20631cd573ed28e0e4900f9
+Made at: d08f5374626a4b77dba30bfbc176109fea615595
+
+## Re-review
+
+Earlier review: bde71c519e8061afa20631cd573ed28e0e4900f9
+
+An earlier review of this remit judged this change at bde71c519e80. Judge only these two things:
+
+1. Each earlier problem below. If the problem is not fixed, list it again under "Problems".
+2. The changes since the earlier review, in the diff below. List a new problem only
+   where a changed line causes the problem.
+
+Do not raise a new problem on material that did not change. This rule also applies
+to a problem that the earlier review missed.
+
+### Earlier problems
+
+none
+
+### Changes since the earlier review
+
+````
+diff --git a/StoragePolicySim/Forecast.lean b/StoragePolicySim/Forecast.lean
+index 1472e22..3370be2 100644
+--- a/StoragePolicySim/Forecast.lean
++++ b/StoragePolicySim/Forecast.lean
+@@ -82,7 +82,7 @@ the day of the run. -/
+ private def dayDraw (seed day : Nat) : Float :=
+   normalOfKey (mix (mix (mix (mix seed.toUInt64) + dayStream) + day.toUInt64))
+ 
+-/-- The random number of a period. It has the variance of a normal curve. It adds the shared
++/-- The random number of a period. It has a variance of 1. It adds the shared
+ part of its day and the part of the period. -/
+ private def normalDraw (seed fetchHour period day : Nat) : Float :=
+   Float.sqrt sharedShare * dayDraw seed day + Float.sqrt ownShare * periodDraw seed fetchHour period
+````
 
 # Remit: privacy
 
@@ -29,7 +64,7 @@ Tests-Locked: 608aff7
 
 ## Delivers
 
-The library makes a simulated forecast from scenario hours that the caller built once. The result equals the result of the older call, and it is fast enough for a run with many fetches. The forecast error of a day is shared by the periods of that day, as in real forecasts.
+The library makes a simulated forecast from scenario hours that the caller built once. The result equals the result of `forecast`, and it is fast enough for a run with many fetches. The forecast error of a day is shared by the periods of that day, as in real forecasts.
 
 ## Requirements
 
@@ -88,7 +123,7 @@ The library makes a simulated forecast from scenario hours that the caller built
 
 ### Test seams
 - `seed` · seam: randomness · `StoragePolicySim/Forecast.lean`
-  - in: the `seed` argument of `forecast`. The same seed gives the same forecast.
+  - in: the `seed` argument of `forecast` and of `forecastOf`. The same seed gives the same forecast.
   - errors: none
 
 ## Files
@@ -135,11 +170,13 @@ Status: active
 CAP-forecast (simulated Solcast forecasts) acts like the Solcast hobbyist rooftop forecast
 service, for a scenario. A fetch at an hour of the run gives 30-minute periods for the next
 48 hours. Each period has an estimate, a 10% band and a 90% band. The forecast has an error
-that grows with the lead time, from a seed.
+that grows with the lead time, from a seed. The periods of one day share a part of their
+error, because one weather front covers a whole day.
 
 A hobbyist account can fetch 10 times a day, so the fetch hours of a day come from a count
 of fetches. The forecast can show as Solcast JSON, with UTC times from the longitude. A
-policy reads the forecast as the solar energy of each coming hour.
+policy reads the forecast as the solar energy of each coming hour. A caller that makes many
+fetches builds the hours of the scenario once, and gives them to `forecastOf`.
 
 ## Code map
 
@@ -155,7 +192,7 @@ policy reads the forecast as the solar energy of each coming hour.
   - in: a site, a seed, the days of the run, the error scale, and the hour of the run at which the fetch is made
   - out: the periods of the fetch, in order of time. The array is empty when the fetch hour is not inside the run.
   - errors: none
-- `forecastOf (hours : Array Hour) (site : Site) (seed : Nat) (errorScale : Float) (fetchHour : Nat) : Array Period` · function · `StoragePolicySim/Forecast.lean` · proposed
+- `forecastOf (hours : Array Hour) (site : Site) (seed : Nat) (errorScale : Float) (fetchHour : Nat) : Array Period` · function · `StoragePolicySim/Forecast.lean`
   - in: the hours of `scenario site seed days`, built once by the caller, the same site and seed, the error scale, and the hour of the run at which the fetch is made
   - out: the same periods as `forecast site seed days errorScale fetchHour`, where `days` is the count of hours divided by 24
   - errors: none
@@ -179,7 +216,7 @@ policy reads the forecast as the solar energy of each coming hour.
 ### Test seams
 
 - `seed` · seam: randomness · `StoragePolicySim/Forecast.lean`
-  - in: the `seed` argument of `forecast`. The same seed gives the same forecast.
+  - in: the `seed` argument of `forecast` and of `forecastOf`. The same seed gives the same forecast.
   - errors: none
 ````
 
@@ -208,7 +245,7 @@ day, because one cloud front covers the whole day. Thus, the random number of R2
 error) of a period has two parts: `sqrt(0.7) × d + sqrt(0.3) × e`, where `d` is a number from
 a normal curve for the day of the period, and `e` is a number from a normal curve for the
 period itself in the fetch (assumed). The number `d` depends only on the seed and the day of
-the run in which the period ends. Thus, two fetches of the same day share `d`. The sum of the
+the run that holds the hour of the period. Thus, two fetches of the same day share `d`. The sum of the
 two parts is still a number from a normal curve, so that the bands of R2 keep their meaning.
 
 The relative error of a sunny period is its estimate less its actual power, divided by the
@@ -526,7 +563,7 @@ port.
 
 ````
 diff --git a/StoragePolicySim/Forecast.lean b/StoragePolicySim/Forecast.lean
-index c6d7459..1472e22 100644
+index c6d7459..3370be2 100644
 --- a/StoragePolicySim/Forecast.lean
 +++ b/StoragePolicySim/Forecast.lean
 @@ -1,8 +1,9 @@
@@ -581,7 +618,7 @@ index c6d7459..1472e22 100644
 +private def dayDraw (seed day : Nat) : Float :=
 +  normalOfKey (mix (mix (mix (mix seed.toUInt64) + dayStream) + day.toUInt64))
 +
-+/-- The random number of a period. It has the variance of a normal curve. It adds the shared
++/-- The random number of a period. It has a variance of 1. It adds the shared
 +part of its day and the part of the period. -/
 +private def normalDraw (seed fetchHour period day : Nat) : Float :=
 +  Float.sqrt sharedShare * dayDraw seed day + Float.sqrt ownShare * periodDraw seed fetchHour period
@@ -723,7 +760,7 @@ the day of the run. -/
 private def dayDraw (seed day : Nat) : Float :=
   normalOfKey (mix (mix (mix (mix seed.toUInt64) + dayStream) + day.toUInt64))
 
-/-- The random number of a period. It has the variance of a normal curve. It adds the shared
+/-- The random number of a period. It has a variance of 1. It adds the shared
 part of its day and the part of the period. -/
 private def normalDraw (seed fetchHour period day : Nat) : Float :=
   Float.sqrt sharedShare * dayDraw seed day + Float.sqrt ownShare * periodDraw seed fetchHour period

@@ -2,7 +2,112 @@
 
 Judge only what is in this packet. Write your result next to it, in result.md.
 
-Made at: bde71c519e8061afa20631cd573ed28e0e4900f9
+Made at: d08f5374626a4b77dba30bfbc176109fea615595
+
+## Re-review
+
+Earlier review: bde71c519e8061afa20631cd573ed28e0e4900f9
+
+An earlier review of this remit judged this change at bde71c519e80. Judge only these two things:
+
+1. Each earlier problem below. If the problem is not fixed, list it again under "Problems".
+2. The changes since the earlier review, in the diff below. List a new problem only
+   where a changed line causes the problem.
+
+Do not raise a new problem on material that did not change. This rule also applies
+to a problem that the earlier review missed.
+
+### Earlier problems
+
+- pdlc/specs/capabilities/CAP-forecast.md:7-14 · The summary in "What it is for" does not show what the change adds. It does not say that the periods of one day share a part of their error (R7, shared error of a day). It does not say that a caller can build the hours once and give them to `forecastOf` (R6, forecast from built hours). The summary still says only "an error that grows with the lead time, from a seed". · Remit rule: the title and the summary of the spec show the behaviour as it is now, and include what the change adds.
+- pdlc/specs/capabilities/CAP-forecast.md:175-176 · The sentence "The number `d` depends only on the seed and the day of the run in which the period ends" has two meanings for a period that ends at 00:00. The period from 23:30 to 24:00 of day N ends at 00:00 of day N+1. The same spec writes "a fetch at 00:00 of the day" for the start of a day, so a reader can take day N+1. The code takes day N: `day := hourOfPeriod endMinute / 24` (`StoragePolicySim/Forecast.lean`, `periodOf`). The acceptance lines of R7 test only the periods that end at 11:30 and 13:30, so no line settles this. · Remit rule: a text that is unclear about what the code does, here a sentence with two possible meanings, is a problem. CAP-forecast.R7 is a requirement that this change wrote. Fix: write "the day of the run in which the period lies". The sentence is only in CAP-forecast.md, so one fix is enough.
+
+### Changes since the earlier review
+
+````
+diff --git a/StoragePolicySim/Forecast.lean b/StoragePolicySim/Forecast.lean
+index 1472e22..3370be2 100644
+--- a/StoragePolicySim/Forecast.lean
++++ b/StoragePolicySim/Forecast.lean
+@@ -82,7 +82,7 @@ the day of the run. -/
+ private def dayDraw (seed day : Nat) : Float :=
+   normalOfKey (mix (mix (mix (mix seed.toUInt64) + dayStream) + day.toUInt64))
+ 
+-/-- The random number of a period. It has the variance of a normal curve. It adds the shared
++/-- The random number of a period. It has a variance of 1. It adds the shared
+ part of its day and the part of the period. -/
+ private def normalDraw (seed fetchHour period day : Nat) : Float :=
+   Float.sqrt sharedShare * dayDraw seed day + Float.sqrt ownShare * periodDraw seed fetchHour period
+diff --git a/pdlc/changes/CH-0006-forecast-fast/change.md b/pdlc/changes/CH-0006-forecast-fast/change.md
+index 74f1088..36dac15 100644
+--- a/pdlc/changes/CH-0006-forecast-fast/change.md
++++ b/pdlc/changes/CH-0006-forecast-fast/change.md
+@@ -6,7 +6,7 @@ Tests-Locked: 608aff7
+ 
+ ## Delivers
+ 
+-The library makes a simulated forecast from scenario hours that the caller built once. The result equals the result of the older call, and it is fast enough for a run with many fetches. The forecast error of a day is shared by the periods of that day, as in real forecasts.
++The library makes a simulated forecast from scenario hours that the caller built once. The result equals the result of `forecast`, and it is fast enough for a run with many fetches. The forecast error of a day is shared by the periods of that day, as in real forecasts.
+ 
+ ## Requirements
+ 
+@@ -65,7 +65,7 @@ The library makes a simulated forecast from scenario hours that the caller built
+ 
+ ### Test seams
+ - `seed` · seam: randomness · `StoragePolicySim/Forecast.lean`
+-  - in: the `seed` argument of `forecast`. The same seed gives the same forecast.
++  - in: the `seed` argument of `forecast` and of `forecastOf`. The same seed gives the same forecast.
+   - errors: none
+ 
+ ## Files
+diff --git a/pdlc/specs/capabilities/CAP-forecast.md b/pdlc/specs/capabilities/CAP-forecast.md
+index f23f289..012cfa8 100644
+--- a/pdlc/specs/capabilities/CAP-forecast.md
++++ b/pdlc/specs/capabilities/CAP-forecast.md
+@@ -7,11 +7,13 @@ Status: active
+ CAP-forecast (simulated Solcast forecasts) acts like the Solcast hobbyist rooftop forecast
+ service, for a scenario. A fetch at an hour of the run gives 30-minute periods for the next
+ 48 hours. Each period has an estimate, a 10% band and a 90% band. The forecast has an error
+-that grows with the lead time, from a seed.
++that grows with the lead time, from a seed. The periods of one day share a part of their
++error, because one weather front covers a whole day.
+ 
+ A hobbyist account can fetch 10 times a day, so the fetch hours of a day come from a count
+ of fetches. The forecast can show as Solcast JSON, with UTC times from the longitude. A
+-policy reads the forecast as the solar energy of each coming hour.
++policy reads the forecast as the solar energy of each coming hour. A caller that makes many
++fetches builds the hours of the scenario once, and gives them to `forecastOf`.
+ 
+ ## Code map
+ 
+@@ -27,7 +29,7 @@ policy reads the forecast as the solar energy of each coming hour.
+   - in: a site, a seed, the days of the run, the error scale, and the hour of the run at which the fetch is made
+   - out: the periods of the fetch, in order of time. The array is empty when the fetch hour is not inside the run.
+   - errors: none
+-- `forecastOf (hours : Array Hour) (site : Site) (seed : Nat) (errorScale : Float) (fetchHour : Nat) : Array Period` · function · `StoragePolicySim/Forecast.lean` · proposed
++- `forecastOf (hours : Array Hour) (site : Site) (seed : Nat) (errorScale : Float) (fetchHour : Nat) : Array Period` · function · `StoragePolicySim/Forecast.lean`
+   - in: the hours of `scenario site seed days`, built once by the caller, the same site and seed, the error scale, and the hour of the run at which the fetch is made
+   - out: the same periods as `forecast site seed days errorScale fetchHour`, where `days` is the count of hours divided by 24
+   - errors: none
+@@ -51,7 +53,7 @@ policy reads the forecast as the solar energy of each coming hour.
+ ### Test seams
+ 
+ - `seed` · seam: randomness · `StoragePolicySim/Forecast.lean`
+-  - in: the `seed` argument of `forecast`. The same seed gives the same forecast.
++  - in: the `seed` argument of `forecast` and of `forecastOf`. The same seed gives the same forecast.
+   - errors: none
+ 
+ ## Requirements
+@@ -173,7 +175,7 @@ day, because one cloud front covers the whole day. Thus, the random number of R2
+ error) of a period has two parts: `sqrt(0.7) × d + sqrt(0.3) × e`, where `d` is a number from
+ a normal curve for the day of the period, and `e` is a number from a normal curve for the
+ period itself in the fetch (assumed). The number `d` depends only on the seed and the day of
+-the run in which the period ends. Thus, two fetches of the same day share `d`. The sum of the
++the run that holds the hour of the period. Thus, two fetches of the same day share `d`. The sum of the
+ two parts is still a number from a normal curve, so that the bands of R2 keep their meaning.
+ 
+ The relative error of a sunny period is its estimate less its actual power, divided by the
+````
 
 # Remit: specification
 
@@ -39,7 +144,7 @@ Tests-Locked: 608aff7
 
 ## Delivers
 
-The library makes a simulated forecast from scenario hours that the caller built once. The result equals the result of the older call, and it is fast enough for a run with many fetches. The forecast error of a day is shared by the periods of that day, as in real forecasts.
+The library makes a simulated forecast from scenario hours that the caller built once. The result equals the result of `forecast`, and it is fast enough for a run with many fetches. The forecast error of a day is shared by the periods of that day, as in real forecasts.
 
 ## Requirements
 
@@ -98,7 +203,7 @@ The library makes a simulated forecast from scenario hours that the caller built
 
 ### Test seams
 - `seed` · seam: randomness · `StoragePolicySim/Forecast.lean`
-  - in: the `seed` argument of `forecast`. The same seed gives the same forecast.
+  - in: the `seed` argument of `forecast` and of `forecastOf`. The same seed gives the same forecast.
   - errors: none
 
 ## Files
@@ -145,11 +250,13 @@ Status: active
 CAP-forecast (simulated Solcast forecasts) acts like the Solcast hobbyist rooftop forecast
 service, for a scenario. A fetch at an hour of the run gives 30-minute periods for the next
 48 hours. Each period has an estimate, a 10% band and a 90% band. The forecast has an error
-that grows with the lead time, from a seed.
+that grows with the lead time, from a seed. The periods of one day share a part of their
+error, because one weather front covers a whole day.
 
 A hobbyist account can fetch 10 times a day, so the fetch hours of a day come from a count
 of fetches. The forecast can show as Solcast JSON, with UTC times from the longitude. A
-policy reads the forecast as the solar energy of each coming hour.
+policy reads the forecast as the solar energy of each coming hour. A caller that makes many
+fetches builds the hours of the scenario once, and gives them to `forecastOf`.
 
 ## Code map
 
@@ -165,7 +272,7 @@ policy reads the forecast as the solar energy of each coming hour.
   - in: a site, a seed, the days of the run, the error scale, and the hour of the run at which the fetch is made
   - out: the periods of the fetch, in order of time. The array is empty when the fetch hour is not inside the run.
   - errors: none
-- `forecastOf (hours : Array Hour) (site : Site) (seed : Nat) (errorScale : Float) (fetchHour : Nat) : Array Period` · function · `StoragePolicySim/Forecast.lean` · proposed
+- `forecastOf (hours : Array Hour) (site : Site) (seed : Nat) (errorScale : Float) (fetchHour : Nat) : Array Period` · function · `StoragePolicySim/Forecast.lean`
   - in: the hours of `scenario site seed days`, built once by the caller, the same site and seed, the error scale, and the hour of the run at which the fetch is made
   - out: the same periods as `forecast site seed days errorScale fetchHour`, where `days` is the count of hours divided by 24
   - errors: none
@@ -189,7 +296,7 @@ policy reads the forecast as the solar energy of each coming hour.
 ### Test seams
 
 - `seed` · seam: randomness · `StoragePolicySim/Forecast.lean`
-  - in: the `seed` argument of `forecast`. The same seed gives the same forecast.
+  - in: the `seed` argument of `forecast` and of `forecastOf`. The same seed gives the same forecast.
   - errors: none
 ````
 
@@ -218,7 +325,7 @@ day, because one cloud front covers the whole day. Thus, the random number of R2
 error) of a period has two parts: `sqrt(0.7) × d + sqrt(0.3) × e`, where `d` is a number from
 a normal curve for the day of the period, and `e` is a number from a normal curve for the
 period itself in the fetch (assumed). The number `d` depends only on the seed and the day of
-the run in which the period ends. Thus, two fetches of the same day share `d`. The sum of the
+the run that holds the hour of the period. Thus, two fetches of the same day share `d`. The sum of the
 two parts is still a number from a normal curve, so that the bands of R2 keep their meaning.
 
 The relative error of a sunny period is its estimate less its actual power, divided by the
@@ -835,7 +942,7 @@ port.
 
 ````
 diff --git a/StoragePolicySim/Forecast.lean b/StoragePolicySim/Forecast.lean
-index c6d7459..1472e22 100644
+index c6d7459..3370be2 100644
 --- a/StoragePolicySim/Forecast.lean
 +++ b/StoragePolicySim/Forecast.lean
 @@ -1,8 +1,9 @@
@@ -890,7 +997,7 @@ index c6d7459..1472e22 100644
 +private def dayDraw (seed day : Nat) : Float :=
 +  normalOfKey (mix (mix (mix (mix seed.toUInt64) + dayStream) + day.toUInt64))
 +
-+/-- The random number of a period. It has the variance of a normal curve. It adds the shared
++/-- The random number of a period. It has a variance of 1. It adds the shared
 +part of its day and the part of the period. -/
 +private def normalDraw (seed fetchHour period day : Nat) : Float :=
 +  Float.sqrt sharedShare * dayDraw seed day + Float.sqrt ownShare * periodDraw seed fetchHour period
@@ -1032,7 +1139,7 @@ the day of the run. -/
 private def dayDraw (seed day : Nat) : Float :=
   normalOfKey (mix (mix (mix (mix seed.toUInt64) + dayStream) + day.toUInt64))
 
-/-- The random number of a period. It has the variance of a normal curve. It adds the shared
+/-- The random number of a period. It has a variance of 1. It adds the shared
 part of its day and the part of the period. -/
 private def normalDraw (seed fetchHour period day : Nat) : Float :=
   Float.sqrt sharedShare * dayDraw seed day + Float.sqrt ownShare * periodDraw seed fetchHour period
@@ -1158,169 +1265,9 @@ end StoragePolicySim
 
 ## Writing check
 
-`pdlc/bin/check_writing.py --since pdlc/CH-0005-forecast` on pdlc/changes/CH-0006-forecast-fast/change.md, pdlc/specs/capabilities/CAP-forecast.md, pdlc/specs/capabilities/CAP-homesim.md, pdlc/specs/capabilities/CAP-hotwater.md, pdlc/specs/capabilities/CAP-policy.md, pdlc/specs/capabilities/CAP-simulation.md, pdlc/specs/capabilities/CAP-strategies.md, pdlc/specs/design/DES-errors.md, pdlc/specs/jobs/JOB-simulate.md:
+`pdlc/bin/check_writing.py --since bde71c519e8061afa20631cd573ed28e0e4900f9` on pdlc/changes/CH-0006-forecast-fast/change.md, pdlc/specs/capabilities/CAP-forecast.md, pdlc/specs/capabilities/CAP-homesim.md, pdlc/specs/capabilities/CAP-hotwater.md, pdlc/specs/capabilities/CAP-policy.md, pdlc/specs/capabilities/CAP-simulation.md, pdlc/specs/capabilities/CAP-strategies.md, pdlc/specs/design/DES-errors.md, pdlc/specs/jobs/JOB-simulate.md:
 
 ````
-pdlc/changes/CH-0006-forecast-fast/change.md:14 · sentence length · 49 words, starting "Given the hours of `scenario`" · split it: a sentence has 25 words or fewer
-pdlc/changes/CH-0006-forecast-fast/change.md:15 · sentence length · 28 words, starting "Given the same hours and" · split it: a sentence has 25 words or fewer
-pdlc/changes/CH-0006-forecast-fast/change.md:18 · sentence length · 29 words, starting "Given the same hours and" · split it: a sentence has 25 words or fewer
-pdlc/changes/CH-0006-forecast-fast/change.md:21 · sentence length · 45 words, starting "Given the fetches at 00:00" · split it: a sentence has 25 words or fewer
-pdlc/changes/CH-0006-forecast-fast/change.md:21 · ID alone · "R2" has no name next to it · write "R2 (<short name>)"
-pdlc/changes/CH-0006-forecast-fast/change.md:22 · sentence length · 51 words, starting "Given the fetches at 00:00" · split it: a sentence has 25 words or fewer
-pdlc/changes/CH-0006-forecast-fast/change.md:23 · sentence length · 48 words, starting "Given the fetches at hour" · split it: a sentence has 25 words or fewer
-pdlc/changes/CH-0006-forecast-fast/change.md:25 · sentence length · 27 words, starting "Given a fetch at 00:00" · split it: a sentence has 25 words or fewer
-pdlc/changes/CH-0006-forecast-fast/change.md:39 · sentence length · 37 words, starting "out: a structure with `Repr`" · split it: a sentence has 25 words or fewer
-pdlc/changes/CH-0006-forecast-fast/change.md:46 · sentence length · 30 words, starting "in: the hours of `scenario" · split it: a sentence has 25 words or fewer
-pdlc/changes/CH-0006-forecast-fast/change.md:100 · ID alone · "IN-0001" has no name next to it · write "IN-0001 (<short name>)"
-pdlc/changes/CH-0006-forecast-fast/change.md:100 · ID alone · "IN-0002" has no name next to it · write "IN-0002 (<short name>)"
-pdlc/changes/CH-0006-forecast-fast/change.md:100 · ID alone · "IN-0001" has no name next to it · write "IN-0001 (<short name>)"
-pdlc/changes/CH-0006-forecast-fast/change.md:100 · ID alone · "CH-0011" has no name next to it · write "CH-0011 (<short name>)"
-pdlc/specs/capabilities/CAP-forecast.md:31 · sentence length · 30 words, starting "in: the hours of `scenario" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-forecast.md:161 · sentence length · 49 words, starting "Given the hours of `scenario`" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-forecast.md:162 · sentence length · 28 words, starting "Given the same hours and" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-forecast.md:165 · sentence length · 29 words, starting "Given the same hours and" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-forecast.md:171 · sentence length · 29 words, starting "A forecast that is wrong" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-forecast.md:172 · sentence length · 47 words, starting "Thus, the random number of" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-forecast.md:177 · ID alone · "R2" has no name next to it · write "R2 (<short name>)"
-pdlc/specs/capabilities/CAP-forecast.md:180 · sentence length · 31 words, starting "For a sunny period in" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-forecast.md:181 · ID alone · "R2" has no name next to it · write "R2 (<short name>)"
-pdlc/specs/capabilities/CAP-forecast.md:188 · sentence length · 45 words, starting "Given the fetches at 00:00" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-forecast.md:188 · ID alone · "R2" has no name next to it · write "R2 (<short name>)"
-pdlc/specs/capabilities/CAP-forecast.md:189 · sentence length · 51 words, starting "Given the fetches at 00:00" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-forecast.md:190 · sentence length · 48 words, starting "Given the fetches at hour" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-forecast.md:192 · sentence length · 27 words, starting "Given a fetch at 00:00" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-homesim.md:23 · sentence length · 34 words, starting "The fields are `site :" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-homesim.md:27 · sentence length · 47 words, starting "out: latitude -41.3, 5 kW" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-homesim.md:31 · sentence length · 51 words, starting "The fields are `day` and" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-homesim.md:35 · sentence length · 29 words, starting "Each field is a `Float`:" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-homesim.md:77 · sentence length · 28 words, starting "The draw of an hour" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-homesim.md:81 · sentence length · 54 words, starting "A precomputed policy makes its" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-homesim.md:84 · sentence length · 38 words, starting "A dynamic policy sees the" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-homesim.md:88 · sentence length · 30 words, starting "In these lines, the home" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-homesim.md:93 · sentence length · 30 words, starting "Given the default run, when" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-homesim.md:94 · sentence length · 31 words, starting "Given the default run, when" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-homesim.md:95 · sentence length · 35 words, starting "Given the default run, when" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-homesim.md:96 · sentence length · 40 words, starting "Given the default run, when" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-homesim.md:97 · sentence length · 35 words, starting "Given the default run, when" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-homesim.md:98 · sentence length · 28 words, starting "Given the default run with" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-homesim.md:99 · sentence length · 32 words, starting "Given the precomputed policy with" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-homesim.md:99 · sentence length · 47 words, starting "The call uses the first" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-homesim.md:106 · sentence length · 27 words, starting "Thus, no hour has an" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-homesim.md:117 · sentence length · 28 words, starting "Given each policy and the" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-homesim.md:118 · sentence length · 28 words, starting "Given each policy and the" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-homesim.md:119 · sentence length · 31 words, starting "Given each policy, a spread" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-homesim.md:120 · sentence length · 31 words, starting "Given a static policy with" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-homesim.md:121 · sentence length · 36 words, starting "Given a home with an" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-homesim.md:136 · sentence length · 28 words, starting "Given 365 days, when the" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-homesim.md:137 · sentence length · 37 words, starting "Given 365 days, when the" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-homesim.md:141 · sentence length · 28 words, starting "Given 365 days, a spread" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-homesim.md:157 · sentence length · 29 words, starting "Given the static policy with" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-homesim.md:158 · sentence length · 41 words, starting "Given the precomputed policy with" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-homesim.md:159 · sentence length · 45 words, starting "Given the dynamic policy with" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-homesim.md:160 · sentence length · 29 words, starting "Given the static policy with" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-homesim.md:161 · sentence length · 30 words, starting "Given the dynamic policy with" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-homesim.md:173 · sentence length · 26 words, starting "In these lines, the home" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-homesim.md:176 · sentence length · 29 words, starting "Given the first seed 3" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-homesim.md:177 · sentence length · 38 words, starting "Given the first seed 3" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-homesim.md:179 · sentence length · 35 words, starting "Given the first seed 3" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-homesim.md:188 · sentence length · 36 words, starting "The tuner tries each static" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-homesim.md:200 · sentence length · 35 words, starting "Given the same arguments, when" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-homesim.md:201 · sentence length · 26 words, starting "Given the same arguments, when" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-homesim.md:202 · sentence length · 27 words, starting "Given the same arguments, when" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-homesim.md:203 · sentence length · 30 words, starting "Given the same arguments, when" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-homesim.md:205 · sentence length · 32 words, starting "Given a home with 0" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-hotwater.md:22 · sentence length · 42 words, starting "The fields `capacityKwh`, `elementKw`, `lossPerHour`" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-hotwater.md:26 · sentence length · 33 words, starting "out: a tank of 10.5" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-hotwater.md:30 · sentence length · 28 words, starting "The fields are `energyKwh :" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-hotwater.md:41 · sentence length · 32 words, starting "in: a tank, its state," · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-hotwater.md:45 · sentence length · 31 words, starting "in: the hot-water energy of" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-hotwater.md:75 · sentence length · 33 words, starting "Given 8.0 kWh stored and" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-hotwater.md:76 · sentence length · 33 words, starting "Given 1.0 kWh stored and" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-hotwater.md:77 · sentence length · 33 words, starting "Given 0.0 kWh stored and" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-hotwater.md:90 · sentence length · 29 words, starting "In these lines, the tank" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-hotwater.md:94 · sentence length · 26 words, starting "Given 5.0 kWh stored and" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-hotwater.md:95 · sentence length · 26 words, starting "Given 5.0 kWh stored and" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-hotwater.md:96 · sentence length · 26 words, starting "Given 9.0 kWh stored and" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-hotwater.md:97 · sentence length · 26 words, starting "Given 10.5 kWh stored and" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-hotwater.md:99 · sentence length · 33 words, starting "Given 2.0 kWh stored, a" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-hotwater.md:100 · sentence length · 42 words, starting "Given a tank with a" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-hotwater.md:111 · sentence length · 30 words, starting "While the thermostat is on," · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-hotwater.md:116 · sentence length · 38 words, starting "In these lines, the tank" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-hotwater.md:122 · sentence length · 29 words, starting "Given 6.0 kWh stored and" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-hotwater.md:123 · sentence length · 29 words, starting "Given 9.0 kWh stored and" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-hotwater.md:124 · sentence length · 27 words, starting "Given 5.0 kWh stored and" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-hotwater.md:125 · sentence length · 27 words, starting "Given 4.0 kWh stored and" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-hotwater.md:126 · sentence length · 30 words, starting "Given 9.0 kWh stored, the" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-hotwater.md:127 · sentence length · 33 words, starting "Given 1.0 kWh stored and" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-hotwater.md:144 · sentence length · 27 words, starting "Given latitude 45, when the" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-hotwater.md:145 · sentence length · 27 words, starting "Given latitude -41, when the" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-hotwater.md:146 · sentence length · 27 words, starting "Given latitude 45, when the" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-hotwater.md:154 · sentence length · 27 words, starting "From the guard hour, 20" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-hotwater.md:156 · ID alone · "R3" has no name next to it · write "R3 (<short name>)"
-pdlc/specs/capabilities/CAP-hotwater.md:160 · sentence length · 29 words, starting "In these lines, the tank" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-hotwater.md:163 · sentence length · 34 words, starting "Given hour 20, 9.0 kWh" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-hotwater.md:164 · sentence length · 34 words, starting "Given hour 19, 9.0 kWh" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-hotwater.md:165 · sentence length · 30 words, starting "Given hour 20, 9.0 kWh" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-hotwater.md:166 · sentence length · 35 words, starting "Given hour 22, 4.0 kWh" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-hotwater.md:167 · sentence length · 29 words, starting "Given hour 0, 10.5 kWh" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-hotwater.md:168 · sentence length · 31 words, starting "Given hour 0, 10.5 kWh" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-hotwater.md:170 · sentence length · 30 words, starting "Given a guard hour of" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-hotwater.md:171 · sentence length · 26 words, starting "Given the start state of" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-hotwater.md:177 · sentence length · 26 words, starting "The factor of a day" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-hotwater.md:184 · sentence length · 35 words, starting "Given seed 7 and a" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-hotwater.md:185 · sentence length · 26 words, starting "Given seed 7 and a" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-hotwater.md:186 · sentence length · 30 words, starting "Given the seeds 7 and" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-policy.md:64 · sentence length · 45 words, starting "in: a tank, the parameters" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-policy.md:91 · sentence length · 28 words, starting "Given the default parameters, when" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-policy.md:103 · sentence length · 28 words, starting "The need is the target" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-policy.md:108 · ID alone · "R1" has no name next to it · write "R1 (<short name>)"
-pdlc/specs/capabilities/CAP-policy.md:114 · sentence length · 56 words, starting "Given a forecast of 1.0," · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-policy.md:115 · sentence length · 28 words, starting "Given the same forecast, 9.0" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-policy.md:116 · sentence length · 28 words, starting "Given the same forecast, 10.0" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-policy.md:117 · sentence length · 33 words, starting "Given a forecast of 0.4" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-policy.md:118 · sentence length · 48 words, starting "Given a forecast of 0.5" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-policy.md:119 · sentence length · 47 words, starting "Given a minimum forecast of" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-policy.md:120 · sentence length · 42 words, starting "Given a forecast of 2.0" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-policy.md:121 · sentence length · 29 words, starting "Given the default parameters, when" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-policy.md:127 · sentence length · 38 words, starting "First it soaks up surplus:" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-policy.md:129 · sentence length · 38 words, starting "If not, and the tank" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-policy.md:132 · ID alone · "R1" has no name next to it · write "R1 (<short name>)"
-pdlc/specs/capabilities/CAP-policy.md:135 · sentence length · 32 words, starting "In these lines, the tank" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-policy.md:142 · sentence length · 32 words, starting "Given no surplus, 3.0 kWh" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-policy.md:143 · sentence length · 32 words, starting "Given no surplus, 3.0 kWh" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-policy.md:145 · sentence length · 32 words, starting "Given no surplus, 0.0 kWh" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-policy.md:146 · sentence length · 35 words, starting "Given a surplus of 1.0" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-policy.md:153 · sentence length · 31 words, starting "The target is a full" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-simulation.md:58 · sentence length · 26 words, starting "in: a battery, the energy" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-simulation.md:151 · sentence length · 35 words, starting "`stepHourGated` runs an hour as" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-simulation.md:153 · ID alone · "R1" has no name next to it · write "R1 (<short name>)"
-pdlc/specs/capabilities/CAP-simulation.md:153 · ID alone · "R2" has no name next to it · write "R2 (<short name>)"
-pdlc/specs/capabilities/CAP-simulation.md:157 · sentence length · 31 words, starting "Given an empty battery that" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-simulation.md:158 · sentence length · 30 words, starting "Given an empty battery that" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-simulation.md:159 · sentence length · 35 words, starting "Given 1.9 kWh stored and" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-simulation.md:160 · sentence length · 36 words, starting "Given 1.9 kWh stored and" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-simulation.md:161 · sentence length · 28 words, starting "Given 9.05 kWh stored and" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-simulation.md:162 · sentence length · 26 words, starting "Given a battery that may" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-simulation.md:163 · sentence length · 45 words, starting "Given a battery that may" · split it: a sentence has 25 words or fewer
-pdlc/specs/capabilities/CAP-simulation.md:164 · sentence length · 28 words, starting "Given a battery that may" · split it: a sentence has 25 words or fewer
-pdlc/specs/jobs/JOB-simulate.md:14 · sentence length · 30 words, starting "They run one policy with" · split it: a sentence has 25 words or fewer
-pdlc/specs/jobs/JOB-simulate.md:21 · sentence length · 28 words, starting "Capabilities: CAP-scenario (sun, weather and" · split it: a sentence has 25 words or fewer
-pdlc/specs/jobs/JOB-simulate.md:39 · ID alone · "CAP-forecast" has no name next to it · write "CAP-forecast (<short name>)"
-pdlc/specs/jobs/JOB-simulate.md:77 · sentence length · 29 words, starting "out: on standard output, the" · split it: a sentence has 25 words or fewer
-pdlc/specs/jobs/JOB-simulate.md:250 · sentence length · 36 words, starting "The lines are `policy` (the" · split it: a sentence has 25 words or fewer
-pdlc/specs/jobs/JOB-simulate.md:260 · sentence length · 39 words, starting "`--tank` (kWh), `--element` (kW), `--cut-in`" · split it: a sentence has 25 words or fewer
-pdlc/specs/jobs/JOB-simulate.md:270 · ID alone · "CAP-homesim" has no name next to it · write "CAP-homesim (<short name>)"
-pdlc/specs/jobs/JOB-simulate.md:272 · sentence length · 26 words, starting "Given `--tank 0 --draw-cv 0`," · split it: a sentence has 25 words or fewer
-pdlc/specs/jobs/JOB-simulate.md:293 · sentence length · 29 words, starting "Given no options, when the" · split it: a sentence has 25 words or fewer
-pdlc/specs/jobs/JOB-simulate.md:294 · sentence length · 26 words, starting "Given `--seed 9 --lat 45" · split it: a sentence has 25 words or fewer
-pdlc/specs/jobs/JOB-simulate.md:298 · sentence length · 26 words, starting "Given `--seed 9 --lat 45" · split it: a sentence has 25 words or fewer
-pdlc/specs/jobs/JOB-simulate.md:298 · ID alone · "CAP-homesim" has no name next to it · write "CAP-homesim (<short name>)"
-pdlc/specs/jobs/JOB-simulate.md:306 · ID alone · "R8" has no name next to it · write "R8 (<short name>)"
-pdlc/specs/jobs/JOB-simulate.md:313 · sentence length · 29 words, starting "Given no options, when the" · split it: a sentence has 25 words or fewer
-pdlc/specs/jobs/JOB-simulate.md:314 · sentence length · 30 words, starting "Given no options, when the" · split it: a sentence has 25 words or fewer
-pdlc/specs/jobs/JOB-simulate.md:315 · sentence length · 26 words, starting "Given `--seeds 1 --seed 4`," · split it: a sentence has 25 words or fewer
-pdlc/specs/jobs/JOB-simulate.md:335 · sentence length · 27 words, starting "Given `--seeds 2 --days 30`," · split it: a sentence has 25 words or fewer
-pdlc/specs/jobs/JOB-simulate.md:337 · sentence length · 29 words, starting "Given `--seeds 2 --days 30`," · split it: a sentence has 25 words or fewer
-160 findings: 143 sentence length, 17 ID alone.
+No findings.
 ````
 
