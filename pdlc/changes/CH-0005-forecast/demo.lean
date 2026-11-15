@@ -39,7 +39,7 @@ def firstLast (ps : Array Period) : String :=
 def jsonField (s : String) (key : String) (n : Nat := 0) : String :=
   let parts := s.splitOn key
   match parts[n + 1]? with
-  | some rest => (rest.takeWhile (· != '"')).toString
+  | some rest => (rest.takeWhile (fun c => c != '"' && c != ',')).toString
   | none => "?"
 
 def run : String → IO Unit
@@ -122,9 +122,20 @@ def run : String → IO Unit
     let ok := values.all fun v => match v.splitOn "." with | [_, f] => f.length == 4 | _ => false
     say s!"error scale 0, fetch at hour 4116: {ps.size} periods\nfirst pv_estimate values (the JSON text up to the next comma): {(values.take 4)}\neach pv_estimate has four decimals: {ok}"
   | "r4-6" => do
-    let j := forecastJson (fetch 7 1.0 0) 174.8
-    let first := (j.splitOn "},").head!
-    say s!"fetch at hour 0, the first period of the JSON:\n{first}}"
+    let ps := fetch 7 1.0 0
+    let j := forecastJson ps 174.8
+    let inner := ((j.drop 14).toString.dropEnd 2).toString
+    let objects := inner.splitOn "},{"
+    let inOrder (o : String) : Bool :=
+      let keys := ["\"pv_estimate\":", "\"pv_estimate10\":", "\"pv_estimate90\":", "\"period_end\":", "\"period\":\"PT30M\""]
+      let pos := keys.map fun k => (o.splitOn k).head!.length
+      (pos.zip pos.tail).all (fun (a, b) => a < b) && (o.splitOn "\"period\":\"PT30M\"").length == 2
+    let sunny := (ps.toList.zip objects).find? fun (p, _) => p.estimateKw > 0
+    say s!"fetch at hour 0: {objects.length} periods in the JSON"
+    say s!"each period has the five fields in order, and \"period\":\"PT30M\": {objects.all inOrder}"
+    match sunny with
+    | some (_, o) => say ("the first period with sun:\n{" ++ o ++ "}")
+    | none => say "no period with sun"
   | "r5-1" => do
     let ps := fetch 7 0.0 0
     let hs := hourlyEnergy ps 0
@@ -146,7 +157,7 @@ def run : String → IO Unit
     let hs := hourlyEnergy ps 4116
     let sumH := hs.foldl (· + ·) 0.0
     let sumP := ps.foldl (fun a p => a + p.estimateKw) 0.0
-    say s!"fetch at hour 4116\nsum of the 48 values: {f3 sumH} kWh\n0.5 times the sum of the {ps.size} estimates: {f3 (0.5 * sumP)} kWh"
+    say s!"fetch at hour 4116\nsum of the 48 values: {f3 sumH} kWh\n0.5 times the sum of the {ps.size} estimates: {f3 (0.5 * sumP)} kWh\ndifference: {(sumH - 0.5 * sumP).abs} kWh (0.000001 or less)"
   | k => say s!"unknown key {k}"
 
 def main (args : List String) : IO Unit := run (args.headD "")
