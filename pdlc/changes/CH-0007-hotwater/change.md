@@ -2,7 +2,7 @@
 
 Intent: IN-0008 · Scope: CAP-hotwater · Status: testing · Ticket: none · Branch: pdlc/CH-0007-hotwater · Base: pdlc/CH-0006-forecast-fast
 
-Tests-Locked: none
+Tests-Locked: d9e3a86
 
 ## Delivers
 
