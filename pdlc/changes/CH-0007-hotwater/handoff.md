@@ -1,10 +1,12 @@
-# Handoff · CH-0007 · tests → build
+# Handoff · CH-0007 · build → verify
 
-Time: 2026-11-15T12:32:16+00:00
+Time: 2026-11-16T04:59:54+00:00
 
 ### Done
 
-- The test writer wrote 73 checks in `tests/CAP-hotwater.lean` for CAP-hotwater.R1 to R6: the lines of the spec, and extra checks for config fields, edges, chains of hours and the seam `drawSeed`. The lock is `ae785cd`, and the review passed in round 2 (round 1 found two problems).
+- `StoragePolicySim/HotWater.lean` has the tank, its state, the hour step with the thermostat and the daily full heating, the draw profile, and the daily draw factor.
+- All 73 checks of `tests/CAP-hotwater.lean` pass. The older component checks and the acceptance file of IN-0002 pass. Three checks of IN-0001 (the usage line) fail until CH-0011 builds the new usage.
+- The builder agent stopped on a usage limit after it wrote the file. The skill ran the checks itself, and no check changed.
 
 ### Decided on defaults
 
@@ -16,8 +18,8 @@ Time: 2026-11-15T12:32:16+00:00
 
 ### Look here
 
+- `StoragePolicySim/HotWater.lean`
 - `tests/CAP-hotwater.lean`
-- The Interface in `pdlc/changes/CH-0007-hotwater/change.md`
 
 ### Don't redo
 
@@ -25,4 +27,4 @@ Time: 2026-11-15T12:32:16+00:00
 
 ### Next: do this first
 
-Write `StoragePolicySim/HotWater.lean`. The hour runs in this order: the tank loses a share of its energy; the household draws (served is the smaller of the draw and the energy, the rest is unmet); the element heats by the request, never more than the element power for one hour and never more than the room; then the thermostat decides (it cuts in below the cut-in level, or from the guard hour when the tank was not full today, and stays on until the tank is full within 0.000000001 kWh); the backstop heating is the element power that the policy left, never more than the room. `fullToday` resets at hour 0 and becomes true in the hour in which the tank is full. `drawFactor` is `exp(cv × z - cv × cv / 2)` where z is a normal number from a hash of the seed and the day. Write the hash and the normal draw in this file, because the ones in Forecast.lean are private.
+Verify CH-0007. Check the order of the hour (loss, draw, heating, thermostat) and the use of the guard hour.

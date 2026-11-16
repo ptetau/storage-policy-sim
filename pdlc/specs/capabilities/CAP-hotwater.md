@@ -60,7 +60,7 @@ that changes with the season, and with a random factor for each day.
 
 ### CAP-hotwater.R1 · Standby loss and draw
 
-Status: ready · Intents: IN-0008
+Status: built · Intents: IN-0008
 
 In each hour, the tank first loses a share of its energy, 0.6% in the default tank (assumed).
 That is 1.5 kWh in a day for a full tank, near the average of the New Zealand tanks. Then the
@@ -80,7 +80,7 @@ The request is 0 kWh, unless the line says otherwise. The tolerance is 0.0000000
 
 ### CAP-hotwater.R2 · Heating limits
 
-Status: ready · Intents: IN-0008
+Status: built · Intents: IN-0008
 
 The element heats the tank by the energy that the policy asks for. The heating is never more
 than the element power for one hour, and never more than the room that the tank has left.
@@ -101,7 +101,7 @@ otherwise. The tolerance is 0.000000001 kWh.
 
 ### CAP-hotwater.R3 · Thermostat
 
-Status: ready · Intents: IN-0008
+Status: built · Intents: IN-0008
 
 After the heating of the policy, the thermostat decides. It cuts in when the tank holds less
 than the cut-in level, 5.25 kWh in the default tank, which is half of the capacity (assumed).
@@ -129,7 +129,7 @@ The tolerance is 0.000000001 kWh.
 
 ### CAP-hotwater.R4 · Hot-water draw profile
 
-Status: ready · Intents: IN-0008
+Status: built · Intents: IN-0008
 
 The household draws more hot water in the morning and in the evening. The hours of a day share
 the daily energy by a fixed profile with a peak at 07:00 and a peak at 19:00 (assumed). A
@@ -148,7 +148,7 @@ In these lines, the daily energy is 6.0 kWh, unless the line says otherwise.
 
 ### CAP-hotwater.R5 · Daily full heating
 
-Status: ready · Intents: IN-0008
+Status: built · Intents: IN-0008
 
 The tank is full at least once each day, so that the stored water stays hot enough against
 legionella bacteria (assumed). From the guard hour, 20 in the default tank (assumed), the
@@ -172,7 +172,7 @@ the request is 0 kWh, unless the line says otherwise. The tolerance is 0.0000000
 
 ### CAP-hotwater.R6 · Daily draw factor
 
-Status: ready · Intents: IN-0008
+Status: built · Intents: IN-0008
 
 A household draws more hot water on some days, and less on others. The factor of a day is
 `exp(cv × z - cv × cv / 2)`, where `cv` is the spread of the draw and `z` is a random number

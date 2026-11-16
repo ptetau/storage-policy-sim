@@ -121,37 +121,37 @@ The library models an electric hot-water tank: heating limits, standby loss, the
 
 ## Steps
 
-### Step 1 · Standby loss and draw · [ ]
+### Step 1 · Standby loss and draw · [x]
 
 - Requirement: CAP-hotwater.R1
 - Check: the checks named `CAP-hotwater.R1 …` in `tests/CAP-hotwater.lean`
 - Done when: the checks pass
 
-### Step 2 · Heating limits · [ ]
+### Step 2 · Heating limits · [x]
 
 - Requirement: CAP-hotwater.R2
 - Check: the checks named `CAP-hotwater.R2 …` in `tests/CAP-hotwater.lean`
 - Done when: the checks pass
 
-### Step 3 · Thermostat · [ ]
+### Step 3 · Thermostat · [x]
 
 - Requirement: CAP-hotwater.R3
 - Check: the checks named `CAP-hotwater.R3 …` in `tests/CAP-hotwater.lean`
 - Done when: the checks pass
 
-### Step 4 · Hot-water draw profile · [ ]
+### Step 4 · Hot-water draw profile · [x]
 
 - Requirement: CAP-hotwater.R4
 - Check: the checks named `CAP-hotwater.R4 …` in `tests/CAP-hotwater.lean`
 - Done when: the checks pass
 
-### Step 5 · Daily full heating · [ ]
+### Step 5 · Daily full heating · [x]
 
 - Requirement: CAP-hotwater.R5
 - Check: the checks named `CAP-hotwater.R5 …` in `tests/CAP-hotwater.lean`
 - Done when: the checks pass
 
-### Step 6 · Daily draw factor · [ ]
+### Step 6 · Daily draw factor · [x]
 
 - Requirement: CAP-hotwater.R6
 - Check: the checks named `CAP-hotwater.R6 …` in `tests/CAP-hotwater.lean`
@@ -164,3 +164,4 @@ none
 ## Progress log
 
 - Planned second. It needs no other change of IN-0008 (hot-water policy simulation).
+- Build: the 73 checks of `tests/CAP-hotwater.lean` pass, with the earlier component checks and the acceptance files of IN-0001 and IN-0002. The three usage checks of IN-0001 fail until CH-0011, as expected. No check changed since the lock.
