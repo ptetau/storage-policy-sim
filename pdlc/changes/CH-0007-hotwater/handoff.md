@@ -1,10 +1,11 @@
-# Handoff · CH-0007 · verify → build
+# Handoff · CH-0007 · build → verify
 
-Time: 2026-11-16T05:02:15+00:00
+Time: 2026-11-16T05:02:21+00:00
 
 ### Done
 
-- Round 1 passed in the specification, security and privacy remits, and the compliance remit does not apply. The quality remit failed with one problem.
+- `StoragePolicySim/HotWater.lean` now has one helper, `fullEarlierToday`, for the day reset of the tank. `thermostatOn` and `tankStep` both call it.
+- All 73 checks of `tests/CAP-hotwater.lean` pass again.
 
 ### Decided on defaults
 
@@ -12,16 +13,16 @@ Time: 2026-11-16T05:02:15+00:00
 
 ### Open
 
-- `StoragePolicySim/HotWater.lean:82` and `:107`: the rule that the tank counts as full before the hour only when `hour != 0 && state.fullToday` is written twice (in `thermostatOn` and in `tankStep`). Make one private helper that both places call. This is a remit rule (no unnecessary repetition), so no check changes.
+- none
 
 ### Look here
 
-- `pdlc/changes/CH-0007-hotwater/review/quality/result.md`
+- `StoragePolicySim/HotWater.lean`
 
 ### Don't redo
 
-- The checks, the spec and the other remits.
+- The checks and the other remits.
 
 ### Next: do this first
 
-Fix the one problem in `StoragePolicySim/HotWater.lean`, run the checks of CH-0007, and run `verify` again.
+Verify CH-0007 again (round 2).
