@@ -33,6 +33,7 @@ Acceptance-Passed: none
 
 - Awaits approval: found reviewing CH-0002 (security, specification)
 - Awaits approval: found reviewing CH-0006 (security): `forecast` and `forecastOf` take any error scale, so a NaN scale gives NaN estimates and a negative scale swaps the 10% and 90% bands. Also, a very large `days` makes `scenario` build 24 × days hours, with no size cap.
+- Awaits approval: found reviewing CH-0007 (security, specification): the tank and the draw take any hour, any negative or NaN energy, request or draw, and any spread. An hour of 24 or more makes `drawKwh` read outside its profile, and a negative draw adds energy to the tank. A guard with an error code would fix both.
 
 ## Handoff
 
