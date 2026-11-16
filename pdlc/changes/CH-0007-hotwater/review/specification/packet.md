@@ -2,7 +2,63 @@
 
 Judge only what is in this packet. Write your result next to it, in result.md.
 
-Made at: b5f15f4dce7f4a402946a2305146a5bfb7a92b2e
+Made at: 1ce86b3c8d9bc54b114a1be9bf99588f1594b402
+
+## Re-review
+
+Earlier review: b5f15f4dce7f4a402946a2305146a5bfb7a92b2e
+
+An earlier review of this remit judged this change at b5f15f4dce7f. Judge only these two things:
+
+1. Each earlier problem below. If the problem is not fixed, list it again under "Problems".
+2. The changes since the earlier review, in the diff below. List a new problem only
+   where a changed line causes the problem.
+
+Do not raise a new problem on material that did not change. This rule also applies
+to a problem that the earlier review missed.
+
+### Earlier problems
+
+none
+
+### Changes since the earlier review
+
+````
+diff --git a/StoragePolicySim/HotWater.lean b/StoragePolicySim/HotWater.lean
+index 77c655f..e808ee8 100644
+--- a/StoragePolicySim/HotWater.lean
++++ b/StoragePolicySim/HotWater.lean
+@@ -73,14 +73,17 @@ private def fullTolerance : Float := 1e-9
+ private def isFull (cfg : TankConfig) (energyKwh : Float) : Bool :=
+   (energyKwh - cfg.capacityKwh).abs ≤ fullTolerance
+ 
++/-- True when the tank was already full earlier in this day, as the state of the hour before says.
++Hour 0 starts a new day, so the tank is then not full before the hour. -/
++private def fullEarlierToday (state : TankState) (hour : Nat) : Bool :=
++  hour != 0 && state.fullToday
++
+ /-- True when the thermostat is on for the rest of the hour. It stays on from the hour before. It
+ cuts in when the level is less than the cut-in level. It also cuts in from the guard hour, when
+-the tank was not full since hour 0 of the day. Hour 0 starts a new day, so the tank is then not
+-full before the hour. -/
++the tank was not full since hour 0 of the day. -/
+ private def thermostatOn (cfg : TankConfig) (state : TankState) (hour : Nat) (level : Float) :
+     Bool :=
+-  let fullBefore := hour != 0 && state.fullToday
+-  state.heating || level < cfg.cutInKwh || (cfg.guardHour ≤ hour && !fullBefore)
++  state.heating || level < cfg.cutInKwh || (cfg.guardHour ≤ hour && !fullEarlierToday state hour)
+ 
+ /-- The result of one hour. The order of the hour is this. The tank loses a share of its energy.
+ The household draws: the tank serves the smaller of the draw and its energy, and the rest is the
+@@ -104,7 +107,7 @@ def tankStep (cfg : TankConfig) (state : TankState) (hour : Nat) (requestKwh dra
+   let energyKwh := level + backstopKwh
+   let full := isFull cfg energyKwh
+   { lossKwh, servedKwh, unmetKwh, heatKwh, backstopKwh,
+-    state := { energyKwh, heating := on && !full, fullToday := (hour != 0 && state.fullToday) || full } }
++    state := { energyKwh, heating := on && !full, fullToday := fullEarlierToday state hour || full } }
+ 
+ /-! ## Draw profile -/
+````
 
 # Remit: specification
 
@@ -857,10 +913,10 @@ port.
 ````
 diff --git a/StoragePolicySim/HotWater.lean b/StoragePolicySim/HotWater.lean
 new file mode 100644
-index 0000000..77c655f
+index 0000000..e808ee8
 --- /dev/null
 +++ b/StoragePolicySim/HotWater.lean
-@@ -0,0 +1,172 @@
+@@ -0,0 +1,175 @@
 +/-
 +The hot-water tank of a household. The tank holds thermal energy in kWh. Each hour it loses a
 +share of its energy, serves the draw of the household, and takes the heating of a policy. A
@@ -936,14 +992,17 @@ index 0000000..77c655f
 +private def isFull (cfg : TankConfig) (energyKwh : Float) : Bool :=
 +  (energyKwh - cfg.capacityKwh).abs ≤ fullTolerance
 +
++/-- True when the tank was already full earlier in this day, as the state of the hour before says.
++Hour 0 starts a new day, so the tank is then not full before the hour. -/
++private def fullEarlierToday (state : TankState) (hour : Nat) : Bool :=
++  hour != 0 && state.fullToday
++
 +/-- True when the thermostat is on for the rest of the hour. It stays on from the hour before. It
 +cuts in when the level is less than the cut-in level. It also cuts in from the guard hour, when
-+the tank was not full since hour 0 of the day. Hour 0 starts a new day, so the tank is then not
-+full before the hour. -/
++the tank was not full since hour 0 of the day. -/
 +private def thermostatOn (cfg : TankConfig) (state : TankState) (hour : Nat) (level : Float) :
 +    Bool :=
-+  let fullBefore := hour != 0 && state.fullToday
-+  state.heating || level < cfg.cutInKwh || (cfg.guardHour ≤ hour && !fullBefore)
++  state.heating || level < cfg.cutInKwh || (cfg.guardHour ≤ hour && !fullEarlierToday state hour)
 +
 +/-- The result of one hour. The order of the hour is this. The tank loses a share of its energy.
 +The household draws: the tank serves the smaller of the draw and its energy, and the rest is the
@@ -967,7 +1026,7 @@ index 0000000..77c655f
 +  let energyKwh := level + backstopKwh
 +  let full := isFull cfg energyKwh
 +  { lossKwh, servedKwh, unmetKwh, heatKwh, backstopKwh,
-+    state := { energyKwh, heating := on && !full, fullToday := (hour != 0 && state.fullToday) || full } }
++    state := { energyKwh, heating := on && !full, fullToday := fullEarlierToday state hour || full } }
 +
 +/-! ## Draw profile -/
 +
@@ -1113,14 +1172,17 @@ private def fullTolerance : Float := 1e-9
 private def isFull (cfg : TankConfig) (energyKwh : Float) : Bool :=
   (energyKwh - cfg.capacityKwh).abs ≤ fullTolerance
 
+/-- True when the tank was already full earlier in this day, as the state of the hour before says.
+Hour 0 starts a new day, so the tank is then not full before the hour. -/
+private def fullEarlierToday (state : TankState) (hour : Nat) : Bool :=
+  hour != 0 && state.fullToday
+
 /-- True when the thermostat is on for the rest of the hour. It stays on from the hour before. It
 cuts in when the level is less than the cut-in level. It also cuts in from the guard hour, when
-the tank was not full since hour 0 of the day. Hour 0 starts a new day, so the tank is then not
-full before the hour. -/
+the tank was not full since hour 0 of the day. -/
 private def thermostatOn (cfg : TankConfig) (state : TankState) (hour : Nat) (level : Float) :
     Bool :=
-  let fullBefore := hour != 0 && state.fullToday
-  state.heating || level < cfg.cutInKwh || (cfg.guardHour ≤ hour && !fullBefore)
+  state.heating || level < cfg.cutInKwh || (cfg.guardHour ≤ hour && !fullEarlierToday state hour)
 
 /-- The result of one hour. The order of the hour is this. The tank loses a share of its energy.
 The household draws: the tank serves the smaller of the draw and its energy, and the rest is the
@@ -1144,7 +1206,7 @@ def tankStep (cfg : TankConfig) (state : TankState) (hour : Nat) (requestKwh dra
   let energyKwh := level + backstopKwh
   let full := isFull cfg energyKwh
   { lossKwh, servedKwh, unmetKwh, heatKwh, backstopKwh,
-    state := { energyKwh, heating := on && !full, fullToday := (hour != 0 && state.fullToday) || full } }
+    state := { energyKwh, heating := on && !full, fullToday := fullEarlierToday state hour || full } }
 
 /-! ## Draw profile -/
 
@@ -1214,13 +1276,9 @@ end StoragePolicySim
 
 ## Writing check
 
-`pdlc/bin/check_writing.py --since pdlc/CH-0006-forecast-fast` on pdlc/changes/CH-0007-hotwater/change.md, pdlc/specs/capabilities/CAP-hotwater.md:
+`pdlc/bin/check_writing.py --since b5f15f4dce7f4a402946a2305146a5bfb7a92b2e` on pdlc/changes/CH-0007-hotwater/change.md, pdlc/specs/capabilities/CAP-hotwater.md:
 
 ````
-pdlc/changes/CH-0007-hotwater/change.md:167 · ID alone · "IN-0001" has no name next to it · write "IN-0001 (<short name>)"
-pdlc/changes/CH-0007-hotwater/change.md:167 · ID alone · "IN-0002" has no name next to it · write "IN-0002 (<short name>)"
-pdlc/changes/CH-0007-hotwater/change.md:167 · ID alone · "IN-0001" has no name next to it · write "IN-0001 (<short name>)"
-pdlc/changes/CH-0007-hotwater/change.md:167 · ID alone · "CH-0011" has no name next to it · write "CH-0011 (<short name>)"
-4 findings: 4 ID alone.
+No findings.
 ````
 

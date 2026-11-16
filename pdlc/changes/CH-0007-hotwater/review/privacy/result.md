@@ -2,14 +2,11 @@ Result: pass
 
 Remit: privacy
 
-Problems:
-none
+Problems: none
 
-Follow-ups:
-none
+Follow-ups: none
 
 Notes:
-- Not applicable. The change touches no personal data.
-- `StoragePolicySim/HotWater.lean` holds pure numeric functions. They take energy values in kWh, a latitude, a day, an hour, and a seed. None of these identifies a person.
-- The "household" in the spec is a simulated draw profile. It is not a record of a real household.
-- The module has no logging, no printed errors, no storage, and no output to another place.
+- Not applicable. The change touches no personal data. It adds a hot-water tank model: energy in kWh, a fixed draw profile, a season factor, and a random factor from a seed and a day number. No input names or identifies a person. The code does not log, print, store, or send any data.
+- Earlier problems: none. There was nothing to check again.
+- The diff since the earlier review moves the test "was the tank full earlier today" into a new private helper, `fullEarlierToday`. It adds no data, no output, and no new place that data goes to. It raises no privacy problem.
