@@ -1,12 +1,10 @@
-# Handoff · CH-0007 · build → verify
+# Handoff · CH-0007 · verify → build
 
-Time: 2026-11-16T04:59:54+00:00
+Time: 2026-11-16T05:02:15+00:00
 
 ### Done
 
-- `StoragePolicySim/HotWater.lean` has the tank, its state, the hour step with the thermostat and the daily full heating, the draw profile, and the daily draw factor.
-- All 73 checks of `tests/CAP-hotwater.lean` pass. The older component checks and the acceptance file of IN-0002 pass. Three checks of IN-0001 (the usage line) fail until CH-0011 builds the new usage.
-- The builder agent stopped on a usage limit after it wrote the file. The skill ran the checks itself, and no check changed.
+- Round 1 passed in the specification, security and privacy remits, and the compliance remit does not apply. The quality remit failed with one problem.
 
 ### Decided on defaults
 
@@ -14,17 +12,16 @@ Time: 2026-11-16T04:59:54+00:00
 
 ### Open
 
-- none
+- `StoragePolicySim/HotWater.lean:82` and `:107`: the rule that the tank counts as full before the hour only when `hour != 0 && state.fullToday` is written twice (in `thermostatOn` and in `tankStep`). Make one private helper that both places call. This is a remit rule (no unnecessary repetition), so no check changes.
 
 ### Look here
 
-- `StoragePolicySim/HotWater.lean`
-- `tests/CAP-hotwater.lean`
+- `pdlc/changes/CH-0007-hotwater/review/quality/result.md`
 
 ### Don't redo
 
-- The checks and their lock.
+- The checks, the spec and the other remits.
 
 ### Next: do this first
 
-Verify CH-0007. Check the order of the hour (loss, draw, heating, thermostat) and the use of the guard hour.
+Fix the one problem in `StoragePolicySim/HotWater.lean`, run the checks of CH-0007, and run `verify` again.
