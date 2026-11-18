@@ -1,0 +1,13 @@
+{
+  "extraKnownMarketplaces": {
+    "pskills": {
+      "source": {
+        "source": "github",
+        "repo": "ptetau/pskills"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "slice@pskills": true
+  }
+}
