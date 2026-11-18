@@ -1,6 +1,6 @@
 # IN-0008 · Hot-water policy simulation
 
-Status: building · Ticket: none · Branch: pdlc/IN-0008-hot-water-policies · Added: 2026-11-15
+Status: paused · Ticket: none · Branch: pdlc/IN-0008-hot-water-policies · Added: 2026-11-15
 
 The pdlc scripts read each header field. Thus, a header field holds only its bare value.
 Do not add a name in brackets, and do not add backticks. For example, write
@@ -50,7 +50,7 @@ Do not add a name in brackets, and do not add backticks. For example, write
 
 ## Acceptance checks
 
-Acceptance-File: tests/acceptance/IN-0008.acceptance.lean
+Acceptance-File: pdlc/archive/checks/IN-0008.acceptance.lean
 Acceptance-Locked: d27aea8
 Acceptance-Passed: none
 
@@ -84,6 +84,8 @@ Acceptance-Passed: none
 - JOB-simulate.R10: What is the default of --seeds for the tuner? → 5 seeds (assumed)
 - JOB-simulate.R11: What are the ranges of the policy options? → the table of the requirement (assumed)
 - IN-0008 (hot-water policy simulation): What did the research of 2026-11-15 change? → a thermostat with a cut-in level in place of a floor, a daily full heating against legionella, a loss that matches the average New Zealand tank, a random draw for each day, a shared error for each day of the forecast, and a perfect-forecast row in the comparison (JOB-simulate.R8 to R10).
+
+- IN-0008 (hot-water policy simulation): Why is the intent paused? → the user moved the project to the slice harness on 2026-11-18. The rest of the work runs as `slice/001-hot-water-policies`. `pdlc/archive/README.md` says where pdlc stopped.
 
 ## Handoff
 
