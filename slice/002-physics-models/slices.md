@@ -72,6 +72,6 @@
   - Given `--model physics --days 30 --seeds 2`, when the person runs `sim policy compare`, `robust`, `tune` and `plan`, then each exits with 0 and prints its table of spec 001. `sim policy plan` prints 24 rows, one for each hour. (R12)
   - Given `--model magic`, when the person runs `sim policy run`, then stderr is `error: UNKNOWN_MODEL: magic (simple, physics)`, stdout is empty and the exit code is 2. (R12)
 - Layers: command, physics run, policy
-- Status: review
+- Status: done
 - Test rounds: 2
-- Review rounds: 1
+- Review rounds: 2
