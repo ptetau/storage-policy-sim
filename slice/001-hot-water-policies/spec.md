@@ -1,6 +1,6 @@
 # Spec: hot-water policies
 
-Status: draft
+Status: ratified
 
 ## Purpose
 
