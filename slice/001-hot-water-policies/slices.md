@@ -152,9 +152,9 @@
   - Given each home of D20, each default policy and the seeds 1 to 3, when each day of a 365-day run is read, then each tank has at most 2 policy starts and the battery gate changes at most 2 times. (R25)
   - Given the home `generic`, when the person runs `sim policy run`, then the `starts-per-day` value equals the policy starts of the tanks of `runHome` divided by the days, with one decimal. (R25)
 - Layers: command, home simulation, policy
-- Status: review
+- Status: done
 - Test rounds: 1
-- Review rounds: 1
+- Review rounds: 2
 
 ## S9: Print the plan of a day
 

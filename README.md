@@ -94,8 +94,12 @@ The three policies are built. The policy `static` repeats one heating window eac
 policy `precomputed` plans each day at hour 0 from the forecast: it heats in the sunniest hours
 with at least `--min-solar` kWh of forecast, until the tank reaches `--target`. The policy
 `dynamic` decides each hour: it heats with the solar surplus up to `--target`, and heats below
-`--low` when the forecast for the rest of the day is too small. Each policy runs the flexible
-load in 3 parts from 18:00.
+`--low` when the forecast for the rest of the day is too small. The flexible load runs inside its
+day: the static policy runs it in 3 parts from `--flex-start`, the precomputed policy in the 3
+sunniest hours that the tanks leave, and the dynamic policy in the hours with a solar surplus and
+from 20:00 at the latest. A policy starts the element of a tank at most 2 times in a day: the
+precomputed policy plans at most 2 runs of hours, and the dynamic policy keeps heating a tank that
+it started 2 times, from the grid too, rather than start a third time.
 
 Each option takes one value, and the last value counts. The options `--days`, `--seed`,
 `--lat`, `--pv`, `--battery`, `--power`, `--load` and `--flex` are the same as in the table
@@ -115,7 +119,7 @@ above. The other options are these:
 | `--heat-start` | The hour that the heating starts, a whole number | 10 | 0 to 23 |
 | `--heat-hours` | The hours of heating, a whole number | 4 | 0 to 24 |
 | `--discharge-from` | The hour from which the battery may discharge, a whole number | 17 | 0 to 24 |
-| `--flex-start` | The hour that the flexible load starts, a whole number | 18 | 0 to 23 |
+| `--flex-start` | The hour that the static policy starts the flexible load, a whole number | 18 | 0 to 23 |
 | `--target` | The kWh that a policy heats the tank to | 10.5 | 0 to 50 |
 | `--min-solar` | The kWh of forecast that an hour needs to heat | 0.5 | 0 to 10 |
 | `--low` | The kWh below which a dynamic policy heats | 5.25 | 0 to 50 |

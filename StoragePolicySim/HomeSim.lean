@@ -164,14 +164,14 @@ private def sumTankHours (hours : Array HomeHour) (value : TankHour → Float) :
 hour, the policy gives its action, each tank runs its hour, the heating and the backstop heating
 join the house load, and the battery runs its hour. A precomputed policy plans at hour 0 of each
 day, from the forecast of the fetch at hour 0. A dynamic policy reads the latest fetch. The
-flexible load of each policy runs as the static default does. -/
+flexible load runs as each policy places it (D25). The run counts the starts of each tank, and a
+dynamic policy sees the starts of the day and the last request of each tank (D26). -/
 private def runHomeOn (home : Home) (policy : Policy) (seed days : Nat)
     (scenarioHours : Array Hour) : HomeResult := Id.run do
   -- A static policy gives the same actions each day: build them once.
   let staticPlan : Array Action := match policy with
     | .static params => staticProfile home.tanks params home.site.flexKwh
     | _ => #[]
-  let flexHours := flexProfile home.site.flexKwh defaultStatic.flexStart
   let mut states := home.tanks.map startState
   let mut minTankKwh := home.tanks.map (·.capacityKwh)
   let mut asked := Array.replicate home.tanks.size false
@@ -211,14 +211,13 @@ private def runHomeOn (home : Home) (policy : Policy) (seed days : Nat)
         let mut forecastRestKwh := 0.0
         for k in [hourOfRun + 1 - fetch : hoursInDay * (day + 1) - fetch] do
           forecastRestKwh := forecastRestKwh + fetchedKwh[k]?.getD 0.0
-        let flexKwh := flexHours[scenarioHour.hour]!
         let observation : Observation :=
           { hour := scenarioHour.hour, tankKwh := states.map (·.energyKwh),
             socKwh := socKwh,
-            surplusKwh := max 0.0 (pvKwh - (scenarioHour.baseLoadKwh + flexKwh)),
+            surplusKwh := max 0.0 (pvKwh - scenarioHour.baseLoadKwh),
             forecastRestKwh, flexLeftKwh := home.site.flexKwh - flexToday, startsToday,
             askedLastHour := asked }
-        action := { dynamicAction home.tanks params observation with flexKwh }
+        action := dynamicAction home.tanks params observation
       let mut tankHours : Array TankHour := Array.mkEmpty home.tanks.size
       let mut tankLoadKwh := 0.0
       for i in [0:home.tanks.size] do
