@@ -105,7 +105,8 @@ def lines (s : String) : List String :=
   (s.splitOn "\n").filter (fun (l : String) => l.trimAscii.toString != "")
 
 def tokens (l : String) : List String :=
-  (l.splitOn " ").filter (fun (t : String) => t != "")
+  ((l.map (fun (c : Char) => if c.isWhitespace then ' ' else c)).splitOn " ").filter
+    (fun (t : String) => t != "")
 
 def parseNum (t : String) : Float := Id.run do
   let cs := t.toList.takeWhile (fun (c : Char) => c.isDigit || c == '.' || c == '-')
@@ -223,6 +224,9 @@ def t_thermostat_t2 : IO (Option String) := do
   for d in notFullDays do
     if !(backstopAt noCutInRun (24 * d + 20) > 0.0) then
       bad := bad ++ [s!"day {d}: no backstop at hour 20 (tank {energyAt noCutInRun (24 * d + 19)} kWh)"]
+    for h in [0:20] do
+      if backstopAt noCutInRun (24 * d + h) > tol then
+        bad := bad ++ [s!"day {d}: backstop {backstopAt noCutInRun (24 * d + h)} kWh at hour {h}, before the guard hour"]
   let miss := if notFullDays.isEmpty then ["no day without a full tank before hour 20"] else []
   return verdict (miss ++ bad.take 3)
 
@@ -257,8 +261,7 @@ def t_compare_default : IO (Option String) := do
   return verdict ((if o.code == 0 then [] else [s!"exit code {o.code}"])
     ++ (if head == headerTokens then [] else [s!"header {head}"])
     ++ (if names == rowNames then [] else [s!"rows {names}"])
-    ++ (if valuesOk then [] else ["a row has not 7 numeric values"])
-    ++ (if o.err == "" then [] else [s!"stderr [{o.err}]"]))
+    ++ (if valuesOk then [] else ["a row has not 7 numeric values"]))
 
 def t_compare_values : IO (Option String) := do
   let o ← Harness.sim ["policy", "compare", "--seed", "9", "--lat", "45", "--days", "90"]

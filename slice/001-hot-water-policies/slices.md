@@ -68,7 +68,7 @@
 - Layers: command, home simulation
 - Status: review
 - Test rounds: 1
-- Review rounds: 0
+- Review rounds: 1
 
 ## S4: Test a policy over many years and tune the static profile
 
