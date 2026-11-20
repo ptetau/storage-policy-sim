@@ -1,5 +1,6 @@
 import tests.slice.Harness
 import StoragePolicySim.Scenario
+import StoragePolicySim.Forecast
 import StoragePolicySim.Simulation
 import StoragePolicySim.HotWater
 import StoragePolicySim.Policy
@@ -32,11 +33,14 @@ def parseF (s0 : String) : Option Float :=
     else none
   | _ => none
 
-def cleanToken (t : String) : String :=
-  if t.endsWith "kWh" then (t.take (t.length - 3)).toString else t
-
 def tokens (line : String) : List String :=
-  ((line.splitOn " ").map cleanToken).filter (fun (t : String) => t != "")
+  (line.splitOn " ").filter (fun (t : String) => t != "")
+
+/-- D27: a number has exactly one digit after the point, and no unit. -/
+def oneDecimal (s : String) : Bool :=
+  match s.splitOn "." with
+  | [_, b] => b.length == 1
+  | _ => false
 
 def nonEmptyLines (s : String) : List String :=
   (s.splitOn "\n").filter (fun (l : String) => l.trimAscii.toString != "")
@@ -49,9 +53,12 @@ def parseRow (line : String) : Except String Row :=
     let hourTok := ((ts[0]!).splitOn ":").head!
     if !isDigits hourTok then .error s!"hour column is not a number in line: {line}"
     else
-      let mids := (ts.extract 1 (ts.size - 1)).map parseF
+      let midToks := ts.extract 1 (ts.size - 1)
+      let mids := midToks.map parseF
       if mids.any (fun (o : Option Float) => o.isNone) then
-        .error s!"a number column does not parse in line: {line}"
+        .error s!"a number column does not parse (a unit or a bad number) in line: {line}"
+      else if midToks.any (fun (t : String) => !oneDecimal t) then
+        .error s!"a number needs exactly one decimal in line: {line}"
       else
         .ok { hour := hourTok.toNat!, nums := mids.map (fun (o : Option Float) => o.getD 0.0),
               gate := ts[ts.size - 1]! }
@@ -124,9 +131,11 @@ def tests : List Harness.Test := [
       let r ← Harness.sim (planArgs ["--home", "mine", "--day", "10"])
       if r.code != 0 then return some s!"exit code {r.code}, stderr: {r.err}"
       let ls := nonEmptyLines r.out
-      let firstIsHeader := match ls.head? with
-        | some l => (parseRow l).toOption.isNone
-        | none => false
+      let hw : Array String := match ls.head? with
+        | some l => (tokens l).toArray
+        | none => #[]
+      let firstIsHeader := hw.size == 5 && hw[0]! == "hour" && hw[1]! == "forecast-kWh"
+        && hw[4]! == "discharge"
       match parsePlan r.out with
       | .error e => return some (e ++ s!" (stderr: {r.err})")
       | .ok rows =>
@@ -135,7 +144,7 @@ def tests : List Harness.Test := [
         let colsOk := rows.all (fun (x : Row) => x.nums.size == 3)
         return Harness.firstFail [
           (r.err == "", s!"stderr is not empty: {r.err}"),
-          (firstIsHeader, s!"the first line is not a header: {ls.head?}"),
+          (firstIsHeader, s!"the header must be 5 words: hour forecast-kWh tankA-kWh tankB-kWh discharge, got {hw}"),
           (hoursOk, s!"the hours are not 0 to 23 in order: {rows.map (fun (x : Row) => x.hour)}"),
           (colsOk, "each row needs the forecast and the heating of 2 tanks (3 numbers)"),
           (gatesOk, s!"the last word of each row must be yes or no: {rows.map (fun (x : Row) => x.gate)}")] },
@@ -153,6 +162,41 @@ def tests : List Harness.Test := [
           (fc[0]! < 0.05, s!"the forecast at hour 0 is {fc[0]!}, expected 0.0 (night)"),
           (total > 1.0, s!"the forecast of the day adds up to {total}, expected sun on a summer day"),
           (fc[12]! > fc[0]!, s!"the forecast at noon {fc[12]!} is not above midnight {fc[0]!}")] },
+
+  { name := "test_001_S9_R23_forecast_column_equals_forecast_of_fetch_hour_day_5_seed_9"
+    run := do
+      match ← getPlan ["--day", "5", "--seed", "9", "--days", "30"] with
+      | .error e => return some e
+      | .ok rows =>
+        let home := defaultHome
+        let hours := scenario home.site 9 30
+        let vals := hourlyEnergy (forecastOf hours home.site 9 home.errorScale (24 * 5)) (24 * 5)
+        let mut total := 0.0
+        for h in [0:24] do
+          total := total + vals[h]!
+        if total <= 0.0 then return some s!"the expected forecast of day 5 is empty ({total}), the test is empty"
+        for r in rows do
+          let shown := r.nums[0]!
+          let want := vals[r.hour]!
+          if !Harness.near shown want 0.0501 then
+            return some s!"hour {r.hour}: plan forecast {shown}, expected {want}"
+        return none },
+
+  { name := "test_001_S9_R23_numbers_have_one_decimal_and_no_unit_day_10"
+    run := do
+      let r ← Harness.sim (planArgs ["--home", "mine", "--day", "10"])
+      if r.code != 0 then return some s!"exit code {r.code}, stderr: {r.err}"
+      let ls := (nonEmptyLines r.out).drop 1
+      for l in ls do
+        let ts := (tokens l).toArray
+        if ts.size != 5 then return some s!"expected 5 words in line: {l}"
+        for t in ts.extract 1 4 do
+          if !(oneDecimal t && (parseF t).isSome) then
+            return some s!"'{t}' is not a plain number with one decimal in line: {l}"
+      let res := precomputedRun mineHome 1 365
+      if askedInDay res 10 <= 0.0 then return some "day 10 has no heating, the test is empty"
+      return Harness.firstFail [
+        (ls.length == 24, s!"expected 24 data lines, got {ls.length}")] },
 
   { name := "test_001_S9_R23_heating_of_each_tank_equals_runHome_precomputed_day_10"
     run := do
