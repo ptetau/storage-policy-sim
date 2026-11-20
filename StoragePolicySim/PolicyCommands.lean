@@ -1,7 +1,7 @@
 /-
 The `sim forecast` and `sim policy` commands. Built: `sim forecast`, `sim policy run`,
-`sim policy compare`, `sim policy robust` and `sim policy tune`. The policy command `plan` is not
-built yet.
+`sim policy compare`, `sim policy robust` and `sim policy tune`, with `--home` and `--tank2`. The
+policy command `plan` is not built yet.
 -/
 import StoragePolicySim.Cli
 import StoragePolicySim.HomeSim
@@ -109,6 +109,27 @@ private structure PolicyLine where
   numbers : List (String × TypedNumber) := []
   /-- The panel arrays of `--array`, in the order typed. None replaces the arrays of the home. -/
   arrays : Array PanelArray := #[]
+  /-- The home of `--home`, as typed. It is a name of `homeNames`. -/
+  homeName : String := "generic"
+  /-- The second tank of `--tank2`: its capacity, its element power and its draw share. -/
+  tank2 : Option (Float × Float × Float) := none
+
+/-- The flag that picks the home. -/
+private def homeFlag : String := "--home"
+
+/-- The flag of the second tank: `--tank2 KWH:ELEMENT:SHARE`. -/
+private def tank2Flag : String := "--tank2"
+
+/-- The second tank of a value `KWH:ELEMENT:SHARE`. A value with other than three numbers is a bad
+number, and a number outside its range (kWh 0 to 50, kW 0 to 20, share 0 to 1) is out of range. -/
+private def readTank2 (text : String) : Except Problem (Float × Float × Float) :=
+  match (text.splitOn ":").mapM (readNumber false) with
+  | some [kwh, element, share] =>
+    if kwh < 0 || kwh > 50 then .error (.outOfRange tank2Flag text "0" "50")
+    else if element < 0 || element > 20 then .error (.outOfRange tank2Flag text "0" "20")
+    else if share < 0 || share > 1 then .error (.outOfRange tank2Flag text "0" "1")
+    else .ok (kwh, element, share)
+  | _ => .error (.badNumber tank2Flag text)
 
 /-- The `--flex` option as the reading step sees it. Its range depends on `--load`, and
 `rangeProblemIn` checks it. -/
@@ -135,6 +156,20 @@ private def readPolicyOptions (allowPolicy allowGoal : Bool) (options : List Num
         if policyNames.contains name then
           readPolicyOptions allowPolicy allowGoal options { line with policy := name } afterName
         else .error (.unknownPolicy name)
+    else if flag == homeFlag then
+      match rest with
+      | [] => .error (.missingValue flag)
+      | name :: afterName =>
+        if homeNames.contains name then
+          readPolicyOptions allowPolicy allowGoal options { line with homeName := name } afterName
+        else .error (.unknownHome name (", ".intercalate homeNames))
+    else if flag == tank2Flag then
+      match rest with
+      | [] => .error (.missingValue flag)
+      | value :: afterValue => do
+        let tank2 ← readTank2 value
+        readPolicyOptions allowPolicy allowGoal options { line with tank2 := some tank2 }
+          afterValue
     else if flag == arrayFlag then
       match rest with
       | [] => .error (.missingValue flag)
@@ -152,33 +187,70 @@ private def readPolicyOptions (allowPolicy allowGoal : Bool) (options : List Num
 
 /-! ## The home and the policy of the options -/
 
-/-- The home of the options: the home `generic` with the values that the person typed. -/
+/-- The home that `--home` names, or `generic` with no `--home`. The reading step makes sure that
+the name is one of `homeNames`. -/
+private def PolicyLine.baseHome (line : PolicyLine) : Home :=
+  (homeNamed line.homeName).getD defaultHome
+
+/-- The value of a number option when typed, or the value of the home. -/
+private def PolicyLine.valueOr (line : PolicyLine) (flag : String) (fromHome : Float) : Float :=
+  ((typedIn line.numbers flag).map (·.value)).getD fromHome
+
+/-- The home of the options: the home of `--home` (`generic` with none) with the values that the
+person typed, whatever the order of the options. `--pv` and `--array` replace the arrays, and the
+site holds the sum of the array powers. `--tank`, `--element`, `--cut-in` and `--floor` change the
+first tank, and `--tank2` sets the second tank, which takes its draw share from the first. -/
 private def PolicyLine.home (line : PolicyLine) : Home :=
-  let loadKwh := numberIn line.numbers loadOption
-  let flexKwh := ((typedIn line.numbers flexFlag).map (·.value)).getD (min defaultFlexKwh loadKwh)
-  -- `--array` replaces the flat array of `--pv`. The site holds the sum of the array powers.
+  let base := line.baseHome
+  let loadKwh := line.valueOr loadOption.flag base.site.dailyLoadKwh
+  let flexKwh := line.valueOr flexFlag
+    (if (typedIn line.numbers loadOption.flag).isSome then min base.site.flexKwh loadKwh
+     else base.site.flexKwh)
   let arrays : Array PanelArray :=
-    if line.arrays.isEmpty then
-      #[{ kw := numberIn line.numbers pvOption, direction := 0.0, tilt := 0.0 }]
-    else line.arrays
+    if !line.arrays.isEmpty then line.arrays
+    else match typedIn line.numbers pvOption.flag with
+      | some typed => #[{ kw := typed.value, direction := 0.0, tilt := 0.0 }]
+      | none => base.arrays
   let pvKw := arrays.foldl (fun sum array => sum + array.kw) 0.0
-  { defaultHome with
-    site := { latitude := numberIn line.numbers latitudeOption, pvKw,
+  let tank0 := base.tanks[0]?.getD defaultTank
+  let firstTank : TankConfig :=
+    { tank0 with
+      capacityKwh := line.valueOr tankOptions[0]!.flag tank0.capacityKwh,
+      elementKw := line.valueOr tankOptions[1]!.flag tank0.elementKw,
+      cutInKwh := line.valueOr tankOptions[2]!.flag tank0.cutInKwh,
+      floorKwh := line.valueOr tankOptions[3]!.flag tank0.floorKwh }
+  let (tanks, drawShares) : Array TankConfig × Array Float :=
+    match line.tank2 with
+    | some (kwh, element, share) =>
+      (#[firstTank, tankOf kwh element], #[1.0 - share, share])
+    | none => (#[firstTank] ++ base.tanks.extract 1 base.tanks.size, base.drawShares)
+  { base with
+    site := { latitude := line.valueOr latitudeOption.flag base.site.latitude, pvKw,
               dailyLoadKwh := loadKwh, flexKwh },
     arrays,
-    limits := { inverterKw := numberIn line.numbers limitOptions[0]!,
-                exportKw := numberIn line.numbers limitOptions[1]! },
-    battery := { capacityKwh := numberIn line.numbers batteryOption,
-                 powerKw := numberIn line.numbers powerOption },
-    tanks := #[{ defaultTank with
-      capacityKwh := numberIn line.numbers tankOptions[0]!,
-      elementKw := numberIn line.numbers tankOptions[1]!,
-      cutInKwh := numberIn line.numbers tankOptions[2]!,
-      floorKwh := numberIn line.numbers tankOptions[3]! }],
-    drawKwhPerDay := numberIn line.numbers drawOptions[0]!,
-    drawCv := numberIn line.numbers drawOptions[1]!,
-    fetchesPerDay := wholeIn line.numbers drawOptions[2]!,
-    errorScale := numberIn line.numbers drawOptions[3]! }
+    limits := { inverterKw := line.valueOr limitOptions[0]!.flag base.limits.inverterKw,
+                exportKw := line.valueOr limitOptions[1]!.flag base.limits.exportKw },
+    battery := { capacityKwh := line.valueOr batteryOption.flag base.battery.capacityKwh,
+                 powerKw := line.valueOr powerOption.flag base.battery.powerKw },
+    tanks, drawShares,
+    drawKwhPerDay := line.valueOr drawOptions[0]!.flag base.drawKwhPerDay,
+    drawCv := line.valueOr drawOptions[1]!.flag base.drawCv,
+    fetchesPerDay := (line.valueOr drawOptions[2]!.flag base.fetchesPerDay.toFloat).toUInt64.toNat,
+    errorScale := line.valueOr drawOptions[3]!.flag base.errorScale }
+
+/-- The first problem of the number options: a value outside its range, or a `--flex` value above
+the daily load of the home. -/
+private def PolicyLine.rangeProblem (line : PolicyLine) (options : List NumberOption) :
+    Option Problem :=
+  -- `rangeProblemIn` checks `--flex` against the load of `generic`: the home sets the limit here.
+  match rangeProblemIn options (line.numbers.filter (·.1 != flexFlag)) with
+  | some problem => some problem
+  | none =>
+    let loadKwh := line.valueOr loadOption.flag line.baseHome.site.dailyLoadKwh
+    (typedIn line.numbers flexFlag).bind fun typed =>
+      if typed.value < 0 || typed.value > loadKwh then
+        some (.outOfRange flexFlag typed.text "0" (boundText loadKwh))
+      else none
 
 /-- The policy of the options. -/
 private def PolicyLine.policyOf (line : PolicyLine) : Policy :=
@@ -229,7 +301,7 @@ private def policyRunLines (line : PolicyLine) (policy : Policy) (totals : HomeT
 /-- The lines of `sim policy run`, or the first problem of its options. -/
 private def policyRun (words : List String) : Except Problem (List String) := do
   let line ← readPolicyOptions true false runOptions {} words
-  match rangeProblemIn runOptions line.numbers with
+  match line.rangeProblem runOptions with
   | some problem => .error problem
   | none =>
     let policy := line.policyOf
@@ -289,7 +361,7 @@ private def paddedHeader (header : List String) : List String :=
 /-- The lines of `sim policy compare`, or the first problem of its options. The rows follow D11. -/
 private def policyCompare (words : List String) : Except Problem (List String) := do
   let line ← readPolicyOptions false false runOptions {} words
-  match rangeProblemIn runOptions line.numbers with
+  match line.rangeProblem runOptions with
   | some problem => .error problem
   | none =>
     let seed := wholeIn line.numbers seedOption
@@ -326,7 +398,7 @@ private def robustTable (line : PolicyLine) (seeds : Nat) (staticPolicy : Option
 private def policyRobust (words : List String) : Except Problem (List String) := do
   let options := runOptions ++ [seedsOption 10]
   let line ← readPolicyOptions false false options {} words
-  match rangeProblemIn options line.numbers with
+  match line.rangeProblem options with
   | some problem => .error problem
   | none => .ok (robustTable line (wholeIn line.numbers (seedsOption 10)))
 
@@ -341,19 +413,21 @@ private def policyTune (words : List String) : Except Problem (List String) := d
   let options := (runOptions.filter fun option => !tunedFlags.contains option.flag) ++
     [seedsOption 5]
   let line ← readPolicyOptions false true options {} words
-  match rangeProblemIn options line.numbers with
+  match line.rangeProblem options with
   | some problem => .error problem
   | none =>
     let goal := if line.goal == "import" then Goal.gridImport else Goal.selfConsumption
     let seeds := wholeIn line.numbers (seedsOption 5)
     let tuned := tuneStatic line.home goal (wholeIn line.numbers seedOption) seeds
       (wholeIn line.numbers daysOption)
-    let window := tuned.best.windows[0]?.getD default
+    -- The first tank has `heat-start` and `heat-hours`, the second `heat-start-2`, and so on.
+    let windowLines := (tuned.best.windows.toList.zipIdx).flatMap fun (window, i) =>
+      let suffix := if i == 0 then "" else s!"-{i + 1}"
+      [labelledLine s!"heat-start{suffix}" (toString window.heatStart),
+       labelledLine s!"heat-hours{suffix}" (toString window.heatHours)]
     .ok ([labelledLine "goal" line.goal, labelledLine "candidates" (toString tuned.candidates),
-          labelledLine "safe" (toString tuned.safe),
-          labelledLine "heat-start" (toString window.heatStart),
-          labelledLine "heat-hours" (toString window.heatHours),
-          labelledLine "discharge-from" (toString tuned.best.dischargeFrom), ""] ++
+          labelledLine "safe" (toString tuned.safe)] ++ windowLines ++
+         [labelledLine "discharge-from" (toString tuned.best.dischargeFrom), ""] ++
       robustTable line seeds (some (.static tuned.best)))
 
 /-- The usage of `sim policy`. -/

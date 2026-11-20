@@ -91,6 +91,7 @@ inductive Problem
   | unknownStrategy (name : String)
   | unknownPolicy (name : String)
   | unknownGoal (name : String)
+  | unknownHome (name names : String)
 
 /-- The strategy names, as the usage and the errors list them. -/
 def strategyNames : String := ", ".intercalate (Strategy.all.map (·.name))
@@ -111,6 +112,7 @@ def Problem.line : Problem → String
   | .unknownPolicy name =>
     s!"error: UNKNOWN_POLICY: {name} ({", ".intercalate policyNames})"
   | .unknownGoal name => s!"error: UNKNOWN_GOAL: {name} (self-consumption, import)"
+  | .unknownHome name names => s!"error: UNKNOWN_HOME: {name} ({names})"
 
 /-! ## Numbers -/
 

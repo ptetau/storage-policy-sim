@@ -1,8 +1,8 @@
 /-
 The simulation of a home with a policy, the evaluation over seeds, and the tuner. Built: the
 structures, `defaultHome`, `runHome` for the three policies with any panel arrays and the limits of
-the inverter and the export, `evaluate` and `tuneStatic` (with one tank). Not built yet:
-`homeNames` (a placeholder), `homeNamed` (a stub), and the search over more tanks.
+the inverter and the export (with any number of tanks), `evaluate`, `tuneStatic` (the search over
+more tanks too), and the five homes of D20 and D21 (`homeNames`, `homeNamed`).
 -/
 import StoragePolicySim.Policy
 import StoragePolicySim.Simulation
@@ -24,13 +24,6 @@ structure Home where
   errorScale : Float
   deriving Repr, Inhabited
 
-/-- A placeholder. Not built yet. -/
-def homeNames : List String := []
-
-/-- The home of a name. Not built yet. -/
-def homeNamed (name : String) : Option Home :=
-  todo "homeNamed" name.length
-
 /-- The home `generic`: latitude -41.3, one flat array of 5 kW, 20 kWh of load a day with 3 kWh
 flexible, a battery of 10 kWh with 5 kW, no limits, the default tank, 6.0 kWh of hot water a day
 with a spread of 0.25, 10 forecast fetches a day, and a forecast error scale of 1.0. -/
@@ -45,6 +38,52 @@ def defaultHome : Home where
   drawCv := 0.25
   fetchesPerDay := 10
   errorScale := 1.0
+
+/-- The names of the homes of D20, in the order that an error lists them. -/
+def homeNames : List String := ["generic", "small", "family", "no-battery", "mine"]
+
+/-- A tank of a capacity and an element power, with the cut-in at half of its capacity, the floor
+at 20% of it, and the loss and the guard hour of the default tank (D20). -/
+def tankOf (capacityKwh elementKw : Float) : TankConfig :=
+  { defaultTank with capacityKwh, elementKw, cutInKwh := capacityKwh / 2,
+                     floorKwh := capacityKwh * 0.2 }
+
+/-- A home with one north array, one tank, and the values of `generic` for the rest (D20). -/
+private def northHome (pvKw batteryKwh powerKw : Float) (tank : TankConfig)
+    (loadKwh drawKwh : Float) : Home :=
+  { defaultHome with
+    site := { defaultHome.site with pvKw, dailyLoadKwh := loadKwh, flexKwh := min 3.0 loadKwh },
+    arrays := #[{ kw := pvKw, direction := 0.0, tilt := 30.0 }],
+    battery := { capacityKwh := batteryKwh, powerKw },
+    tanks := #[tank], drawKwhPerDay := drawKwh }
+
+/-- The home `mine` of D21: five arrays, a battery of 13.5 kWh with an inverter and an export
+limit, and two tanks that share the draw by their capacity. -/
+private def mineHome : Home :=
+  let arrays : Array PanelArray :=
+    #[{ kw := 4.32, direction := 0.0, tilt := 15.0 },
+      { kw := 2.88, direction := 270.0, tilt := 30.0 },
+      { kw := 2.88, direction := 90.0, tilt := 30.0 },
+      { kw := 2.40, direction := 0.0, tilt := 30.0 },
+      { kw := 2.40, direction := 180.0, tilt := 30.0 }]
+  { defaultHome with
+    site := { defaultHome.site with pvKw := arrays.foldl (fun sum array => sum + array.kw) 0.0 },
+    arrays,
+    battery := { capacityKwh := 13.5, powerKw := 11.0 },
+    limits := { inverterKw := 11.0, exportKw := 10.0 },
+    tanks := #[tankOf 13.1 3.3, tankOf 9.4 2.5], drawShares := #[0.58, 0.42],
+    drawKwhPerDay := 11.0 }
+
+/-- The home of a name (D20, D21), or `none` for another name. -/
+def homeNamed (name : String) : Option Home :=
+  match name with
+  | "generic" => some defaultHome
+  | "small" => some (northHome 3.0 5.0 3.0 (tankOf 7.1 2.0) 12.0 4.0)
+  | "family" => some (northHome 8.0 13.5 5.0 (tankOf 15.7 3.0) 30.0 10.0)
+  | "no-battery" =>
+    some { defaultHome with battery := { defaultHome.battery with capacityKwh := 0.0 } }
+  | "mine" => some mineHome
+  | _ => none
 
 /-- One tank in one hour of a run. -/
 structure TankHour where
@@ -302,16 +341,16 @@ structure TuneResult where
   safe : Nat
   deriving Repr, Inhabited
 
-/-- The candidates of D12, in the order of the start, the heating hours and the discharge hour.
-Each candidate keeps the flexible-load start of the default static policy. -/
-private def candidateGrid : Array StaticParams := Id.run do
+/-- The windows of D12, in the order of the start and the heating hours. -/
+private def windowGrid : Array TankWindow := Id.run do
   let mut grid := #[]
   for start in [6:17] do
     for hours in [1:9] do
-      for discharge in [15:23] do
-        grid := grid.push { windows := #[{ heatStart := start, heatHours := hours }],
-                            dischargeFrom := discharge, flexStart := defaultStatic.flexStart }
+      grid := grid.push { heatStart := start, heatHours := hours }
   return grid
+
+/-- The discharge hours of D12. -/
+private def dischargeGrid : Array Nat := (Array.range 8).map (· + 15)
 
 /-- The first measure of a goal, where higher is better: the import is negated. -/
 private def firstMeasure (goal : Goal) (e : Evaluation) : Float :=
@@ -331,27 +370,56 @@ private def secondMeasure (goal : Goal) (e : Evaluation) : Float :=
   | .selfConsumption => -e.meanImportKwh
   | .gridImport => e.meanSelfConsumption
 
-/-- The best static profile of the grid of D12 with the element of the home tank. A candidate is
-safe when no seed has an unmet draw. The best safe candidate ranks first by the goal; the
-candidates within the near tie of the first rank by the second measure, and a tie goes to the first
-candidate. With no safe candidate, the best has the lowest total unmet draw. -/
-def tuneStatic (home : Home) (goal : Goal) (seed seeds days : Nat) : TuneResult :=
-  let scenarios := scenariosOf home seed seeds days
-  let candidates := candidateGrid.map fun params =>
-    (params, evaluateOn home (.static params) seed days scenarios)
+/-- The best candidate of a list, and the count of its safe candidates. A candidate is safe when no
+seed has an unmet draw. The best safe candidate ranks first by the goal; the candidates within the
+near tie of the first rank by the second measure, and a tie goes to the first candidate. With no
+safe candidate, the best has the lowest total unmet draw. -/
+private def pickBest (goal : Goal) (candidates : Array (StaticParams × Evaluation)) :
+    (StaticParams × Evaluation) × Nat :=
   let safe := candidates.filter fun candidate => candidate.2.unmetSeeds == 0
   let empty : StaticParams × Evaluation := default
-  let best : StaticParams × Evaluation :=
-    if safe.isEmpty then
-      candidates.foldl (init := candidates[0]?.getD empty) fun best candidate =>
-        if candidate.2.totalUnmetKwh < best.2.totalUnmetKwh then candidate else best
-    else
-      let top := safe.foldl (init := (safe[0]?.getD empty).2) fun top candidate =>
-        if firstMeasure goal candidate.2 > firstMeasure goal top then candidate.2 else top
-      let floor := firstMeasure goal top - nearTie goal
-      let tied := safe.filter fun candidate => firstMeasure goal candidate.2 ≥ floor
-      tied.foldl (init := tied[0]?.getD empty) fun best candidate =>
-        if secondMeasure goal candidate.2 > secondMeasure goal best.2 then candidate else best
-  { best := best.1, evaluation := best.2, candidates := candidates.size, safe := safe.size }
+  if safe.isEmpty then
+    (candidates.foldl (init := candidates[0]?.getD empty) fun best candidate =>
+      if candidate.2.totalUnmetKwh < best.2.totalUnmetKwh then candidate else best, 0)
+  else
+    let top := safe.foldl (init := (safe[0]?.getD empty).2) fun top candidate =>
+      if firstMeasure goal candidate.2 > firstMeasure goal top then candidate.2 else top
+    let floor := firstMeasure goal top - nearTie goal
+    let tied := safe.filter fun candidate => firstMeasure goal candidate.2 ≥ floor
+    (tied.foldl (init := tied[0]?.getD empty) fun best candidate =>
+      if secondMeasure goal candidate.2 > secondMeasure goal best.2 then candidate else best,
+     safe.size)
+
+/-- The best static profile with the element of each tank of the home. With one tank, the
+candidates are the 704 of D12, in the order of the start, the heating hours and the discharge hour.
+With more tanks (D23), the search takes the window of one tank at a time, in tank order, from the
+default window of each tank and the default discharge hour, with the other tanks at their best
+window so far (88 candidates for each tank), and then the discharge hour (8 candidates). Each
+candidate keeps the flexible-load start of the default static policy. -/
+def tuneStatic (home : Home) (goal : Goal) (seed seeds days : Nat) : TuneResult :=
+  let scenarios := scenariosOf home seed seeds days
+  let evaluateParams (params : StaticParams) : StaticParams × Evaluation :=
+    (params, evaluateOn home (.static params) seed days scenarios)
+  if home.tanks.size ≤ 1 then
+    let candidates := windowGrid.flatMap fun window =>
+      dischargeGrid.map fun discharge =>
+        evaluateParams { windows := #[window], dischargeFrom := discharge,
+                         flexStart := defaultStatic.flexStart }
+    let (best, safe) := pickBest goal candidates
+    { best := best.1, evaluation := best.2, candidates := candidates.size, safe }
+  else
+    let start : StaticParams :=
+      { defaultStatic with windows := home.tanks.map fun _ => defaultStatic.windows[0]! }
+    let (params, count, safe) := (Array.range home.tanks.size).foldl
+      (init := (start, 0, 0)) fun (params, count, safe) i =>
+        let tried := windowGrid.map fun window =>
+          evaluateParams { params with windows := params.windows.set! i window }
+        let (best, safeHere) := pickBest goal tried
+        (best.1, count + tried.size, safe + safeHere)
+    let tried := dischargeGrid.map fun discharge =>
+      evaluateParams { params with dischargeFrom := discharge }
+    let (best, safeHere) := pickBest goal tried
+    { best := best.1, evaluation := best.2, candidates := count + tried.size,
+      safe := safe + safeHere }
 
 end StoragePolicySim

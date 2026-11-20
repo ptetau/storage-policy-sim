@@ -1,6 +1,7 @@
 /-
 The policies of the hot-water tanks, the battery and the flexible load. Built: the structures,
-the defaults, `Policy.name`, `staticProfile`, `planDay` and `dynamicAction`. The flexible load of
+the defaults, `Policy.name`, `staticProfile`, `planDay` and `dynamicAction`, with more tanks (the tank with the lowest share of its capacity goes
+first). The flexible load of
 each policy runs as the static default does (3 parts from 18). Shifting it, and the limit of 2
 starts in a day, are not built yet.
 -/
@@ -107,6 +108,14 @@ def staticProfile (tanks : Array TankConfig) (params : StaticParams) (flexDayKwh
     { heatKwh, allowCharge := true, allowDischarge := params.dischargeFrom ≤ hour,
       flexKwh := flex[hour]! }
 
+/-- The order in which tanks take the same energy (D22): the tank with the lowest share of its
+capacity first, and a tie goes to the first tank. -/
+def tankOrder (tanks : Array TankConfig) (energyKwh : Array Float) : Array Nat :=
+  let share (i : Nat) : Float :=
+    let capacity := tanks[i]!.capacityKwh
+    if capacity > 0.0 then energyKwh[i]?.getD 0.0 / capacity else 1.0
+  (Array.range tanks.size).qsort fun a b => share a < share b || (share a == share b && a < b)
+
 /-- The heating of one tank in each hour of a day. The tank takes the hours with a forecast of at
 least `minSolarKwh`, from the highest forecast to the lowest (a tie goes to the earlier hour),
 at its element power each, until the need is met. The last hour gets only the rest of the
@@ -132,15 +141,16 @@ policy. The flexible load runs as the static default does. -/
 def planDay (tanks : Array TankConfig) (params : PlanParams)
     (forecastKwh tankKwh expectedDrawKwh : Array Float) (flexDayKwh : Float) : Array Action :=
   let flex := flexProfile flexDayKwh defaultStatic.flexStart
-  let (heats, _) := (Array.range tanks.size).foldl
-    (init := ((#[] : Array (Array Float)), forecastKwh)) fun (heats, remaining) i =>
+  let (heats, _) := (tankOrder tanks tankKwh).foldl
+    (init := (Array.replicate tanks.size (Array.replicate hoursInDay 0.0), forecastKwh))
+    fun (heats, remaining) i =>
       let tank := tanks[i]!
       let target := params.targetKwh[i]?.getD tank.capacityKwh
       let need := max 0.0 (target - tankKwh[i]?.getD 0.0 + expectedDrawKwh[i]?.getD 0.0)
       let heat := planTank tank.elementKw params.minSolarKwh need remaining
       let left := (Array.range hoursInDay).map fun hour =>
         max 0.0 (remaining[hour]?.getD 0.0 - heat[hour]!)
-      (heats.push heat, left)
+      (heats.set! i heat, left)
   (Array.range hoursInDay).map fun hour =>
     { heatKwh := heats.map fun heat => heat[hour]!, allowCharge := true,
       allowDischarge := params.dischargeFrom ≤ hour, flexKwh := flex[hour]! }
@@ -164,18 +174,18 @@ the lack, it asks for the smaller of its element power and the lack. Otherwise i
 tank takes its share of the surplus in turn. The battery may discharge from `dischargeFrom`. The
 action holds no flexible load: the caller runs it as the static default does. -/
 def dynamicAction (tanks : Array TankConfig) (params : DynamicParams) (obs : Observation) : Action :=
-  let (asks, _) := (Array.range tanks.size).foldl
-    (init := ((#[] : Array Float), obs.surplusKwh)) fun (asks, surplus) i =>
+  let (asks, _) := (tankOrder tanks obs.tankKwh).foldl
+    (init := (Array.replicate tanks.size 0.0, obs.surplusKwh)) fun (asks, surplus) i =>
       let tank := tanks[i]!
       let energy := obs.tankKwh[i]?.getD 0.0
       let target := params.targetKwh[i]?.getD tank.capacityKwh
       let low := params.lowKwh[i]?.getD (tank.capacityKwh / 2)
       if surplus > 0 && energy < target then
         let ask := min tank.elementKw (min surplus (target - energy))
-        (asks.push ask, surplus - ask)
+        (asks.set! i ask, surplus - ask)
       else if energy < low && obs.forecastRestKwh < low - energy then
-        (asks.push (min tank.elementKw (low - energy)), surplus)
-      else (asks.push 0.0, surplus)
+        (asks.set! i (min tank.elementKw (low - energy)), surplus)
+      else (asks, surplus)
   { heatKwh := asks, allowCharge := true, allowDischarge := params.dischargeFrom ≤ obs.hour,
     flexKwh := 0.0 }
 

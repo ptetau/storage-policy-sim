@@ -137,9 +137,9 @@
   - Given the dynamic policy, a surplus of 3.0 kWh, a first tank at 50% of its capacity and a second at 30%, when the hour is decided, then the second tank gets its request first. (R22)
   - Given `--tank2 9.4:2.5:0.42`, when the person runs `sim policy run`, then the run has 2 tanks and the second draws 42% of the hot water. (R22)
 - Layers: command, home simulation, policy, tank
-- Status: review
+- Status: done
 - Test rounds: 1
-- Review rounds: 1
+- Review rounds: 2
 
 ## S8: Shift the flexible load and stop thrashing
 

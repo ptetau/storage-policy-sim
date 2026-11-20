@@ -127,6 +127,31 @@ The solar energy of the home is the sum of its arrays. The solar surplus goes to
 first, then to the grid (inside the export limit and the inverter limit), and only the rest is
 `curtailed`. A value of `--array` without three numbers gives `BAD_NUMBER` with the value as typed.
 
+### Homes and tanks
+
+`--home NAME` sets every home value at once. The names are `generic` (the default, with the
+values above), `small`, `family`, `no-battery` and `mine`. Another name gives `UNKNOWN_HOME` with
+the name as typed and the list of names. Each other option on the line changes one value of the
+home, whatever the order. `--pv` and `--array` replace the arrays of the home, and `--tank`,
+`--element`, `--cut-in` and `--floor` change its first tank.
+
+| Home | Panels | Battery | Tanks | Load, hot water each day |
+|---|---|---|---|---|
+| `generic` | one flat 5 kW array | 10 kWh, 5 kW | 10.5 kWh, 3 kW | 20 kWh, 6 kWh |
+| `small` | one north 3 kW array at 30° | 5 kWh, 3 kW | 7.1 kWh, 2 kW | 12 kWh, 4 kWh |
+| `family` | one north 8 kW array at 30° | 13.5 kWh, 5 kW | 15.7 kWh, 3 kW | 30 kWh, 10 kWh |
+| `no-battery` | as `generic` | none | as `generic` | as `generic` |
+| `mine` | five arrays of 14.88 kW; inverter limit 11 kW, export limit 10 kW | 13.5 kWh, 11 kW | 13.1 kWh, 3.3 kW and 9.4 kWh, 2.5 kW (58% and 42% of the draw) | 20 kWh, 11 kWh |
+
+A tank of `small`, `family` and `mine` cuts in at half of its capacity and is cold below 20% of it.
+`--tank2 KWH:ELEMENT:SHARE` sets a second tank, with a draw share from 0 to 1 (the first tank gets
+the rest). The tanks have their own heating and backstop, and their elements can run in the same
+hour. Where tanks compete for the same energy (the dynamic surplus, the sunny hours of the
+precomputed plan), the tank with the lowest share of its capacity goes first, and a tie goes to the
+first tank. `--heat-start` and `--heat-hours` give the window of each tank. `sim policy tune` over
+more tanks searches the window of one tank at a time, then the discharge hour, and prints
+`heat-start-2` and `heat-hours-2` for the second tank.
+
 ## The forecast command
 
 `sim forecast [options]` prints the simulated Solcast JSON of the fetch at one hour of the run,
