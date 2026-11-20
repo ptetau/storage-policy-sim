@@ -26,7 +26,7 @@
   - Given `--heat-hours 0`, when the person runs `sim policy run`, then the `heating` line is `heating           0.0 kWh` and the `backstop` value is more than 0.0 kWh. (R14)
   - Given `--policy wild`, when the person runs `sim policy run`, then stderr is `error: UNKNOWN_POLICY: wild (static, precomputed, dynamic)`, stdout is empty and the exit code is 2. (R14)
 - Layers: command, home simulation, policy, battery step
-- Status: planned
+- Status: red
 - Test rounds: 0
 - Review rounds: 0
 
@@ -49,7 +49,7 @@
   - Given no options, when the person runs `sim forecast`, then stdout starts with `{"forecasts":[{"pv_estimate":`, has 96 periods, and the first `period_end` is `2024-12-31T13:00:00.0000000Z`. (R13)
   - Given `--hour 8760`, when the person runs `sim forecast`, then stderr is `error: OUT_OF_RANGE: --hour 8760 (0 to 8759)` and the exit code is 2. `--battery 5` gives `error: UNKNOWN_OPTION: --battery`. (R13)
 - Layers: command, home simulation, policy, forecast
-- Status: planned
+- Status: red
 - Test rounds: 0
 - Review rounds: 0
 
@@ -66,7 +66,7 @@
   - Given `--seed 9 --lat 45 --days 90`, when the person runs `sim policy compare`, then each row shows the values of `runHome` for its policy, and the `perfect-forecast` row those of the precomputed policy with an error scale of 0. (R15)
   - Given `--heat-hours 0`, when the person runs `sim policy compare`, then the `static` row equals the `thermostat` row. `--policy static` gives `error: UNKNOWN_OPTION: --policy`. (R15)
 - Layers: command, home simulation
-- Status: planned
+- Status: red
 - Test rounds: 0
 - Review rounds: 0
 
@@ -85,7 +85,7 @@
   - Given `--seeds 2 --days 30`, when the person runs `sim policy tune`, then the first lines are `goal              self-consumption`, `candidates        704` and `safe              704`, and the `static` row equals the row of `sim policy robust` with the tuned profile as options. (R17)
   - Given `--goal cheap`, when the person runs `sim policy tune`, then stderr is `error: UNKNOWN_GOAL: cheap (self-consumption, import)` and the exit code is 2. `--heat-start 10` gives `error: UNKNOWN_OPTION: --heat-start`. (R17)
 - Layers: command, home simulation
-- Status: planned
+- Status: red
 - Test rounds: 0
 - Review rounds: 0
 
@@ -100,7 +100,7 @@
   - Given `--tank` with no value, when the person runs `sim policy run`, then stderr is `error: MISSING_VALUE: --tank`. `--seeds 3` gives `error: UNKNOWN_OPTION: --seeds`. (R18)
   - Given `--tank 5 --tank 12`, when the person runs `sim policy run`, then the result equals the result of `--tank 12`. Given each error, stdout is empty. (R18)
 - Layers: command
-- Status: planned
+- Status: red
 - Test rounds: 0
 - Review rounds: 0
 
@@ -118,7 +118,7 @@
   - Given limits of 0, when any hour runs, then the flows equal `stepHourGated` and 0 kWh is curtailed. (R20)
   - Given `--inverter 3 --export-limit 1`, when the person runs `sim policy run`, then the `curtailed` value is more than 0.0 kWh, and in each hour of `runHome` the export is at most 1 kWh. `--inverter 100.1` gives `error: OUT_OF_RANGE: --inverter 100.1 (0 to 100)`. (R20)
 - Layers: command, home simulation, scenario, battery step
-- Status: planned
+- Status: red
 - Test rounds: 0
 - Review rounds: 0
 
@@ -136,7 +136,7 @@
   - Given the dynamic policy, a surplus of 3.0 kWh, a first tank at 50% of its capacity and a second at 30%, when the hour is decided, then the second tank gets its request first. (R22)
   - Given `--tank2 9.4:2.5:0.42`, when the person runs `sim policy run`, then the run has 2 tanks and the second draws 42% of the hot water. (R22)
 - Layers: command, home simulation, policy, tank
-- Status: planned
+- Status: red
 - Test rounds: 0
 - Review rounds: 0
 
@@ -151,7 +151,7 @@
   - Given each home of D20, each default policy and the seeds 1 to 3, when each day of a 365-day run is read, then each tank has at most 2 policy starts and the battery gate changes at most 2 times. (R25)
   - Given the home `generic`, when the person runs `sim policy run`, then the `starts-per-day` value equals the policy starts of the tanks of `runHome` divided by the days, with one decimal. (R25)
 - Layers: command, home simulation, policy
-- Status: planned
+- Status: red
 - Test rounds: 0
 - Review rounds: 0
 
@@ -164,6 +164,6 @@
   - Given the same options, when the lines are compared with `runHome` for the precomputed policy, then the heating of each tank in each hour equals the request of that hour on day 10, with one decimal. (R23)
   - Given no `--day`, when the person runs `sim policy plan`, then it prints the plan of day 0. `--day 365` with 365 days gives `error: OUT_OF_RANGE: --day 365 (0 to 364)`. (R23)
 - Layers: command, home simulation, policy
-- Status: planned
+- Status: red
 - Test rounds: 0
 - Review rounds: 0
