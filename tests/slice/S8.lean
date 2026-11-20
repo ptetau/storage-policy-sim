@@ -159,6 +159,34 @@ def t_static_flex_start_run : IO (Option String) := do
     if !(Harness.near s 3.0 0.000001) then return some s!"day {d}: flexible load {s}, want 3.0"
   return none
 
+/-- The number after the label of a `policy run` line, parsed. -/
+def runValue (out label : String) : Option Float :=
+  match lineValue out label with
+  | none => none
+  | some w => parseDec w
+
+def t_static_flex_start_cli : IO (Option String) := do
+  let p := Policy.static { defaultStatic with flexStart := 11 }
+  let r := runHome defaultHome p 7 30
+  let base := ["policy", "run", "--policy", "static", "--seed", "7", "--days", "30"]
+  let o11 ← Harness.sim (base ++ ["--flex-start", "11"])
+  let od ← Harness.sim base
+  if o11.code != 0 then return some s!"--flex-start 11: exit {o11.code}, stderr {o11.err}"
+  if od.code != 0 then return some s!"default: exit {od.code}, stderr {od.err}"
+  let labels : List (String × Float) :=
+    [("import", r.totals.importKwh), ("self-consumption", r.totals.selfConsumption)]
+  let mut differs := false
+  for (label, want) in labels do
+    match runValue o11.out label, runValue od.out label with
+    | some a, some b =>
+      if !(Harness.near a want 0.051) then
+        return some s!"--flex-start 11: {label} {a}, want about {want} (runHome with flexStart 11)"
+      if !(Harness.near a b 0.051) then differs := true
+    | _, _ => return some s!"no {label} line in {o11.out} or {od.out}"
+  if !differs then
+    return some "--flex-start 11 gives the same import and self-consumption as the default run"
+  return none
+
 def t_static_flex_start_end_of_day : IO (Option String) := do
   let acts := staticProfile tank1 (staticParams 23) 3.0
   let early := (List.range 23).all (fun (h : Nat) => Harness.near (acts[h]!).flexKwh 0.0 tiny)
@@ -313,6 +341,35 @@ def t_dynamic_keeps_heating_instead_of_third_start : IO (Option String) := do
     [((a.heatKwh[0]!) > tiny, s!"2 starts, asked last hour, no surplus, tank 6.0: request {a.heatKwh}, want more than 0"),
      ((a.heatKwh[0]!) ≤ 3.0 + tiny, s!"request {a.heatKwh}, more than the element power 3.0")]
 
+def t_dynamic_no_third_start_not_needed : IO (Option String) := do
+  let a := dynamicAction tank1 dynP (mkObs 14 8.0 0.0 5.0 0.0 1 true)
+  return Harness.firstFail
+    [(Harness.near (a.heatKwh[0]!) 0.0 tiny,
+      s!"1 start, asked last hour, no surplus, tank 8.0 (above low 5.25): request {a.heatKwh}, want 0")]
+
+def afterTankForecast : Array Float :=
+  (List.range 24).toArray.map (fun (h : Nat) =>
+    if h == 12 then 4.0 else if h == 13 then 3.9 else if h == 14 then 3.8
+    else if h == 15 then 3.0 else 0.0)
+
+def t_precomputed_flex_after_tanks : IO (Option String) := do
+  let params : PlanParams := { targetKwh := #[10.5], minSolarKwh := 0.5, dischargeFrom := 17 }
+  let acts := planDay tank1 params afterTankForecast #[7.5] #[0.0] 3.0
+  if acts.size != 24 then return some s!"size {acts.size}"
+  let heat := acts.map (fun (a : Action) => a.heatKwh[0]!)
+  let left := (List.range 24).toArray.map (fun (h : Nat) =>
+    let x := afterTankForecast[h]! - heat[h]!
+    if x < 0.0 then 0.0 else x)
+  if !(heat.foldl (fun (s : Float) (x : Float) => s + x) 0.0 > tiny) then
+    return some s!"the plan heats nothing: {heat}"
+  if !(Harness.near (sumFlex acts) 3.0 tiny) then return some s!"flex sum {sumFlex acts}, want 3.0"
+  for h in [0:24] do
+    if (acts[h]!).flexKwh > tiny then
+      for g in [0:24] do
+        if (acts[g]!).flexKwh ≤ tiny && left[g]! > left[h]! + tiny then
+          return some s!"flex in hour {h} (forecast left {left[h]!}) but not in hour {g} (forecast left {left[g]!}): flex {acts.map (fun (a : Action) => a.flexKwh)}, heat {heat}"
+  return none
+
 def planStarts (heat : Array Float) : Nat := Id.run do
   let mut n := 0
   for h in [0:heat.size] do
@@ -339,6 +396,7 @@ def tests : List Harness.Test := [
   { name := "test_001_S8_R24_flex_load_adds_up_each_day", run := t_flex_sum_each_day },
   { name := "test_001_S8_R24_static_profile_flex_in_three_parts", run := t_static_profile_parts },
   { name := "test_001_S8_R24_static_flex_start_11_in_run", run := t_static_flex_start_run },
+  { name := "test_001_S8_R24_static_flex_start_11_changes_command_output", run := t_static_flex_start_cli },
   { name := "test_001_S8_R24_static_flex_start_23_stays_in_day", run := t_static_flex_start_end_of_day },
   { name := "test_001_S8_R24_flex_start_24_out_of_range", run := t_flex_start_out_of_range },
   { name := "test_001_S8_R24_flex_start_negative_out_of_range", run := t_flex_start_negative },
@@ -349,6 +407,8 @@ def tests : List Harness.Test := [
   { name := "test_001_S8_R24_dynamic_surplus_runs_flex", run := t_dynamic_surplus_runs_flex },
   { name := "test_001_S8_R24_dynamic_run_without_surplus_starts_at_20", run := t_dynamic_run_no_surplus_day },
   { name := "test_001_S8_R24_precomputed_flex_in_sunny_hours", run := t_precomputed_flex_sunny_hours },
+  { name := "test_001_S8_R24_precomputed_flex_avoids_hours_the_tanks_took", run := t_precomputed_flex_after_tanks },
+  { name := "test_001_S8_R25_dynamic_no_heat_when_third_start_not_needed", run := t_dynamic_no_third_start_not_needed },
   { name := "test_001_S8_R25_each_tank_at_most_2_starts_a_day", run := t_tank_starts_at_most_2 },
   { name := "test_001_S8_R25_battery_gate_at_most_2_changes_a_day", run := t_gate_changes_at_most_2 },
   { name := "test_001_S8_R25_starts_per_day_equals_run_totals", run := t_starts_per_day_value },
