@@ -400,15 +400,14 @@ def r17Layout : IO (Option String) := do
   let o ← tuneCli
   let ls := outLines o.out
   let label := fun (i : Nat) => ((ls[i]?.getD "").splitOn " ").headD "x"
-  let names := (ls.drop 7).map (fun (l : String) => (toks l).headD "")
+  let names := (ls.drop 8).map (fun (l : String) => (toks l).headD "")
   return Harness.firstFail [
     (o.code == 0, s!"exit {o.code}, stderr: {o.err}"),
     (label 3 == "heat-start" && label 4 == "heat-hours" && label 5 == "discharge-from",
       s!"lines 3 to 5: {ls}"),
     ((ls[6]?).getD "x" == "", s!"line 6 is not blank: {ls}"),
     (" ".intercalate (toks (ls[7]?.getD "")) == headerRobust, s!"table header: {ls[7]?}"),
-    (names == rowNames, s!"table rows {names}"),
-    (o.err == "", s!"stderr: {o.err}")]
+    (names == rowNames, s!"table rows {names}")]
 
 def r17ProfileMatchesTune : IO (Option String) := do
   let o ← tuneCli

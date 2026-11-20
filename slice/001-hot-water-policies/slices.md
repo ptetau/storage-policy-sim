@@ -85,8 +85,8 @@
   - Given `--seeds 2 --days 30`, when the person runs `sim policy tune`, then the first lines are `goal              self-consumption`, `candidates        704` and `safe              704`, and the `static` row equals the row of `sim policy robust` with the tuned profile as options. (R17)
   - Given `--goal cheap`, when the person runs `sim policy tune`, then stderr is `error: UNKNOWN_GOAL: cheap (self-consumption, import)` and the exit code is 2. `--heat-start 10` gives `error: UNKNOWN_OPTION: --heat-start`. (R17)
 - Layers: command, home simulation
-- Status: red
-- Test rounds: 0
+- Status: review
+- Test rounds: 1
 - Review rounds: 0
 
 ## S5: Refuse a bad option
