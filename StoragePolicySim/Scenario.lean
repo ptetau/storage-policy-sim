@@ -168,9 +168,24 @@ structure PanelArray where
   tilt : Float
   deriving Repr, Inhabited
 
-/-- The solar energy of one array in an hour, in kWh. Not built yet. -/
+/-- The solar energy of one array in an hour, in kWh (D18): the power, times the cosine of the
+angle between the sun and the line square to the panels, times the sky factor. It is 0 when the
+sun is below the horizon or behind the panels. The sun is at the middle of the hour, in solar time,
+as in `pvOutput`: a flat array gives exactly the output of `pvOutput` for the same power. -/
 def arrayOutput (latitude : Float) (array : PanelArray) (dayOfYear hour : Nat) (sky : Sky) : Float :=
-  let _ := (latitude, array, sky, hour)
-  todo "arrayOutput" dayOfYear
+  let up := sinSunHeight latitude dayOfYear hour
+  if up ≤ 0 then 0
+  else
+    let lat := radians latitude
+    let dec := radians (declination dayOfYear)
+    let hourAngle := radians (15 * (hour.toFloat + 0.5 - 12))
+    -- The sun in east, north and up parts. The hour angle is negative before noon.
+    let east := -(Float.cos dec * Float.sin hourAngle)
+    let north := Float.sin dec * Float.cos lat - Float.cos dec * Float.sin lat * Float.cos hourAngle
+    let tilt := radians array.tilt
+    let facing := radians array.direction
+    let cosAngle := east * (Float.sin tilt * Float.sin facing) +
+      north * (Float.sin tilt * Float.cos facing) + up * Float.cos tilt
+    if cosAngle ≤ 0 then 0 else array.kw * cosAngle * sky.factor
 
 end StoragePolicySim

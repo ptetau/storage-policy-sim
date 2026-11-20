@@ -1,8 +1,8 @@
 /-
 The simulation of a home with a policy, the evaluation over seeds, and the tuner. Built: the
-structures, `defaultHome`, `runHome` for the three policies and one flat array, `evaluate` and
-`tuneStatic` (with one tank). Not built yet: `homeNames` (a placeholder), `homeNamed` (a stub), the
-panel arrays other than one flat array, and the search over more tanks.
+structures, `defaultHome`, `runHome` for the three policies with any panel arrays and the limits of
+the inverter and the export, `evaluate` and `tuneStatic` (with one tank). Not built yet:
+`homeNames` (a placeholder), `homeNamed` (a stub), and the search over more tanks.
 -/
 import StoragePolicySim.Policy
 import StoragePolicySim.Simulation
@@ -97,9 +97,14 @@ structure HomeResult where
   totals : HomeTotals
   deriving Repr, Inhabited
 
-/-- The solar energy of a scenario hour. A home with one flat array gives the solar energy of
-the scenario. Not built yet for other arrays (the slice of the panel arrays owns them). -/
-private def solarOf (_home : Home) (hour : Hour) : Float := hour.pvKwh
+/-- The scenario of a home: the hours of its site, with the solar energy of each hour set to the
+sum of the arrays of the home (D18). A home with one flat array gives the solar energy of the
+site. The forecast reads these hours, so it follows the arrays too. -/
+private def homeScenario (home : Home) (seed days : Nat) : Array Hour :=
+  (scenario home.site seed days).map fun hour =>
+    { hour with
+      pvKwh := home.arrays.foldl (init := 0.0) fun sum array =>
+        sum + arrayOutput home.site.latitude array hour.dayOfYear hour.hour hour.sky }
 
 /-- The expected draw of each tank in a day: the draw profile with the season, and without the
 random factor of the day. -/
@@ -155,7 +160,7 @@ private def runHomeOn (home : Home) (policy : Policy) (seed days : Nat)
     | .dynamic _ => pure ()
     let factor := drawFactor seed day home.drawCv
     for scenarioHour in scenarioHours.extract (hoursInDay * day) (hoursInDay * (day + 1)) do
-      let pvKwh := solarOf home scenarioHour
+      let pvKwh := scenarioHour.pvKwh
       let hourOfRun := hoursInDay * day + scenarioHour.hour
       let mut action := dayPlan[scenarioHour.hour]?.getD default
       if let .dynamic params := policy then
@@ -199,13 +204,14 @@ private def runHomeOn (home : Home) (policy : Policy) (seed days : Nat)
         tankHours := tankHours.push tankHour
       flexToday := flexToday + action.flexKwh
       let houseLoadKwh := scenarioHour.baseLoadKwh + action.flexKwh
-      let flow := stepHourGated home.battery socKwh action.allowCharge action.allowDischarge
-        pvKwh (houseLoadKwh + tankLoadKwh)
+      let limited := stepHourLimited home.limits home.battery socKwh action.allowCharge
+        action.allowDischarge pvKwh (houseLoadKwh + tankLoadKwh)
+      let flow := limited.flow
       socKwh := flow.socKwh
       let homeHour : HomeHour :=
         { day := day, hour := scenarioHour.hour, pvKwh := pvKwh, houseLoadKwh := houseLoadKwh,
           flexKwh := action.flexKwh, tanks := tankHours, allowCharge := action.allowCharge,
-          allowDischarge := action.allowDischarge, flow := flow, curtailedKwh := 0.0 }
+          allowDischarge := action.allowDischarge, flow := flow, curtailedKwh := limited.curtailedKwh }
       hours := hours.push homeHour
   let pvKwh := sumHours hours (·.pvKwh)
   let exportKwh := sumHours hours (·.flow.exportKwh)
@@ -226,7 +232,7 @@ private def runHomeOn (home : Home) (policy : Policy) (seed days : Nat)
 /-- One run of a home with a policy, from a full tank and an empty battery on 1 January. See
 `runHomeOn`: this is the run on the scenario of the seed. -/
 def runHome (home : Home) (policy : Policy) (seed days : Nat) : HomeResult :=
-  runHomeOn home policy seed days (scenario home.site seed days)
+  runHomeOn home policy seed days (homeScenario home seed days)
 
 /-- The summary of a policy over several seeds. -/
 structure Evaluation where
@@ -268,7 +274,7 @@ private def summarise (runs : Array HomeTotals) (days : Nat) : Evaluation :=
 
 /-- The scenario of each seed from `seed`. -/
 private def scenariosOf (home : Home) (seed seeds days : Nat) : Array (Array Hour) :=
-  (Array.range seeds).map fun k => scenario home.site (seed + k) days
+  (Array.range seeds).map fun k => homeScenario home (seed + k) days
 
 /-- The evaluation of a policy on scenarios that are already built. -/
 private def evaluateOn (home : Home) (policy : Policy) (seed days : Nat)

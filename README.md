@@ -119,6 +119,13 @@ above. The other options are these:
 | `--target` | The kWh that a policy heats the tank to | 10.5 | 0 to 50 |
 | `--min-solar` | The kWh of forecast that an hour needs to heat | 0.5 | 0 to 10 |
 | `--low` | The kWh below which a dynamic policy heats | 5.25 | 0 to 50 |
+| `--inverter` | The kW of the inverter limit: the most that the house and the grid take together. 0 is no limit | 0 | 0 to 100 |
+| `--export-limit` | The kW of the export limit. 0 is no limit | 0 | 0 to 100 |
+| `--array` | A panel array `KW:DIRECTION:TILT`. The direction is the compass angle that the array faces (0 north, 90 east, 180 south, 270 west) and the tilt is in degrees from flat. The first `--array` replaces the flat array of `--pv`, and each later one adds an array | one flat array of `--pv` | KW 0 to 100, DIRECTION 0 to 360, TILT 0 to 90 |
+
+The solar energy of the home is the sum of its arrays. The solar surplus goes to the battery
+first, then to the grid (inside the export limit and the inverter limit), and only the rest is
+`curtailed`. A value of `--array` without three numbers gives `BAD_NUMBER` with the value as typed.
 
 ## The forecast command
 

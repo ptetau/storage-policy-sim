@@ -224,10 +224,44 @@ structure LimitedFlow where
   curtailedKwh : Float
   deriving Repr, Inhabited
 
-/-- The flows of one hour with a battery gate and the limits. Not built yet. -/
+/-- The energy cap of a limit of 0: no cap. -/
+private def noCap : Float := 1.0e18
+
+/-- A limit in kW as a cap on the energy of one hour. A limit of 0 is no cap. -/
+private def capOf (limitKw : Float) : Float := if limitKw == 0 then noCap else limitKw
+
+/-- The flows of one hour with a battery gate and the limits (D19). With no limit, the flows are
+those of `stepHourGated`. Otherwise the inverter limit caps the energy that goes direct to the
+house, from the battery to the house, and to the grid, all together. The export limit caps the
+export. Solar energy charges the battery outside the inverter limit. The solar surplus goes to the
+battery first (up to its power, its room and its gate), then to the grid (up to the export limit
+and the room that the inverter limit leaves after the direct energy), and only the rest is
+curtailed. -/
 def stepHourLimited (limits : Limits) (battery : Battery) (socKwh : Float)
     (allowCharge allowDischarge : Bool) (pvKwh loadKwh : Float) : LimitedFlow :=
-  let _ := (limits, battery, socKwh, allowCharge, allowDischarge, pvKwh, loadKwh)
-  todo "stepHourLimited" 0
+  if limits.inverterKw == 0 && limits.exportKw == 0 then
+    { flow := stepHourGated battery socKwh allowCharge allowDischarge pvKwh loadKwh,
+      curtailedKwh := 0 }
+  else
+    let directKwh := min (min pvKwh loadKwh) (capOf limits.inverterKw)
+    let surplusKwh := pvKwh - directKwh
+    let shortfallKwh := loadKwh - directKwh
+    let inverterRoomKwh := capOf limits.inverterKw - directKwh
+    let exportCapKwh := max 0 (min inverterRoomKwh (capOf limits.exportKw))
+    let chargeToFillKwh := (battery.capacityKwh - socKwh) / efficiency
+    let chargeRoomKwh := min battery.powerKw chargeToFillKwh
+    let chargeKwh := limitTo (if allowCharge then surplusKwh else 0) surplusKwh chargeRoomKwh
+    let exportKwh := min exportCapKwh (surplusKwh - chargeKwh)
+    let storedAfterChargeKwh := socKwh + chargeKwh * efficiency
+    let dischargeKwh :=
+      limitTo (if allowDischarge then shortfallKwh else 0) (min shortfallKwh inverterRoomKwh)
+        (min battery.powerKw (storedAfterChargeKwh * efficiency))
+    let takenOutKwh := dischargeKwh / efficiency
+    { flow :=
+        { directKwh, chargeKwh, dischargeKwh, exportKwh,
+          importKwh := shortfallKwh - dischargeKwh,
+          lossKwh := chargeKwh - chargeKwh * efficiency + takenOutKwh - dischargeKwh,
+          socKwh := max 0 (min battery.capacityKwh (storedAfterChargeKwh - takenOutKwh)) },
+      curtailedKwh := max 0 (surplusKwh - chargeKwh - exportKwh) }
 
 end StoragePolicySim

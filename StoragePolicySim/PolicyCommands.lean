@@ -60,11 +60,31 @@ private def minSolarOption : NumberOption :=
 private def lowOption : NumberOption :=
   policyNumberOption "--low" "kWh below which a dynamic policy heats" defaultTank.cutInKwh 0 50
 
+/-- The limits of the inverter, in the order that the range step reads them. -/
+private def limitOptions : List NumberOption :=
+  [policyNumberOption "--inverter" "kW of the inverter limit, 0 for no limit" 0 0 100,
+   policyNumberOption "--export-limit" "kW of the export limit, 0 for no limit" 0 0 100]
+
 /-- The number options of `sim policy run`. -/
 private def runOptions : List NumberOption :=
-  rangedOptions ++ tankOptions ++ drawOptions ++
+  rangedOptions ++ tankOptions ++ drawOptions ++ limitOptions ++
     [heatStartOption, heatHoursOption, dischargeFromOption, flexStartOption, targetOption,
      minSolarOption, lowOption]
+
+/-- The flag of a panel array: `--array KW:DIRECTION:TILT`. -/
+private def arrayFlag : String := "--array"
+
+/-- The panel array of a value `KW:DIRECTION:TILT`. A value with other than three numbers is a bad
+number, and a number outside its range (kW 0 to 100, direction 0 to 360, tilt 0 to 90) is out of
+range. -/
+private def readArray (text : String) : Except Problem PanelArray :=
+  match (text.splitOn ":").mapM (readNumber false) with
+  | some [kw, direction, tilt] =>
+    if kw < 0 || kw > 100 then .error (.outOfRange arrayFlag text "0" "100")
+    else if direction < 0 || direction > 360 then .error (.outOfRange arrayFlag text "0" "360")
+    else if tilt < 0 || tilt > 90 then .error (.outOfRange arrayFlag text "0" "90")
+    else .ok { kw, direction, tilt }
+  | _ => .error (.badNumber arrayFlag text)
 
 /-- The flag that picks the policy. -/
 private def policyFlag : String := "--policy"
@@ -87,6 +107,8 @@ private structure PolicyLine where
   goal : String := "self-consumption"
   /-- The number options, the last typed first. -/
   numbers : List (String × TypedNumber) := []
+  /-- The panel arrays of `--array`, in the order typed. None replaces the arrays of the home. -/
+  arrays : Array PanelArray := #[]
 
 /-- The `--flex` option as the reading step sees it. Its range depends on `--load`, and
 `rangeProblemIn` checks it. -/
@@ -113,6 +135,13 @@ private def readPolicyOptions (allowPolicy allowGoal : Bool) (options : List Num
         if policyNames.contains name then
           readPolicyOptions allowPolicy allowGoal options { line with policy := name } afterName
         else .error (.unknownPolicy name)
+    else if flag == arrayFlag then
+      match rest with
+      | [] => .error (.missingValue flag)
+      | value :: afterValue => do
+        let array ← readArray value
+        readPolicyOptions allowPolicy allowGoal options
+          { line with arrays := line.arrays.push array } afterValue
     else match numberOptionIn (flexReadOption :: options) flag, rest with
       | none, _ => .error (.unknownOption flag)
       | some _, [] => .error (.missingValue flag)
@@ -127,11 +156,18 @@ private def readPolicyOptions (allowPolicy allowGoal : Bool) (options : List Num
 private def PolicyLine.home (line : PolicyLine) : Home :=
   let loadKwh := numberIn line.numbers loadOption
   let flexKwh := ((typedIn line.numbers flexFlag).map (·.value)).getD (min defaultFlexKwh loadKwh)
-  let pvKw := numberIn line.numbers pvOption
+  -- `--array` replaces the flat array of `--pv`. The site holds the sum of the array powers.
+  let arrays : Array PanelArray :=
+    if line.arrays.isEmpty then
+      #[{ kw := numberIn line.numbers pvOption, direction := 0.0, tilt := 0.0 }]
+    else line.arrays
+  let pvKw := arrays.foldl (fun sum array => sum + array.kw) 0.0
   { defaultHome with
     site := { latitude := numberIn line.numbers latitudeOption, pvKw,
               dailyLoadKwh := loadKwh, flexKwh },
-    arrays := #[{ kw := pvKw, direction := 0.0, tilt := 0.0 }],
+    arrays,
+    limits := { inverterKw := numberIn line.numbers limitOptions[0]!,
+                exportKw := numberIn line.numbers limitOptions[1]! },
     battery := { capacityKwh := numberIn line.numbers batteryOption,
                  powerKw := numberIn line.numbers powerOption },
     tanks := #[{ defaultTank with

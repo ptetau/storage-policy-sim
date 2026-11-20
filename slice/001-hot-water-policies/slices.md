@@ -119,7 +119,7 @@
   - Given limits of 0, when any hour runs, then the flows equal `stepHourGated` and 0 kWh is curtailed. (R20)
   - Given `--inverter 3 --export-limit 1`, when the person runs `sim policy run`, then the `curtailed` value is more than 0.0 kWh, and in each hour of `runHome` the export is at most 1 kWh. `--inverter 100.1` gives `error: OUT_OF_RANGE: --inverter 100.1 (0 to 100)`. (R20)
 - Layers: command, home simulation, scenario, battery step
-- Status: review
+- Status: done
 - Test rounds: 1
 - Review rounds: 1
 
