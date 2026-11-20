@@ -100,9 +100,9 @@
   - Given `--tank` with no value, when the person runs `sim policy run`, then stderr is `error: MISSING_VALUE: --tank`. `--seeds 3` gives `error: UNKNOWN_OPTION: --seeds`. (R18)
   - Given `--tank 5 --tank 12`, when the person runs `sim policy run`, then the result equals the result of `--tank 12`. Given each error, stdout is empty. (R18)
 - Layers: command
-- Status: red
+- Status: done
 - Test rounds: 0
-- Review rounds: 0
+- Review rounds: 1
 
 ## S6: Model panel arrays and the limits of the inverter
 
