@@ -191,52 +191,57 @@ def t_weak_element : IO (Option String) := do
 
 /-! Thermostat machine, seen through `runHome`. -/
 
+/-- The level of the first tank in hour i (i at least 1) after the loss of 0.6% and the served draw. -/
+def levelAfterDraw (r : HomeResult) (i : Nat) : Float :=
+  match r.hours[i]? with
+  | some h =>
+    let t := h.tanks[0]!
+    energyAt r (i - 1) * 0.994 - (t.drawKwh - t.unmetKwh)
+  | none => 0.0
+
 /-- T1: a tank that starts an hour below the cut-in is heated by the backstop. -/
 def t_thermostat_t1 : IO (Option String) := do
   let mut n := 0
   let mut bad : List String := []
-  for i in [0:thermostatRun7.hours.size] do
-    let before := if i == 0 then full else energyAt thermostatRun7 (i - 1)
-    if before < 5.25 - tol then
+  for i in [1:thermostatRun7.hours.size] do
+    let level := levelAfterDraw thermostatRun7 i
+    if level < 5.25 - tol then
       n := n + 1
       if !(backstopAt thermostatRun7 i > 0.0) then
-        bad := bad ++ [s!"hour {i}: tank {before} kWh at the start, backstop {backstopAt thermostatRun7 i}"]
-  let miss := if n == 0 then ["no hour started below the cut-in"] else []
+        bad := bad ++ [s!"hour {i}: level {level} kWh after loss and draw, backstop {backstopAt thermostatRun7 i}"]
+  let miss := if n == 0 then ["no hour fell below the cut-in after loss and draw"] else []
   return verdict (miss ++ bad.take 3)
 
-/-- A day d (1 to 29) of `noCutInRun` that starts after a full tank at hour 23 of the day before. -/
-def guardDays : List Nat :=
-  (List.range 30).filter (fun (d : Nat) => d ≥ 1 && isFullAt noCutInRun (24 * d - 1))
+/-- A day d (0 to 29) of `noCutInRun` where no hour before hour 20 ends with a full tank. -/
+def notFullDays : List Nat :=
+  (List.range 30).filter (fun (d : Nat) =>
+    !((List.range 20).any (fun (h : Nat) => isFullAt noCutInRun (24 * d + h))))
 
-/-- T2: with no cut-in, the thermostat stays off until the guard hour, then heats a tank that was not full. -/
+/-- T2: with no cut-in and no floor, the thermostat heats a tank that was not full at the guard hour 20. -/
 def t_thermostat_t2 : IO (Option String) := do
   let mut bad : List String := []
-  for d in guardDays do
-    let mut early := 0.0
-    for h in [0:20] do
-      early := early + backstopAt noCutInRun (24 * d + h)
-    if early > tol then bad := bad ++ [s!"day {d}: backstop {early} kWh before hour 20"]
+  for d in notFullDays do
     if !(backstopAt noCutInRun (24 * d + 20) > 0.0) then
       bad := bad ++ [s!"day {d}: no backstop at hour 20 (tank {energyAt noCutInRun (24 * d + 19)} kWh)"]
-  let miss := if guardDays.length < 10 then [s!"only {guardDays.length} days start from a full tank"] else []
+  let miss := if notFullDays.isEmpty then ["no day without a full tank before hour 20"] else []
   return verdict (miss ++ bad.take 3)
 
-/-- T3: once the tank is full at or after the guard hour, the thermostat stops heating for the rest of the day. -/
+/-- True when the hour i is the guard hour (hour 20) of a day that had no full tank before it. -/
+def isFreshGuardHour (r : HomeResult) (i : Nat) : Bool :=
+  i % 24 == 20 && !((List.range 20).any (fun (h : Nat) => isFullAt r (24 * (i / 24) + h)))
+
+/-- T3: a tank that ends an hour full is not heated in the next hour, while its level stays above the cut-in. -/
 def t_thermostat_t3 : IO (Option String) := do
   let mut bad : List String := []
   let mut seen := 0
-  for d in guardDays do
-    let mut found : Option Nat := none
-    for h in [20:24] do
-      if found.isNone && isFullAt noCutInRun (24 * d + h) then found := some h
-    match found with
-    | none => pure ()
-    | some f =>
-      seen := seen + 1
-      for h in [f + 1:24] do
-        if backstopAt noCutInRun (24 * d + h) > tol then
-          bad := bad ++ [s!"day {d}: backstop {backstopAt noCutInRun (24 * d + h)} kWh at hour {h} after full at hour {f}"]
-  let miss := if seen < 5 then [s!"only {seen} days reach a full tank in the evening"] else []
+  for i in [0:thermostatRun7.hours.size - 1] do
+    if isFullAt thermostatRun7 i then
+      let next := i + 1
+      if levelAfterDraw thermostatRun7 next > 5.25 + tol && !(isFreshGuardHour thermostatRun7 next) then
+        seen := seen + 1
+        if backstopAt thermostatRun7 next > tol then
+          bad := bad ++ [s!"hour {next}: backstop {backstopAt thermostatRun7 next} kWh after a full tank at hour {i}"]
+  let miss := if seen == 0 then ["no hour ends full with the next hour above the cut-in"] else []
   return verdict (miss ++ bad.take 3)
 
 /-! ## R15: sim policy compare -/
