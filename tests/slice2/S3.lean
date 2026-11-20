@@ -102,6 +102,42 @@ def limitsHold : IO (Option String) := do
     (r3.flow.dischargeKwh > 0.0, s!"no discharge for a load of 20 kWh: {fmt r3}"),
     (gap 0.0 20.0 13.5 r3 ≤ 0.000001, s!"balance with discharge limit: {fmt r3}")]
 
+/-- Energy through the inverter in one step: direct, discharge and export. -/
+def invEnergy (r : LimitedFlow) : Float :=
+  r.flow.directKwh + r.flow.dischargeKwh + r.flow.exportKwh
+
+def inverterLimit : IO (Option String) := do
+  let lim : Limits := { inverterKw := 2.0, exportKw := 0.0 }
+  -- a quarter of 2.0 kW is 0.5 kWh
+  let a := physBatteryStep lim bat135 6.0 true true 5.0 3.0
+  let b := physBatteryStep lim bat135 13.5 true true 0.0 3.0
+  let c := physBatteryStep lim bat135 10.0 true true 1.0 3.0
+  let d := physBatteryStep lim bat135 13.5 true true 5.0 0.2
+  return Harness.firstFail [
+    (invEnergy a ≤ 0.5 + 0.000001, s!"solar, large load: direct+discharge+export above 0.5 kWh: {fmt a}"),
+    (invEnergy a > 0.0, s!"solar, large load: nothing through the inverter: {fmt a}"),
+    (gap 5.0 3.0 6.0 a ≤ 0.000001, s!"solar, large load: balance: {fmt a}"),
+    (invEnergy b ≤ 0.5 + 0.000001, s!"full battery, large load: direct+discharge+export above 0.5 kWh: {fmt b}"),
+    (b.flow.dischargeKwh > 0.0, s!"full battery, large load: no discharge: {fmt b}"),
+    (gap 0.0 3.0 13.5 b ≤ 0.000001, s!"full battery, large load: balance: {fmt b}"),
+    (invEnergy c ≤ 0.5 + 0.000001, s!"solar and battery, large load: direct+discharge+export above 0.5 kWh: {fmt c}"),
+    (gap 1.0 3.0 10.0 c ≤ 0.000001, s!"solar and battery, large load: balance: {fmt c}"),
+    (invEnergy d ≤ 0.5 + 0.000001, s!"full battery, solar surplus: direct+discharge+export above 0.5 kWh: {fmt d}"),
+    (gap 5.0 0.2 13.5 d ≤ 0.000001, s!"full battery, solar surplus: balance: {fmt d}")]
+
+/-- A signature of the cycles of one day. -/
+def cycleSig (seed day : Nat) : List (String × Nat × Float) :=
+  (applianceCycles seed day).toList.map
+    (fun (c : Cycle) => (c.name, c.stepKwh.size, fsum c.stepKwh))
+
+def seedMatters : IO (Option String) := do
+  let mut diff := 0
+  for d in [0:60] do
+    if cycleSig 7 d != cycleSig 8 d then
+      diff := diff + 1
+  return if diff > 0 then none
+    else some "seeds 7 and 8 give the same cycles on each of the first 60 days"
+
 def countTest (name : String) (lo hi : Nat) : IO (Option String) := do
   let n := daysWith name
   return if n ≥ lo && n ≤ hi then none
@@ -169,6 +205,8 @@ def tests : List Harness.Test := [
   { name := "test_002_S3_R8_discharge_gives_load_and_inverter_loss", run := dischargeLoad },
   { name := "test_002_S3_R8_energy_balances_in_each_step", run := balanceCases },
   { name := "test_002_S3_R8_limits_hold_with_quarter_energy", run := limitsHold },
+  { name := "test_002_S3_R8_inverter_limit_caps_output_energy", run := inverterLimit },
+  { name := "test_002_S3_R9_different_seeds_give_different_cycles", run := seedMatters },
   { name := "test_002_S3_R9_dishwasher_days", run := countTest "dishwasher" 450 550 },
   { name := "test_002_S3_R9_washing_machine_days", run := countTest "washing-machine" 350 450 },
   { name := "test_002_S3_R9_dryer_days", run := countTest "dryer" 150 250 },
