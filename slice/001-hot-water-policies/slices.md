@@ -113,14 +113,15 @@
   - Given latitude -41.3, a sunny day 0, and an array of 3 kW at 30° that faces east (90), when the hours are added, then the hours before 12:00 give more than the hours after. An array that faces west (270) gives the reverse. (R19)
   - Given latitude -41.3 at 12:00 on a sunny day 171, when a north array at 30° and a south array at 30° of the same power are compared, then the north array gives more. (R19)
   - Given `--array 3:90:30 --array 3:270:30`, when the person runs `sim policy run`, then the `solar` value equals the sum of the two arrays, and the flat 5 kW array of the home is gone. `--array 3:90` gives `error: BAD_NUMBER: --array 3:90`. (R19)
-  - Given an inverter limit of 5 kW, no export limit and an empty battery of 10 kWh with 5 kW, when an hour has 8 kWh of solar and 1 kWh of load, then 1 kWh is direct, 3 kWh charges the battery, 4 kWh is export and 0 kWh is curtailed. (R20)
+  - Given an inverter limit of 5 kW, no export limit and an empty battery of 10 kWh with 5 kW, when an hour has 8 kWh of solar and 1 kWh of load, then 1 kWh is direct, 5 kWh charges the battery (its power limit), 2 kWh is export and 0 kWh is curtailed. (R20)
+  - Given an inverter limit of 5 kW, no export limit and an empty battery of 10 kWh with 2 kW, when an hour has 9 kWh of solar and 1 kWh of load, then 1 kWh is direct, 2 kWh charges the battery, 4 kWh is export and 2 kWh is curtailed. (R20)
   - Given an inverter limit of 5 kW, an export limit of 2 kW and a full battery, when an hour has 8 kWh of solar and 1 kWh of load, then the export is 2 kWh and 5 kWh is curtailed. (R20)
   - Given limits of 0, when any hour runs, then the flows equal `stepHourGated` and 0 kWh is curtailed. (R20)
   - Given `--inverter 3 --export-limit 1`, when the person runs `sim policy run`, then the `curtailed` value is more than 0.0 kWh, and in each hour of `runHome` the export is at most 1 kWh. `--inverter 100.1` gives `error: OUT_OF_RANGE: --inverter 100.1 (0 to 100)`. (R20)
 - Layers: command, home simulation, scenario, battery step
-- Status: red
-- Test rounds: 0
-- Review rounds: 0
+- Status: review
+- Test rounds: 1
+- Review rounds: 1
 
 ## S7: Simulate my home with two tanks
 

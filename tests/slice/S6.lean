@@ -167,9 +167,19 @@ def tests : List Harness.Test := [
       let r := stepHourLimited lim battery10 0.0 true true 8.0 1.0
       return Harness.firstFail [
         (Harness.near r.flow.directKwh 1.0 0.000000001, s!"direct {r.flow.directKwh}, expected 1"),
-        (Harness.near r.flow.chargeKwh 3.0 0.000000001, s!"charge {r.flow.chargeKwh}, expected 3"),
-        (Harness.near r.flow.exportKwh 4.0 0.000000001, s!"export {r.flow.exportKwh}, expected 4"),
+        (Harness.near r.flow.chargeKwh 5.0 0.000000001, s!"charge {r.flow.chargeKwh}, expected 5"),
+        (Harness.near r.flow.exportKwh 2.0 0.000000001, s!"export {r.flow.exportKwh}, expected 2"),
         (Harness.near r.curtailedKwh 0.0 0.000000001, s!"curtailed {r.curtailedKwh}, expected 0")] },
+  { name := "test_001_S6_R20_slow_battery_leaves_grid_and_curtailed_rest"
+    run := do
+      let lim : Limits := { inverterKw := 5.0, exportKw := 0.0 }
+      let slow : Battery := { capacityKwh := 10.0, powerKw := 2.0 }
+      let r := stepHourLimited lim slow 0.0 true true 9.0 1.0
+      return Harness.firstFail [
+        (Harness.near r.flow.directKwh 1.0 0.000000001, s!"direct {r.flow.directKwh}, expected 1"),
+        (Harness.near r.flow.chargeKwh 2.0 0.000000001, s!"charge {r.flow.chargeKwh}, expected 2"),
+        (Harness.near r.flow.exportKwh 4.0 0.000000001, s!"export {r.flow.exportKwh}, expected 4"),
+        (Harness.near r.curtailedKwh 2.0 0.000000001, s!"curtailed {r.curtailedKwh}, expected 2")] },
   { name := "test_001_S6_R20_export_limit_curtails_with_full_battery"
     run := do
       let lim : Limits := { inverterKw := 5.0, exportKw := 2.0 }
