@@ -66,9 +66,9 @@
   - Given `--seed 9 --lat 45 --days 90`, when the person runs `sim policy compare`, then each row shows the values of `runHome` for its policy, and the `perfect-forecast` row those of the precomputed policy with an error scale of 0. (R15)
   - Given `--heat-hours 0`, when the person runs `sim policy compare`, then the `static` row equals the `thermostat` row. `--policy static` gives `error: UNKNOWN_OPTION: --policy`. (R15)
 - Layers: command, home simulation
-- Status: review
+- Status: done
 - Test rounds: 1
-- Review rounds: 1
+- Review rounds: 2
 
 ## S4: Test a policy over many years and tune the static profile
 

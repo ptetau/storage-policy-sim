@@ -30,8 +30,14 @@ The command is then at `.lake/build/bin/sim`. The toolchain is Lean 4.35.0.
 - `sim policy run [options]` simulates one home with one policy. See "The policy command".
 - `sim forecast [options]` prints the Solcast JSON of one forecast fetch and a line break.
   See "The forecast command".
-- Not built yet: `sim policy compare`, `sim policy robust`, `sim policy tune` and
-  `sim policy plan`. Each of them prints `error: not implemented` on stderr and exits with 3.
+- `sim policy compare [options]` simulates `thermostat` (the static policy with 0 heating
+  hours), `static`, `precomputed`, `dynamic` and `perfect-forecast` (the precomputed policy with
+  a forecast error of 0) on the same weather. The command prints a header and one row for each
+  policy: the self-consumption, the self-sufficiency, the import, the export, the curtailed
+  energy, the backstop heating and the starts each day, as plain numbers with one decimal. It
+  takes each option of `sim policy run` except `--policy`, which gives `UNKNOWN_OPTION`.
+- Not built yet: `sim policy robust`, `sim policy tune` and `sim policy plan`. Each of them
+  prints `error: not implemented` on stderr and exits with 3.
 
 For example:
 
