@@ -26,9 +26,9 @@
   - Given `--heat-hours 0`, when the person runs `sim policy run`, then the `heating` line is `heating           0.0 kWh` and the `backstop` value is more than 0.0 kWh. (R14)
   - Given `--policy wild`, when the person runs `sim policy run`, then stderr is `error: UNKNOWN_POLICY: wild (static, precomputed, dynamic)`, stdout is empty and the exit code is 2. (R14)
 - Layers: command, home simulation, policy, battery step
-- Status: red
-- Test rounds: 0
-- Review rounds: 0
+- Status: review
+- Test rounds: 1
+- Review rounds: 1
 
 ## S2: Run the precomputed and the dynamic policy
 

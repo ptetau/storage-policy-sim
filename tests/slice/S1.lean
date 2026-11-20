@@ -210,7 +210,14 @@ def tR2Window : IO (Option String) := do
     (Harness.near (chkHeatAt a h) 3.0 chkTol, s!"hour {h} asks {chkHeatAt a h}, want 3.0"))
   let outWin := ((List.range 24).filter (fun (h : Nat) => h < 10 || h > 13)).map (fun (h : Nat) =>
     (Harness.near (chkHeatAt a h) 0.0 chkTol, s!"hour {h} asks {chkHeatAt a h}, want 0"))
-  return Harness.firstFail ([(a.size == 24, s!"the profile has {a.size} actions, want 24")] ++ inWin ++ outWin)
+  let tank2 : TankConfig := { defaultTank with elementKw := 2.0 }
+  let b := staticProfile #[tank2] defaultStatic 3.0
+  let inWin2 := [10, 11, 12, 13].map (fun (h : Nat) =>
+    (Harness.near (chkHeatAt b h) 2.0 chkTol, s!"element 2.0: hour {h} asks {chkHeatAt b h}, want 2.0"))
+  let outWin2 := ((List.range 24).filter (fun (h : Nat) => h < 10 || h > 13)).map (fun (h : Nat) =>
+    (Harness.near (chkHeatAt b h) 0.0 chkTol, s!"element 2.0: hour {h} asks {chkHeatAt b h}, want 0"))
+  return Harness.firstFail ([(a.size == 24, s!"the profile has {a.size} actions, want 24"),
+    (b.size == 24, s!"the profile has {b.size} actions, want 24")] ++ inWin ++ outWin ++ inWin2 ++ outWin2)
 
 def chkP23 : StaticParams :=
   { defaultStatic with windows := #[({ heatStart := 23, heatHours := 5 } : TankWindow)] }
@@ -261,8 +268,17 @@ def chkScenario (r : HomeResult) : Option String := Id.run do
     let s := chkScen7[i]!
     if !(Harness.near hh.pvKwh s.pvKwh 0.000001) then
       return some s!"hour {i}: solar {hh.pvKwh}, scenario {s.pvKwh}"
-    if !(Harness.near hh.houseLoadKwh (s.baseLoadKwh + hh.flexKwh) 0.000001) then
-      return some s!"hour {i}: house load {hh.houseLoadKwh}, scenario base load {s.baseLoadKwh} plus flexible {hh.flexKwh}"
+    let flexWant := (chkProfile[s.hour]!).flexKwh
+    if !(Harness.near hh.flexKwh flexWant 0.000001) then
+      return some s!"hour {i}: flexible load {hh.flexKwh}, the static policy runs {flexWant}"
+    if !(Harness.near hh.houseLoadKwh (s.baseLoadKwh + flexWant) 0.000001) then
+      return some s!"hour {i}: house load {hh.houseLoadKwh}, scenario base load {s.baseLoadKwh} plus flexible {flexWant}"
+  for d in [0:r.hours.size / 24] do
+    let mut sum : Float := 0.0
+    for k in [0:24] do
+      sum := sum + (r.hours[d * 24 + k]!).flexKwh
+    if !(Harness.near sum defaultHome.site.flexKwh 0.000001) then
+      return some s!"day {d}: flexible energy {sum}, want {defaultHome.site.flexKwh}"
   return none
 
 def tR6Scenario : IO (Option String) := pure (chkScenario chkRun7)
