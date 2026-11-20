@@ -49,9 +49,9 @@
   - Given no options, when the person runs `sim forecast`, then stdout starts with `{"forecasts":[{"pv_estimate":`, has 96 periods, and the first `period_end` is `2024-12-31T13:00:00.0000000Z`. (R13)
   - Given `--hour 8760`, when the person runs `sim forecast`, then stderr is `error: OUT_OF_RANGE: --hour 8760 (0 to 8759)` and the exit code is 2. `--battery 5` gives `error: UNKNOWN_OPTION: --battery`. (R13)
 - Layers: command, home simulation, policy, forecast
-- Status: red
-- Test rounds: 0
-- Review rounds: 0
+- Status: review
+- Test rounds: 1
+- Review rounds: 1
 
 ## S3: Compare the policies and prove no cold tank
 

@@ -303,9 +303,12 @@ def t_forecast_options : IO (Option String) := do
   let o ← Harness.sim
     ["forecast", "--hour", "24", "--lon", "170", "--forecast-error", "0.5", "--lat", "45",
      "--pv", "6", "--days", "30", "--seed", "3"]
+  let afterFirst : String := ((o.out.splitOn "\"period_end\":\"")[1]?).getD ""
   return Harness.firstFail
     [ (o.code == 0, s!"exit code {o.code}, stderr: {o.err}")
-    , (o.out.startsWith "{\"forecasts\":[{\"pv_estimate\":", s!"stdout starts with {(o.out.take 60).toString}") ]
+    , (o.out.startsWith "{\"forecasts\":[{\"pv_estimate\":", s!"stdout starts with {(o.out.take 60).toString}")
+    , (afterFirst.startsWith "2025-01-01T13:00:00.0000000Z",
+        s!"first period_end after --hour 24: {(afterFirst.take 40).toString}") ]
 
 def errCheck (o : Harness.Out) (line : String) : Option String :=
   Harness.firstFail
