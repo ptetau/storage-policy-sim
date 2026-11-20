@@ -41,12 +41,14 @@ def errors_of(text, limit=6):
 def run_slice(path):
     """Results of one slice file: a list of (name, status, message)."""
     sid = os.path.basename(path)[:-5]
+    folder = os.path.basename(os.path.dirname(path))  # slice or slice2
+    target = "slicetest%s_%s" % (folder[5:], sid)
     names = list(dict.fromkeys(NAME.findall(open(path, encoding="utf-8").read())))
-    code, out, err = sh(["lake", "build", "slicetest_" + sid], 400)
+    code, out, err = sh(["lake", "build", target], 400)
     if code != 0:
         msg = "the test program does not compile: " + errors_of(out + err)
         return [(n, "error", msg) for n in names] or [("build_" + sid, "error", msg)]
-    exe = os.path.join(ROOT, ".lake", "build", "bin", "slicetest_" + sid)
+    exe = os.path.join(ROOT, ".lake", "build", "bin", target)
     env = {**ENV, "LEAN_ABORT_ON_PANIC": "1"}
     results, start = {}, 0
     for _ in range(len(names) + 2):
@@ -105,8 +107,8 @@ def main(argv):
     if code != 0:
         results.append(("build", "error", "lake build fails: " + errors_of(out + err)))
     else:
-        for path in sorted(glob.glob(os.path.join(ROOT, "tests", "slice", "S*.lean")),
-                           key=lambda p: int(re.sub(r"\D", "", os.path.basename(p)) or 0)):
+        for path in sorted(glob.glob(os.path.join(ROOT, "tests", "slice*", "S*.lean")),
+                           key=lambda p: (os.path.dirname(p), int(re.sub(r"\D", "", os.path.basename(p)) or 0))):
             results += run_slice(path)
         legacy = sorted(glob.glob(os.path.join(ROOT, "tests", "*.lean")) +
                         glob.glob(os.path.join(ROOT, "tests", "acceptance", "*.lean")))

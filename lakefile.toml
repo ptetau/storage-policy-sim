@@ -12,7 +12,7 @@ root = "Main"
 
 [[lean_lib]]
 name = "SliceTests"
-globs = ["tests.slice.+"]
+globs = ["tests.slice.+", "tests.slice2.+"]
 
 [[lean_exe]]
 name = "slicetest_S1"
@@ -61,3 +61,19 @@ root = "analysis.Monthly"
 [[lean_exe]]
 name = "nosensor"
 root = "analysis.NoSensor"
+
+[[lean_exe]]
+name = "slicetest2_S1"
+root = "tests.slice2.S1"
+
+[[lean_exe]]
+name = "slicetest2_S2"
+root = "tests.slice2.S2"
+
+[[lean_exe]]
+name = "slicetest2_S3"
+root = "tests.slice2.S3"
+
+[[lean_exe]]
+name = "slicetest2_S4"
+root = "tests.slice2.S4"

@@ -1,6 +1,6 @@
 # Interface
 
-Status: draft
+Status: approved
 
 Stack: a Lean 4 library (`StoragePolicySim`, namespace `StoragePolicySim`) and the `sim` command, as in spec 001. A test calls the library functions, or runs `sim` as a process.
 
