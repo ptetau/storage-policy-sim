@@ -71,8 +71,10 @@ def planArgs (extra : List String) : List String := ["policy", "plan"] ++ extra
 
 def mineHome : Home := (homeNamed "mine").getD defaultHome
 
+/-- The command gives no target, so the policy has an empty target list and each tank
+takes its own capacity as its target. -/
 def precomputedRun (home : Home) (seed days : Nat) : HomeResult :=
-  runHome home (Policy.precomputed defaultPlan) seed days
+  runHome home (Policy.precomputed { defaultPlan with targetKwh := #[] }) seed days
 
 /-- Runs `sim policy plan` and parses it. -/
 def getPlan (extra : List String) : IO (Except String (Array Row)) := do
