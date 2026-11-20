@@ -405,12 +405,58 @@ def tPhysTune : IO (Option String) := do
     ((ls.drop 6).headD "x" == "", s!"line 7 is '{(ls.drop 6).headD "x"}', want a blank line")] ++
     tableCheck r robustHeader (ls.drop 7))
 
+def oneDecimal (s : String) : Bool :=
+  match s.splitOn "." with
+  | [i, f] => i.toNat?.isSome && f.length == 1 && f.all Char.isDigit
+  | _ => false
+
 def tPhysPlan : IO (Option String) := do
   let r ← Harness.sim ["policy", "plan", "--model", "physics", "--days", "30"]
   let ls := splitLines r.out
-  return Harness.firstFail [
+  let nt := defaultHome.tanks.size
+  let header : List String :=
+    ["hour", "forecast-kWh"] ++ (List.range nt).map (fun (i : Nat) => s!"tank{i + 1}-kWh") ++ ["discharge"]
+  let rows := ls.drop 1
+  let rowChecks : List (Bool × String) := (List.range rows.length).flatMap (fun (k : Nat) =>
+    let l := rows.getD k ""
+    let w := words l
+    [((w.headD "") == toString k, s!"row {k} is '{l}', want the hour {k} first"),
+     (w.length == 3 + nt, s!"row {k} has {w.length} words, want {3 + nt}: '{l}'"),
+     ((w.drop 1).dropLast.all oneDecimal, s!"row {k} has a number without one decimal or with a unit: '{l}'"),
+     (w.getLast? == some "yes" || w.getLast? == some "no", s!"row {k} does not end with yes or no: '{l}'")])
+  return Harness.firstFail ([
     (r.code == 0, s!"exit code {r.code}; stderr: {r.err}"),
-    (ls.length == 25, s!"{ls.length} lines, want 25 (a header and 24 rows); stderr: {r.err}")]
+    (ls.length == 25, s!"{ls.length} lines, want 25 (a header and 24 rows); stderr: {r.err}"),
+    (words (ls.headD "") == header, s!"header is '{ls.headD ""}', want {header}")] ++ rowChecks)
+
+def weakHome : Home :=
+  { defaultHome with tanks := defaultHome.tanks.map (fun (t : TankConfig) => { t with elementKw := 0.2 }) }
+
+def polNoHeat : Policy :=
+  Policy.static { defaultStatic with windows := #[({ heatStart := 10, heatHours := 0 } : TankWindow)] }
+
+def tColdHoursCount : IO (Option String) := do
+  let home := weakHome
+  let r := runPhysics home polNoHeat 7 30
+  let lat := home.site.latitude
+  let nt := home.tanks.size
+  let mut count : Nat := 0
+  for d in [0:30] do
+    let inlet := inletTempC lat d
+    for hr in [0:24] do
+      for t in [0:nt] do
+        let cfg := home.tanks[t]!
+        let litres := (physTankOf cfg).litres
+        let full := litres * kwhPerLitreK * (60.0 - inlet)
+        let floorShare := cfg.floorKwh / cfg.capacityKwh
+        let x := (r.hours[d * 96 + 4 * hr + 3]!).tanks[t]!
+        if x.energyKwh / full < floorShare then
+          count := count + 1
+  return Harness.firstFail [
+    (r.hours.size == 2880, s!"the run has {r.hours.size} records, want 2880"),
+    (count > 0, "no tank-hour is cold in the run: the test needs a weak element"),
+    (r.totals.coldHours == count,
+      s!"coldHours is {r.totals.coldHours}, want {count} (tank-hours below the floor at the last step of the hour)")]
 
 def usesPhysics (cmd : String) (extra : List String) : IO (Option String) := do
   let a ← Harness.sim (["policy", cmd, "--model", "physics", "--days", "30"] ++ extra)
@@ -474,6 +520,8 @@ def tests : List Harness.Test := [
   mk "test_002_S4_R12_physics_robust_prints_its_table" tPhysRobust,
   mk "test_002_S4_R12_physics_robust_differs_from_simple" (usesPhysics "robust" ["--seeds", "2"]),
   mk "test_002_S4_R12_physics_tune_prints_its_lines_and_table" tPhysTune,
+  mk "test_002_S4_R11_cold_hours_count_hours_not_steps" tColdHoursCount,
+  mk "test_002_S4_R12_physics_tune_differs_from_simple" (usesPhysics "tune" ["--seeds", "2"]),
   mk "test_002_S4_R12_physics_plan_prints_header_and_24_rows" tPhysPlan,
   mk "test_002_S4_R12_physics_plan_differs_from_simple" (usesPhysics "plan" []),
   mk "test_002_S4_R12_unknown_model_gives_error_and_exit_2" tUnknownModel,
