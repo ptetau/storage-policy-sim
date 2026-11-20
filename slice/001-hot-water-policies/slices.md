@@ -43,7 +43,7 @@
   - Given the same levels and no surplus, when the tank holds 3.0 kWh and the forecast for the rest of the day is 0.5 kWh, then the tank asks for 1.0 kWh. With a forecast of 1.0 kWh it asks for 0 kWh. (R4)
   - Given the defaults, when they are read, then `defaultPlan` has a target of 10.5 kWh, a minimum forecast of 0.5 kWh and discharge from 17, and `defaultDynamic` has a low level of 5.25 kWh, a target of 10.5 kWh and discharge from 17. The names are `static`, `precomputed` and `dynamic`. (R5)
   - Given the precomputed policy, a forecast error of 0, 1 fetch each day and seed 7, when each hour of a 365-day run is read, then the tank asks for heat only in hours with at least 0.5 kWh of solar energy. (R9)
-  - Given the dynamic policy and seed 7, when each hour is read, then the tank asks for heat only in an hour whose solar energy is more than its house load, or whose tank held less than 5.25 kWh. (R9)
+  - Given the dynamic policy and seed 7, when each hour is read, then the tank asks for heat only in an hour whose solar energy is more than its house load, or whose tank held less than 5.25 kWh, or in which it keeps heating a tank that it asked to heat in the hour before (D26). (R9)
   - Given seed 7, when the default static, the default dynamic and the static policy with 0 heating hours run, then the first two each have a higher self-consumption than the third. (R9)
   - Given `--policy dynamic --days 30 --seed 9`, when the person runs `sim policy run`, then the first line shows `dynamic` and the values equal the totals of `runHome`. (R9)
   - Given no options, when the person runs `sim forecast`, then stdout starts with `{"forecasts":[{"pv_estimate":`, has 96 periods, and the first `period_end` is `2024-12-31T13:00:00.0000000Z`. (R13)
@@ -152,9 +152,9 @@
   - Given each home of D20, each default policy and the seeds 1 to 3, when each day of a 365-day run is read, then each tank has at most 2 policy starts and the battery gate changes at most 2 times. (R25)
   - Given the home `generic`, when the person runs `sim policy run`, then the `starts-per-day` value equals the policy starts of the tanks of `runHome` divided by the days, with one decimal. (R25)
 - Layers: command, home simulation, policy
-- Status: red
-- Test rounds: 0
-- Review rounds: 0
+- Status: review
+- Test rounds: 1
+- Review rounds: 1
 
 ## S9: Print the plan of a day
 

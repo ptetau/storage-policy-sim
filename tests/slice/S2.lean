@@ -234,19 +234,21 @@ def t_dynamic_hours : IO (Option String) := do
   let mut bad := 0
   let mut firstBad := ""
   let mut prev : Float := 10.5
+  let mut prevAsk : Float := 0.0
   for h in res.hours do
     let t : TankHour := (h.tanks[0]?).getD default
     if t.askKwh > 0.000000000001 then
       asks := asks + 1
-      if !(h.pvKwh > h.houseLoadKwh - 0.000000001 || prev < 5.25) then
+      if !(h.pvKwh > h.houseLoadKwh - 0.000000001 || prev < 5.25 || prevAsk > 0.000000000001) then
         bad := bad + 1
         if firstBad == "" then
-          firstBad := s!"day {h.day} hour {h.hour} solar {h.pvKwh} load {h.houseLoadKwh} tank before {prev} ask {t.askKwh}"
+          firstBad := s!"day {h.day} hour {h.hour} solar {h.pvKwh} load {h.houseLoadKwh} tank before {prev} ask before {prevAsk} ask {t.askKwh}"
     prev := t.energyKwh
+    prevAsk := t.askKwh
   return Harness.firstFail
     [ (res.hours.size == 8760, s!"{res.hours.size} hours")
     , (asks > 0, "the tank never asks for heat")
-    , (bad == 0, s!"{bad} hours ask for heat with no surplus and a tank at the low level or more, the first: {firstBad}") ]
+    , (bad == 0, s!"{bad} hours ask for heat with no surplus, a tank at the low level or more, and no request in the hour before, the first: {firstBad}") ]
 
 def t_static_beats_thermostat : IO (Option String) := do
   let s := (runHome myHome (Policy.static staticDefault) 7 365).totals.selfConsumption
