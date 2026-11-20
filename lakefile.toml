@@ -57,3 +57,7 @@ globs = ["analysis.+"]
 [[lean_exe]]
 name = "monthly"
 root = "analysis.Monthly"
+
+[[lean_exe]]
+name = "nosensor"
+root = "analysis.NoSensor"
