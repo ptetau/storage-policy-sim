@@ -3,11 +3,9 @@ The physics model of the battery, the flexible appliances and the base load (spe
 D12 and D15).
 -/
 import StoragePolicySim.Simulation
+import StoragePolicySim.PhysWeather
 
 namespace StoragePolicySim
-
-/-- The length of a step in hours. -/
-private def stepHours : Float := 0.25
 
 /-- The standby energy of the battery in a step: 0.01 kW. -/
 private def standbyKwh : Float := 0.01 * stepHours

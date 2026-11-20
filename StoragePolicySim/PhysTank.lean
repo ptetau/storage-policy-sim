@@ -3,6 +3,7 @@ The physics model of a hot-water tank in litres and degrees: a hot layer at the 
 cold water at the inlet temperature.
 -/
 import StoragePolicySim.HotWater
+import StoragePolicySim.PhysWeather
 
 namespace StoragePolicySim
 
@@ -27,12 +28,6 @@ private def roomC : Float := 18.0
 
 /-- The temperature of the water at the tap, in degrees Celsius. -/
 private def tapC : Float := 40.0
-
-/-- The hours in a step: a step is a quarter of an hour. -/
-private def stepHours : Float := 0.25
-
-/-- The steps in a day. -/
-private def stepsPerDay : Nat := 96
 
 /-- A tank is full when its hot litres are within this many litres of its volume. -/
 private def fullToleranceLitres : Float := 1e-9

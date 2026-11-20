@@ -11,12 +11,6 @@ import StoragePolicySim.PhysAppliances
 
 namespace StoragePolicySim
 
-/-- The steps in an hour. -/
-private def stepsPerHour : Nat := 4
-
-/-- The length of a step in hours. -/
-private def stepLengthHours : Float := 0.25
-
 /-- The temperature rise of the draw at the tap in the litres rule of D15: 26 degrees. -/
 private def tapRiseK : Float := 26.0
 
@@ -64,8 +58,8 @@ private def physPre (home : Home) (seed days : Nat) : PhysPre := Id.run do
         let clear := stepClearness[stepsPerDay * day + step]!
         let kw := home.arrays.foldl (init := 0.0) fun sum array =>
           sum + arrayKw array (panelWm2 latitude array dayOfYear step clear) airC
-        let solarStep := kw * stepLengthHours
-        let baseStep := baseLoadKw baseDailyKwh latitude dayOfYear step * stepLengthHours
+        let solarStep := kw * stepHours
+        let baseStep := baseLoadKw baseDailyKwh latitude dayOfYear step * stepHours
         solar := solar.push solarStep
         base := base.push baseStep
         pvKwh := pvKwh + solarStep
@@ -214,7 +208,7 @@ private def runPhysicsOn (home : Home) (policy : Policy) (seed days : Nat) (pre 
           sums := bump sums slotDrawn (result.servedKwh + result.unmetKwh)
           sums := bump sums slotUnmet result.unmetKwh
           minTank := minTank.set! i (min (minTank.get! i) energyKwh)
-          if result.state.hotLitres / tank.litres < tank.floorShare then
+          if quarter == stepsPerHour - 1 && result.state.hotLitres / tank.litres < tank.floorShare then
             coldHours := coldHours + 1
           if record then
             tankHours := tankHours.push

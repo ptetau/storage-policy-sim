@@ -8,6 +8,12 @@ namespace StoragePolicySim
 /-- The steps of a day: a step is a quarter of an hour. -/
 def stepsPerDay : Nat := 96
 
+/-- The steps in an hour. -/
+def stepsPerHour : Nat := 4
+
+/-- The length of a step in hours. -/
+def stepHours : Float := 0.25
+
 private def pi : Float := 3.141592653589793
 
 private def radians (deg : Float) : Float := deg * pi / 180

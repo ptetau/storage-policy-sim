@@ -53,7 +53,7 @@
   - Given a daily base load of 17 kWh at latitude -41.3, when the steps of 365 days are added (kW times 0.25), then the sum is 6205 kWh, within 1%. Step 76 (19:00) of day 100 is more than step 12 (03:00). (R10)
   - Given the same home, when the steps of day 197 (winter) and day 15 (summer) are added, then winter is more, because the lights run longer. (R10)
 - Layers: appliance library
-- Status: review
+- Status: done
 - Test rounds: 1
 - Review rounds: 3
 

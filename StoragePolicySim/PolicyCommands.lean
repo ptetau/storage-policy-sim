@@ -291,7 +291,7 @@ private def PolicyLine.policyOf (line : PolicyLine) : Policy :=
 
 /-! ## The model of the options -/
 
-/-- True when `--model physics` is typed last. -/
+/-- True when the model of the options is physics. -/
 private def PolicyLine.physics (line : PolicyLine) : Bool := line.model == "physics"
 
 /-- One run of the model of the options. -/
@@ -497,7 +497,7 @@ private def policyPlan (words : List String) : Except Problem (List String) := d
     let forecast := if line.physics then physDayForecast home seed days day
       else dayForecast home seed days day
     -- The records of an hour: one in the simple model, 4 steps in the physics model.
-    let perHour := if line.physics then 4 else 1
+    let perHour := if line.physics then stepsPerHour else 1
     let rows := (List.range hoursInDay).map fun hour =>
       let first := perHour * (hoursInDay * day + hour)
       let records := result.hours.extract first (first + perHour)
