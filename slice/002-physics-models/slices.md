@@ -35,7 +35,7 @@
   - Given a tank with a cut-in share of 0.5 and a hot share of 0.45, when one step runs with no request, then the backstop heats 0.825 kWh and the thermostat is on. With a hot share of 0.55 the backstop is 0 kWh. A thermostat that is on stays on until the tank is all hot. (R7)
   - Given a tank that was not all hot today and a guard hour of 20, when step 80 runs, then the backstop heats. At step 79 it does not. A tank that was all hot today gets no guard heating. Step 0 starts a new day. (R7)
 - Layers: tank library
-- Status: review
+- Status: done
 - Test rounds: 1
 - Review rounds: 1
 
