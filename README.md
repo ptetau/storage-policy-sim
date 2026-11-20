@@ -28,9 +28,10 @@ The command is then at `.lake/build/bin/sim`. The toolchain is Lean 4.35.0.
   self-consumption, the self-sufficiency, the import and the export.
 - `sim policy` and `sim policy help` print the usage of `sim policy`.
 - `sim policy run [options]` simulates one home with one policy. See "The policy command".
-- Not built yet: `sim policy compare`, `sim policy robust`, `sim policy tune`,
-  `sim policy plan` and `sim forecast`. Each of them prints `error: not implemented` on
-  stderr and exits with 3.
+- `sim forecast [options]` prints the Solcast JSON of one forecast fetch and a line break.
+  See "The forecast command".
+- Not built yet: `sim policy compare`, `sim policy robust`, `sim policy tune` and
+  `sim policy plan`. Each of them prints `error: not implemented` on stderr and exits with 3.
 
 For example:
 
@@ -71,8 +72,12 @@ command prints 15 lines, one label and one value on each line: `policy`, `days`,
 `cold-hours`, `starts-per-day`, `self-consumption` and `self-sufficiency`. The energy lines
 are in kWh and the two ratio lines are in percent.
 
-The policy `static` is built. The names `precomputed` and `dynamic` are accepted, and their
-runs are not built yet.
+The three policies are built. The policy `static` repeats one heating window each day. The
+policy `precomputed` plans each day at hour 0 from the forecast: it heats in the sunniest hours
+with at least `--min-solar` kWh of forecast, until the tank reaches `--target`. The policy
+`dynamic` decides each hour: it heats with the solar surplus up to `--target`, and heats below
+`--low` when the forecast for the rest of the day is too small. Each policy runs the flexible
+load in 3 parts from 18:00.
 
 Each option takes one value, and the last value counts. The options `--days`, `--seed`,
 `--lat`, `--pv`, `--battery`, `--power`, `--load` and `--flex` are the same as in the table
@@ -96,6 +101,20 @@ above. The other options are these:
 | `--target` | The kWh that a policy heats the tank to | 10.5 | 0 to 50 |
 | `--min-solar` | The kWh of forecast that an hour needs to heat | 0.5 | 0 to 10 |
 | `--low` | The kWh below which a dynamic policy heats | 5.25 | 0 to 50 |
+
+## The forecast command
+
+`sim forecast [options]` prints the simulated Solcast JSON of the fetch at one hour of the run,
+and a line break. The JSON holds 96 periods of 30 minutes (48 hours). The options are
+`--lat`, `--pv`, `--days` and `--seed` as above, and these:
+
+| Option | Meaning | Default | Range |
+|---|---|---|---|
+| `--hour` | The hour of the run of the fetch, a whole number | 0 | 0 to 24 × days - 1 |
+| `--lon` | The longitude in degrees, east is positive | 174.8 | -180 to 180 |
+| `--forecast-error` | The scale of the forecast error | 1 | 0 to 5 |
+
+Any other option gives `UNKNOWN_OPTION`.
 
 ## Repeatable weather
 

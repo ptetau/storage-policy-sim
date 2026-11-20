@@ -1,8 +1,8 @@
 /-
 The simulation of a home with a policy, the evaluation over seeds, and the tuner. Built: the
-structures, `defaultHome`, and `runHome` for the static policy and one flat array. Not built yet:
-`homeNames` (a placeholder), `homeNamed`, `evaluate` and `tuneStatic` (stubs), `runHome` for the
-precomputed and the dynamic policy, and the panel arrays other than one flat array.
+structures, `defaultHome`, and `runHome` for the three policies and one flat array. Not built yet:
+`homeNames` (a placeholder), `homeNamed`, `evaluate` and `tuneStatic` (stubs), and the panel
+arrays other than one flat array.
 -/
 import StoragePolicySim.Policy
 import StoragePolicySim.Simulation
@@ -101,13 +101,12 @@ structure HomeResult where
 the scenario. Not built yet for other arrays (the slice of the panel arrays owns them). -/
 private def solarOf (_home : Home) (hour : Hour) : Float := hour.pvKwh
 
-/-- The 24 actions of a day. The static policy repeats one profile each day. Not built yet for
-the precomputed and the dynamic policy. -/
-private def dayActions (home : Home) (policy : Policy) : Array Action :=
-  match policy with
-  | .static params => staticProfile home.tanks params home.site.flexKwh
-  | .precomputed _ => todo "runHome precomputed policy" 0
-  | .dynamic _ => todo "runHome dynamic policy" 0
+/-- The expected draw of each tank in a day: the draw profile with the season, and without the
+random factor of the day. -/
+private def expectedDraw (home : Home) (dayOfYear : Nat) : Array Float :=
+  (Array.range home.tanks.size).map fun i =>
+    (Array.range hoursInDay).foldl (init := 0.0) fun sum hour =>
+      sum + drawKwh (home.drawKwhPerDay * home.drawShares[i]!) home.site.latitude dayOfYear hour
 
 /-- The sum of a value over the hours of a run. -/
 private def sumHours (hours : Array HomeHour) (value : HomeHour → Float) : Float :=
@@ -119,9 +118,12 @@ private def sumTankHours (hours : Array HomeHour) (value : TankHour → Float) :
 
 /-- One run of a home with a policy, from a full tank and an empty battery on 1 January. In each
 hour, the policy gives its action, each tank runs its hour, the heating and the backstop heating
-join the house load, and the battery runs its hour. -/
+join the house load, and the battery runs its hour. A precomputed policy plans at hour 0 of each
+day, from the forecast of the fetch at hour 0. A dynamic policy reads the latest fetch. The
+flexible load of each policy runs as the static default does. -/
 def runHome (home : Home) (policy : Policy) (seed days : Nat) : HomeResult := Id.run do
   let scenarioHours := scenario home.site seed days
+  let flexHours := flexProfile home.site.flexKwh defaultStatic.flexStart
   let mut states := home.tanks.map startState
   let mut minTankKwh := home.tanks.map (·.capacityKwh)
   let mut asked := Array.replicate home.tanks.size false
@@ -129,12 +131,46 @@ def runHome (home : Home) (policy : Policy) (seed days : Nat) : HomeResult := Id
   let mut tankLossKwh := 0.0
   let mut coldHours := 0
   let mut policyStarts := 0
+  let mut startsToday := Array.replicate home.tanks.size 0
+  let mut flexToday := 0.0
+  let mut fetchedAt : Option Nat := none
+  let mut fetchedKwh : Array Float := #[]
   let mut hours : Array HomeHour := Array.mkEmpty scenarioHours.size
   for day in [0:days] do
-    let actions := dayActions home policy
+    startsToday := Array.replicate home.tanks.size 0
+    flexToday := 0.0
+    let mut dayPlan : Array Action := #[]
+    match policy with
+    | .static params => dayPlan := staticProfile home.tanks params home.site.flexKwh
+    | .precomputed params =>
+      let fetch := hoursInDay * day
+      let forecastKwh := (hourlyEnergy (forecastOf scenarioHours home.site seed home.errorScale
+        fetch) fetch).extract 0 hoursInDay
+      dayPlan := planDay home.tanks params forecastKwh (states.map (·.energyKwh))
+        (expectedDraw home scenarioHours[fetch]!.dayOfYear) home.site.flexKwh
+    | .dynamic _ => pure ()
     let factor := drawFactor seed day home.drawCv
     for scenarioHour in scenarioHours.extract (hoursInDay * day) (hoursInDay * (day + 1)) do
-      let action := actions[scenarioHour.hour]!
+      let pvKwh := solarOf home scenarioHour
+      let hourOfRun := hoursInDay * day + scenarioHour.hour
+      let mut action := dayPlan[scenarioHour.hour]?.getD default
+      if let .dynamic params := policy then
+        let fetch := latestFetch home.fetchesPerDay hourOfRun
+        if fetchedAt != some fetch then
+          fetchedKwh := hourlyEnergy (forecastOf scenarioHours home.site seed home.errorScale
+            fetch) fetch
+          fetchedAt := some fetch
+        let mut forecastRestKwh := 0.0
+        for k in [hourOfRun + 1 - fetch : hoursInDay * (day + 1) - fetch] do
+          forecastRestKwh := forecastRestKwh + fetchedKwh[k]?.getD 0.0
+        let flexKwh := flexHours[scenarioHour.hour]!
+        let observation : Observation :=
+          { hour := scenarioHour.hour, tankKwh := states.map (·.energyKwh),
+            socKwh := socKwh,
+            surplusKwh := max 0.0 (pvKwh - (scenarioHour.baseLoadKwh + flexKwh)),
+            forecastRestKwh, flexLeftKwh := home.site.flexKwh - flexToday, startsToday,
+            askedLastHour := asked }
+        action := { dynamicAction home.tanks params observation with flexKwh }
       let mut tankHours : Array TankHour := Array.mkEmpty home.tanks.size
       let mut tankLoadKwh := 0.0
       for i in [0:home.tanks.size] do
@@ -148,14 +184,16 @@ def runHome (home : Home) (policy : Policy) (seed days : Nat) : HomeResult := Id
         tankLoadKwh := tankLoadKwh + step.heatKwh + step.backstopKwh
         minTankKwh := minTankKwh.set! i (min minTankKwh[i]! step.state.energyKwh)
         if step.state.energyKwh < tank.floorKwh then coldHours := coldHours + 1
-        if askKwh > 0 && !asked[i]! then policyStarts := policyStarts + 1
+        if askKwh > 0 && !asked[i]! then
+          policyStarts := policyStarts + 1
+          startsToday := startsToday.modify i (· + 1)
         asked := asked.set! i (askKwh > 0)
         let tankHour : TankHour :=
           { drawKwh := drawKwh, askKwh := askKwh, heatKwh := step.heatKwh,
             backstopKwh := step.backstopKwh, unmetKwh := step.unmetKwh,
             energyKwh := step.state.energyKwh }
         tankHours := tankHours.push tankHour
-      let pvKwh := solarOf home scenarioHour
+      flexToday := flexToday + action.flexKwh
       let houseLoadKwh := scenarioHour.baseLoadKwh + action.flexKwh
       let flow := stepHourGated home.battery socKwh action.allowCharge action.allowDischarge
         pvKwh (houseLoadKwh + tankLoadKwh)

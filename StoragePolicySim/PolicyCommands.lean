@@ -1,17 +1,11 @@
 /-
-The `sim forecast` and `sim policy` commands. `sim forecast` and the policy commands `compare`,
-`robust`, `tune` and `plan` are not built yet.
+The `sim forecast` and `sim policy` commands. Built: `sim forecast` and `sim policy run`. The
+policy commands `compare`, `robust`, `tune` and `plan` are not built yet.
 -/
 import StoragePolicySim.Cli
 import StoragePolicySim.HomeSim
 
 namespace StoragePolicySim
-
-/-- Runs `sim forecast` with its words. Not built yet. -/
-def forecastCommand (words : List String) : IO UInt32 := do
-  let _ := words
-  IO.eprintln "error: not implemented"
-  return 3
 
 /-! ## Options of `sim policy run` -/
 
@@ -130,13 +124,19 @@ private def PolicyLine.home (line : PolicyLine) : Home :=
 /-- The policy of the options. -/
 private def PolicyLine.policyOf (line : PolicyLine) : Policy :=
   let dischargeFrom := wholeIn line.numbers dischargeFromOption
+  -- A value that is not typed stays out of the array: the tank gives the default.
+  let typedArray (option : NumberOption) : Array Float :=
+    match typedIn line.numbers option.flag with
+    | some typed => #[typed.value]
+    | none => #[]
+  let targets := typedArray targetOption
+  let lows := typedArray lowOption
   match line.policy with
   | "precomputed" =>
-    .precomputed { targetKwh := #[numberIn line.numbers targetOption],
+    .precomputed { targetKwh := targets,
                    minSolarKwh := numberIn line.numbers minSolarOption, dischargeFrom }
   | "dynamic" =>
-    .dynamic { lowKwh := #[numberIn line.numbers lowOption],
-               targetKwh := #[numberIn line.numbers targetOption], dischargeFrom }
+    .dynamic { lowKwh := lows, targetKwh := targets, dischargeFrom }
   | _ =>
     .static { windows := #[{ heatStart := wholeIn line.numbers heatStartOption,
                              heatHours := wholeIn line.numbers heatHoursOption }],
@@ -145,12 +145,13 @@ private def PolicyLine.policyOf (line : PolicyLine) : Policy :=
 /-! ## Output -/
 
 /-- The 15 lines of `sim policy run`. -/
-private def policyRunLines (line : PolicyLine) (totals : HomeTotals) : List String :=
+private def policyRunLines (line : PolicyLine) (policy : Policy) (totals : HomeTotals) :
+    List String :=
   let days := wholeIn line.numbers daysOption
   let energy (label : String) (kwh : Float) := labelledLine label (oneDecimal kwh ++ " kWh")
   let ratio (label : String) (percent : Float) := labelledLine label (oneDecimal percent ++ " %")
   let startsPerDay := if days == 0 then 0.0 else totals.policyStarts.toFloat / days.toFloat
-  [labelledLine "policy" line.policy,
+  [labelledLine "policy" policy.name,
    labelledLine "days" (toString days),
    labelledLine "seed" (toString (wholeIn line.numbers seedOption)),
    energy "solar" totals.pvKwh, energy "load" totals.loadKwh,
@@ -168,9 +169,10 @@ private def policyRun (words : List String) : Except Problem (List String) := do
   match rangeProblemIn runOptions line.numbers with
   | some problem => .error problem
   | none =>
-    let result := runHome line.home line.policyOf (wholeIn line.numbers seedOption)
+    let policy := line.policyOf
+    let result := runHome line.home policy (wholeIn line.numbers seedOption)
       (wholeIn line.numbers daysOption)
-    .ok (policyRunLines line result.totals)
+    .ok (policyRunLines line policy result.totals)
 
 /-- The usage of `sim policy`. -/
 private def policyUsage : List String :=
@@ -187,6 +189,59 @@ private def finish (outcome : Except Problem (List String)) : IO UInt32 := do
   | .error problem =>
     IO.eprintln problem.line
     return 2
+
+/-! ## The command `sim forecast` -/
+
+/-- The `--lon` option of `sim forecast`. -/
+private def lonOption : NumberOption :=
+  policyNumberOption "--lon" "longitude in degrees, east is positive" 174.8 (-180) 180
+
+/-- The `--hour` option of `sim forecast`, with the last hour of a run of `days` days. -/
+private def hourOption (days : Nat) : NumberOption :=
+  policyNumberOption "--hour" "hour of the run that the fetch is made" 0 0
+    ((hoursInDay * days).toFloat - 1) (wholeOnly := true)
+
+/-- The `--hour` option for the reading step: the widest true range, that of the most days. -/
+private def hourReadOption : NumberOption :=
+  hourOption daysOption.highest.toUInt64.toNat
+
+/-- The `--forecast-error` option, as `sim policy run` has it. -/
+private def forecastErrorOption : NumberOption := drawOptions[3]!
+
+/-- Reads each option of `sim forecast` and its value, from left to right. The first problem
+stops the reading. The last typed value is first in the list. -/
+private def readForecastOptions (options : List NumberOption) :
+    List (String × TypedNumber) → List String → Except Problem (List (String × TypedNumber))
+  | numbers, [] => .ok numbers
+  | numbers, flag :: rest =>
+    match numberOptionIn options flag, rest with
+    | none, _ => .error (.unknownOption flag)
+    | some _, [] => .error (.missingValue flag)
+    | some option, value :: afterValue => do
+      let typed ← readTyped option value
+      readForecastOptions options ((flag, typed) :: numbers) afterValue
+
+/-- The Solcast JSON of one fetch, or the first problem of the options. -/
+private def forecastRun (words : List String) : Except Problem (List String) := do
+  let readable := [hourReadOption, lonOption, forecastErrorOption, latitudeOption, pvOption,
+    daysOption, seedOption]
+  let numbers ← readForecastOptions readable [] words
+  let days := wholeIn numbers daysOption
+  let options := [daysOption, seedOption, latitudeOption, pvOption, hourOption days, lonOption,
+    forecastErrorOption]
+  match rangeProblemIn options numbers with
+  | some problem => .error problem
+  | none =>
+    let site := { defaultHome.site with latitude := numberIn numbers latitudeOption,
+                                         pvKw := numberIn numbers pvOption }
+    let seed := wholeIn numbers seedOption
+    let fetchHour := wholeIn numbers (hourOption days)
+    let periods := forecastOf (scenario site seed days) site seed
+      (numberIn numbers forecastErrorOption) fetchHour
+    .ok [forecastJson periods (numberIn numbers lonOption)]
+
+/-- Runs `sim forecast` with its words: prints the Solcast JSON of one fetch. -/
+def forecastCommand (words : List String) : IO UInt32 := finish (forecastRun words)
 
 /-- Runs `sim policy` with its words. The commands `compare`, `robust`, `tune` and `plan` are not
 built yet. -/

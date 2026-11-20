@@ -1,10 +1,10 @@
 /-
 The policies of the hot-water tanks, the battery and the flexible load. Built: the structures,
-`defaultStatic` and `staticProfile`. Not built yet: `Policy.name`, `planDay` and `dynamicAction`
-(stubs), and `defaultPlan` and `defaultDynamic` (placeholders).
+the defaults, `Policy.name`, `staticProfile`, `planDay` and `dynamicAction`. The flexible load of
+each policy runs as the static default does (3 parts from 18). Shifting it, and the limit of 2
+starts in a day, are not built yet.
 -/
 import StoragePolicySim.HotWater
-import StoragePolicySim.Stub
 
 namespace StoragePolicySim
 
@@ -50,27 +50,41 @@ inductive Policy where
   | dynamic (p : DynamicParams)
   deriving Repr, Inhabited
 
-/-- The name of a policy. Not built yet. -/
-def Policy.name (policy : Policy) : String :=
-  let _ := policy
-  todo "Policy.name" 0
+/-- The name of a policy: `static`, `precomputed` or `dynamic`. -/
+def Policy.name : Policy → String
+  | .static _ => "static"
+  | .precomputed _ => "precomputed"
+  | .dynamic _ => "dynamic"
 
 /-- The default static policy: heat from 10:00 for 4 hours, discharge from 17:00, and run the
 flexible load from 18:00. -/
 def defaultStatic : StaticParams :=
   { windows := #[{ heatStart := 10, heatHours := 4 }], dischargeFrom := 17, flexStart := 18 }
 
-/-- A placeholder. Not built yet. -/
-def defaultPlan : PlanParams := default
+/-- The default precomputed policy: heat to a full tank, in hours with a forecast of at least
+0.5 kWh, and discharge from 17:00. -/
+def defaultPlan : PlanParams :=
+  { targetKwh := #[defaultTank.capacityKwh], minSolarKwh := 0.5, dischargeFrom := 17 }
 
-/-- A placeholder. Not built yet. -/
-def defaultDynamic : DynamicParams := default
+/-- The default dynamic policy: heat below 5.25 kWh, heat to a full tank, and discharge from
+17:00. -/
+def defaultDynamic : DynamicParams :=
+  { lowKwh := #[defaultTank.cutInKwh], targetKwh := #[defaultTank.capacityKwh],
+    dischargeFrom := 17 }
 
 /-- The hours in a day. -/
 def hoursInDay : Nat := 24
 
 /-- The parts that the flexible load of a day runs in. -/
 def flexParts : Nat := 3
+
+/-- The flexible load of each hour of a day, in 3 equal parts from `flexStart`, in fewer and
+larger parts when the day ends first. -/
+def flexProfile (flexDayKwh : Float) (flexStart : Nat) : Array Float :=
+  let parts := min flexParts (hoursInDay - flexStart)
+  let partKwh := if parts == 0 then 0.0 else flexDayKwh / parts.toFloat
+  (Array.range hoursInDay).map fun hour =>
+    if flexStart ≤ hour && hour < flexStart + parts then partKwh else 0.0
 
 /-- The window of a tank: window `i`, or the last window when there are fewer. -/
 def StaticParams.windowOf (params : StaticParams) (tank : Nat) : Option TankWindow :=
@@ -82,8 +96,7 @@ the window stops at the end of the day. The battery may always charge, and may d
 parts when the day ends first. -/
 def staticProfile (tanks : Array TankConfig) (params : StaticParams) (flexDayKwh : Float) :
     Array Action :=
-  let parts := min flexParts (hoursInDay - params.flexStart)
-  let partKwh := if parts == 0 then 0.0 else flexDayKwh / parts.toFloat
+  let flex := flexProfile flexDayKwh params.flexStart
   (Array.range hoursInDay).map fun hour =>
     let heatKwh := tanks.mapIdx fun i tank =>
       match params.windowOf i with
@@ -92,14 +105,45 @@ def staticProfile (tanks : Array TankConfig) (params : StaticParams) (flexDayKwh
         then tank.elementKw else 0.0
       | none => 0.0
     { heatKwh, allowCharge := true, allowDischarge := params.dischargeFrom ≤ hour,
-      flexKwh := if params.flexStart ≤ hour && hour < params.flexStart + parts then partKwh
-        else 0.0 }
+      flexKwh := flex[hour]! }
 
-/-- The 24 actions of a precomputed policy for one day. Not built yet. -/
+/-- The heating of one tank in each hour of a day. The tank takes the hours with a forecast of at
+least `minSolarKwh`, from the highest forecast to the lowest (a tie goes to the earlier hour),
+at its element power each, until the need is met. The last hour gets only the rest of the
+need. -/
+private def planTank (elementKw minSolarKwh need : Float) (forecastKwh : Array Float) :
+    Array Float :=
+  let forecastAt (hour : Nat) := forecastKwh[hour]?.getD 0.0
+  let sunny := (Array.range hoursInDay).filter fun hour => forecastAt hour ≥ minSolarKwh
+  let ranked := sunny.qsort fun a b =>
+    forecastAt a > forecastAt b || (forecastAt a == forecastAt b && a < b)
+  let (heat, _) := ranked.foldl (init := (Array.replicate hoursInDay 0.0, need))
+    fun (heat, left) hour =>
+      if left > 0 then
+        let ask := min elementKw left
+        (heat.set! hour ask, left - ask)
+      else (heat, left)
+  heat
+
+/-- The 24 actions of a precomputed policy for one day. The need of a tank is its target less its
+energy plus its expected draw, and never less than 0. Each tank plans in turn, and the forecast
+of an hour falls by what the tanks before it took. The battery rules are those of a static
+policy. The flexible load runs as the static default does. -/
 def planDay (tanks : Array TankConfig) (params : PlanParams)
     (forecastKwh tankKwh expectedDrawKwh : Array Float) (flexDayKwh : Float) : Array Action :=
-  let _ := (tanks, params, forecastKwh, tankKwh, expectedDrawKwh, flexDayKwh)
-  todo "planDay" 0
+  let flex := flexProfile flexDayKwh defaultStatic.flexStart
+  let (heats, _) := (Array.range tanks.size).foldl
+    (init := ((#[] : Array (Array Float)), forecastKwh)) fun (heats, remaining) i =>
+      let tank := tanks[i]!
+      let target := params.targetKwh[i]?.getD tank.capacityKwh
+      let need := max 0.0 (target - tankKwh[i]?.getD 0.0 + expectedDrawKwh[i]?.getD 0.0)
+      let heat := planTank tank.elementKw params.minSolarKwh need remaining
+      let left := (Array.range hoursInDay).map fun hour =>
+        max 0.0 (remaining[hour]?.getD 0.0 - heat[hour]!)
+      (heats.push heat, left)
+  (Array.range hoursInDay).map fun hour =>
+    { heatKwh := heats.map fun heat => heat[hour]!, allowCharge := true,
+      allowDischarge := params.dischargeFrom ≤ hour, flexKwh := flex[hour]! }
 
 /-- What a dynamic policy sees in one hour. -/
 structure Observation where
@@ -113,9 +157,26 @@ structure Observation where
   askedLastHour : Array Bool
   deriving Repr, Inhabited
 
-/-- The action of a dynamic policy for one hour. Not built yet. -/
+/-- The action of a dynamic policy for one hour. With a solar surplus and a tank below its target,
+a tank asks for the smallest of its element power, the surplus left and the room to the target.
+If not, and the tank is below its low level and the forecast for the rest of the day is less than
+the lack, it asks for the smaller of its element power and the lack. Otherwise it asks for 0. Each
+tank takes its share of the surplus in turn. The battery may discharge from `dischargeFrom`. The
+action holds no flexible load: the caller runs it as the static default does. -/
 def dynamicAction (tanks : Array TankConfig) (params : DynamicParams) (obs : Observation) : Action :=
-  let _ := (tanks, params, obs)
-  todo "dynamicAction" 0
+  let (asks, _) := (Array.range tanks.size).foldl
+    (init := ((#[] : Array Float), obs.surplusKwh)) fun (asks, surplus) i =>
+      let tank := tanks[i]!
+      let energy := obs.tankKwh[i]?.getD 0.0
+      let target := params.targetKwh[i]?.getD tank.capacityKwh
+      let low := params.lowKwh[i]?.getD (tank.capacityKwh / 2)
+      if surplus > 0 && energy < target then
+        let ask := min tank.elementKw (min surplus (target - energy))
+        (asks.push ask, surplus - ask)
+      else if energy < low && obs.forecastRestKwh < low - energy then
+        (asks.push (min tank.elementKw (low - energy)), surplus)
+      else (asks.push 0.0, surplus)
+  { heatKwh := asks, allowCharge := true, allowDischarge := params.dischargeFrom ≤ obs.hour,
+    flexKwh := 0.0 }
 
 end StoragePolicySim
