@@ -36,8 +36,20 @@ The command is then at `.lake/build/bin/sim`. The toolchain is Lean 4.35.0.
   policy: the self-consumption, the self-sufficiency, the import, the export, the curtailed
   energy, the backstop heating and the starts each day, as plain numbers with one decimal. It
   takes each option of `sim policy run` except `--policy`, which gives `UNKNOWN_OPTION`.
-- Not built yet: `sim policy robust`, `sim policy tune` and `sim policy plan`. Each of them
-  prints `error: not implemented` on stderr and exits with 3.
+- `sim policy robust [options]` evaluates the five policies of `sim policy compare` over
+  `--seeds` weather years (1 to 100, default 10) from `--seed`. The table has one row for each
+  policy: the mean and the worst self-consumption, the mean self-sufficiency, the mean export,
+  the mean backstop heating, the total unmet hot water, the cold hours, the starts each day, and
+  `safe` (`yes` when no seed has an unmet draw and no hour is cold). It takes the options of
+  `sim policy run` except `--policy`.
+- `sim policy tune [options]` tries 704 static profiles (heating start 6 to 16, 1 to 8 heating
+  hours, discharge from 15 to 22) over `--seeds` years (default 5), and prints the `goal`,
+  `candidates`, `safe`, `heat-start`, `heat-hours` and `discharge-from` of the best, a blank line,
+  and the table of `sim policy robust` with that profile in the row `static`. `--goal` is
+  `self-consumption` (the default) or `import`. The options `--heat-start`, `--heat-hours` and
+  `--discharge-from` give `UNKNOWN_OPTION`. With the defaults it takes about 25 seconds.
+- Not built yet: `sim policy plan`. It prints `error: not implemented` on stderr and exits
+  with 3.
 
 For example:
 
@@ -143,6 +155,7 @@ The line is `error: <code>: <detail>`, for example `error: OUT_OF_RANGE: --days 
 | `OUT_OF_RANGE` | A number is outside the range of its option |
 | `UNKNOWN_STRATEGY` | The strategy name is not in the list |
 | `UNKNOWN_POLICY` | The name after `--policy` is not `static`, `precomputed` or `dynamic` (`sim policy run` only) |
+| `UNKNOWN_GOAL` | The name after `--goal` is not `self-consumption` or `import` (`sim policy tune` only) |
 
 ## Run the checks
 

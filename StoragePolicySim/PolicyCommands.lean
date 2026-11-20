@@ -1,6 +1,7 @@
 /-
-The `sim forecast` and `sim policy` commands. Built: `sim forecast`, `sim policy run` and
-`sim policy compare`. The policy commands `robust`, `tune` and `plan` are not built yet.
+The `sim forecast` and `sim policy` commands. Built: `sim forecast`, `sim policy run`,
+`sim policy compare`, `sim policy robust` and `sim policy tune`. The policy command `plan` is not
+built yet.
 -/
 import StoragePolicySim.Cli
 import StoragePolicySim.HomeSim
@@ -68,10 +69,22 @@ private def runOptions : List NumberOption :=
 /-- The flag that picks the policy. -/
 private def policyFlag : String := "--policy"
 
+/-- The flag that picks the tuner goal. -/
+private def goalFlag : String := "--goal"
+
+/-- The goal names, as the person types them. -/
+private def goalNames : List String := ["self-consumption", "import"]
+
+/-- The `--seeds` option, with the default of the command. -/
+private def seedsOption (default : Float) : NumberOption :=
+  policyNumberOption "--seeds" "weather years to simulate" default 1 100 (wholeOnly := true)
+
 /-- The options of a `sim policy` command line after the reading step. -/
 private structure PolicyLine where
   /-- The name of the policy. -/
   policy : String := "static"
+  /-- The tuner goal, as typed: `self-consumption` or `import`. -/
+  goal : String := "self-consumption"
   /-- The number options, the last typed first. -/
   numbers : List (String × TypedNumber) := []
 
@@ -82,22 +95,31 @@ private def flexReadOption : NumberOption :=
     1000
 
 /-- Reads each option and its value, from left to right. The first problem stops the reading. -/
-private def readPolicyOptions (allowPolicy : Bool) (line : PolicyLine) :
-    List String → Except Problem PolicyLine
+private def readPolicyOptions (allowPolicy allowGoal : Bool) (options : List NumberOption)
+    (line : PolicyLine) : List String → Except Problem PolicyLine
   | [] => .ok line
   | flag :: rest =>
-    if flag == policyFlag && allowPolicy then
+    if flag == goalFlag && allowGoal then
       match rest with
       | [] => .error (.missingValue flag)
       | name :: afterName =>
-        if policyNames.contains name then readPolicyOptions allowPolicy { line with policy := name } afterName
+        if goalNames.contains name then
+          readPolicyOptions allowPolicy allowGoal options { line with goal := name } afterName
+        else .error (.unknownGoal name)
+    else if flag == policyFlag && allowPolicy then
+      match rest with
+      | [] => .error (.missingValue flag)
+      | name :: afterName =>
+        if policyNames.contains name then
+          readPolicyOptions allowPolicy allowGoal options { line with policy := name } afterName
         else .error (.unknownPolicy name)
-    else match numberOptionIn (flexReadOption :: runOptions) flag, rest with
+    else match numberOptionIn (flexReadOption :: options) flag, rest with
       | none, _ => .error (.unknownOption flag)
       | some _, [] => .error (.missingValue flag)
       | some option, value :: afterValue => do
         let typed ← readTyped option value
-        readPolicyOptions allowPolicy { line with numbers := (flag, typed) :: line.numbers } afterValue
+        readPolicyOptions allowPolicy allowGoal options
+          { line with numbers := (flag, typed) :: line.numbers } afterValue
 
 /-! ## The home and the policy of the options -/
 
@@ -170,7 +192,7 @@ private def policyRunLines (line : PolicyLine) (policy : Policy) (totals : HomeT
 
 /-- The lines of `sim policy run`, or the first problem of its options. -/
 private def policyRun (words : List String) : Except Problem (List String) := do
-  let line ← readPolicyOptions true {} words
+  let line ← readPolicyOptions true false runOptions {} words
   match rangeProblemIn runOptions line.numbers with
   | some problem => .error problem
   | none =>
@@ -193,42 +215,119 @@ private def compareRow (name : String) (days : Nat) (totals : HomeTotals) : List
    oneDecimal totals.importKwh, oneDecimal totals.exportKwh, oneDecimal totals.curtailedKwh,
    oneDecimal totals.backstopKwh, oneDecimal startsPerDay]
 
-/-- The lines of `sim policy compare`, or the first problem of its options. The rows follow D11:
-the thermostat is the static policy with no heating hours, and the perfect forecast is the
-precomputed policy with an error scale of 0. -/
+/-- A row of D11: its name, and the policy and home that it runs. -/
+private structure ComparisonRow where
+  name : String
+  policy : Policy
+  home : Home
+
+/-- The five rows of D11, in order. The thermostat is the static policy with no heating hours,
+and the perfect forecast is the precomputed policy with an error scale of 0. `staticPolicy` is
+the policy of the row `static`: the static policy of the options, or a tuned profile. -/
+private def comparisonRows (line : PolicyLine) (staticPolicy : Option Policy := none) :
+    List ComparisonRow :=
+  let zeroHours : List (String × TypedNumber) :=
+    (heatHoursOption.flag, ⟨"0", 0.0⟩) :: line.numbers
+  let rowOf (name : String) (policyLine : PolicyLine) (errorScale : Option Float := none) :
+      ComparisonRow :=
+    let home := policyLine.home
+    { name, policy := policyLine.policyOf,
+      home := match errorScale with
+        | some scale => { home with errorScale := scale }
+        | none => home }
+  let staticLine := { line with policy := "static" }
+  [rowOf "thermostat" { line with policy := "static", numbers := zeroHours },
+   { rowOf "static" staticLine with policy := staticPolicy.getD staticLine.policyOf },
+   rowOf "precomputed" { line with policy := "precomputed" },
+   rowOf "dynamic" { line with policy := "dynamic" },
+   rowOf "perfect-forecast" { line with policy := "precomputed" } (some 0.0)]
+
+/-- The header with the first column as wide as the widest row name. -/
+private def paddedHeader (header : List String) : List String :=
+  let names := ["thermostat", "static", "precomputed", "dynamic", "perfect-forecast"]
+  let firstWidth := names.foldl (fun widest name => max widest name.length) "policy".length
+  match header with
+  | first :: rest => (first ++ "".pushn ' ' (firstWidth - first.length)) :: rest
+  | [] => []
+
+/-- The lines of `sim policy compare`, or the first problem of its options. The rows follow D11. -/
 private def policyCompare (words : List String) : Except Problem (List String) := do
-  let line ← readPolicyOptions false {} words
+  let line ← readPolicyOptions false false runOptions {} words
   match rangeProblemIn runOptions line.numbers with
   | some problem => .error problem
   | none =>
     let seed := wholeIn line.numbers seedOption
     let days := wholeIn line.numbers daysOption
-    let zeroHours : List (String × TypedNumber) :=
-      (heatHoursOption.flag, ⟨"0", 0.0⟩) :: line.numbers
-    let rowOf (name : String) (policyLine : PolicyLine) (errorScale : Option Float := none) :=
-      let home := policyLine.home
-      let home := match errorScale with
-        | some scale => { home with errorScale := scale }
-        | none => home
-      compareRow name days (runHome home policyLine.policyOf seed days).totals
-    let names := ["thermostat", "static", "precomputed", "dynamic", "perfect-forecast"]
-    let firstWidth := names.foldl (fun widest name => max widest name.length) "policy".length
-    let header := match compareHeader with
-      | first :: rest => (first ++ "".pushn ' ' (firstWidth - first.length)) :: rest
-      | [] => []
-    .ok (table header
-      [rowOf "thermostat" { line with policy := "static", numbers := zeroHours },
-       rowOf "static" { line with policy := "static" },
-       rowOf "precomputed" { line with policy := "precomputed" },
-       rowOf "dynamic" { line with policy := "dynamic" },
-       rowOf "perfect-forecast" { line with policy := "precomputed" } (some 0.0)])
+    .ok (table (paddedHeader compareHeader)
+      ((comparisonRows line).map fun row =>
+        compareRow row.name days (runHome row.home row.policy seed days).totals))
+
+/-! ## The commands `sim policy robust` and `sim policy tune` -/
+
+/-- The header of `sim policy robust`. -/
+private def robustHeader : List String :=
+  ["policy", "mean-self-consumption-%", "worst-self-consumption-%", "mean-self-sufficiency-%",
+   "mean-export-kWh", "mean-backstop-kWh", "unmet-kWh", "cold-hours", "starts-per-day", "safe"]
+
+/-- The row of one policy of `sim policy robust`. A policy is safe (D10) when no seed has an unmet
+draw and no hour is cold. -/
+private def robustRow (name : String) (e : Evaluation) : List String :=
+  [name, oneDecimal e.meanSelfConsumption, oneDecimal e.worstSelfConsumption,
+   oneDecimal e.meanSelfSufficiency, oneDecimal e.meanExportKwh, oneDecimal e.meanBackstopKwh,
+   oneDecimal e.totalUnmetKwh, toString e.coldHours, oneDecimal e.meanStartsPerDay,
+   if e.unmetSeeds == 0 && e.coldHours == 0 then "yes" else "no"]
+
+/-- The table of `sim policy robust`: the rows of D11 over the seeds from `--seed`. -/
+private def robustTable (line : PolicyLine) (seeds : Nat) (staticPolicy : Option Policy := none) :
+    List String :=
+  let seed := wholeIn line.numbers seedOption
+  let days := wholeIn line.numbers daysOption
+  table (paddedHeader robustHeader)
+    ((comparisonRows line staticPolicy).map fun row =>
+      robustRow row.name (evaluate row.home row.policy seed seeds days))
+
+/-- The lines of `sim policy robust`, or the first problem of its options. -/
+private def policyRobust (words : List String) : Except Problem (List String) := do
+  let options := runOptions ++ [seedsOption 10]
+  let line ← readPolicyOptions false false options {} words
+  match rangeProblemIn options line.numbers with
+  | some problem => .error problem
+  | none => .ok (robustTable line (wholeIn line.numbers (seedsOption 10)))
+
+/-- The flags that `sim policy tune` does not take: the tuner sets the static profile. -/
+private def tunedFlags : List String :=
+  [heatStartOption.flag, heatHoursOption.flag, dischargeFromOption.flag]
+
+/-- The lines of `sim policy tune`, or the first problem of its options: the best static profile
+of `tuneStatic`, a blank line, and the table of `sim policy robust` with that profile in the row
+`static`. -/
+private def policyTune (words : List String) : Except Problem (List String) := do
+  let options := (runOptions.filter fun option => !tunedFlags.contains option.flag) ++
+    [seedsOption 5]
+  let line ← readPolicyOptions false true options {} words
+  match rangeProblemIn options line.numbers with
+  | some problem => .error problem
+  | none =>
+    let goal := if line.goal == "import" then Goal.gridImport else Goal.selfConsumption
+    let seeds := wholeIn line.numbers (seedsOption 5)
+    let tuned := tuneStatic line.home goal (wholeIn line.numbers seedOption) seeds
+      (wholeIn line.numbers daysOption)
+    let window := tuned.best.windows[0]?.getD default
+    .ok ([labelledLine "goal" line.goal, labelledLine "candidates" (toString tuned.candidates),
+          labelledLine "safe" (toString tuned.safe),
+          labelledLine "heat-start" (toString window.heatStart),
+          labelledLine "heat-hours" (toString window.heatHours),
+          labelledLine "discharge-from" (toString tuned.best.dischargeFrom), ""] ++
+      robustTable line seeds (some (.static tuned.best)))
 
 /-- The usage of `sim policy`. -/
 private def policyUsage : List String :=
   ["usage: sim policy run|compare|robust|tune|plan [options]",
    "",
    "sim policy run simulates one policy and prints the totals.",
-   "sim policy compare simulates each policy on the same weather and prints a table."]
+   "sim policy compare simulates each policy on the same weather and prints a table.",
+   "sim policy robust evaluates each policy over several weather years (--seeds).",
+   "sim policy tune searches the best static profile (--goal self-consumption|import)."]
 
 /-- Prints the lines of a command, or its error line. Returns the exit code. -/
 private def finish (outcome : Except Problem (List String)) : IO UInt32 := do
@@ -293,15 +392,16 @@ private def forecastRun (words : List String) : Except Problem (List String) := 
 /-- Runs `sim forecast` with its words: prints the Solcast JSON of one fetch. -/
 def forecastCommand (words : List String) : IO UInt32 := finish (forecastRun words)
 
-/-- Runs `sim policy` with its words. The commands `robust`, `tune` and `plan` are not built
-yet. -/
+/-- Runs `sim policy` with its words. The command `plan` is not built yet. -/
 def policyCommand (words : List String) : IO UInt32 := do
   match words with
   | [] | "help" :: _ => finish (.ok policyUsage)
   | "run" :: options => finish (policyRun options)
   | "compare" :: options => finish (policyCompare options)
+  | "robust" :: options => finish (policyRobust options)
+  | "tune" :: options => finish (policyTune options)
   | word :: _ =>
-    if ["robust", "tune", "plan"].contains word then
+    if word == "plan" then
       IO.eprintln "error: not implemented"
       return 3
     else finish (.error (.unknownCommand s!"policy {word}"))

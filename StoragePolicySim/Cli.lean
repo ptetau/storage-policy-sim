@@ -90,6 +90,7 @@ inductive Problem
   | outOfRange (flag text lowest highest : String)
   | unknownStrategy (name : String)
   | unknownPolicy (name : String)
+  | unknownGoal (name : String)
 
 /-- The strategy names, as the usage and the errors list them. -/
 def strategyNames : String := ", ".intercalate (Strategy.all.map (·.name))
@@ -109,6 +110,7 @@ def Problem.line : Problem → String
     s!"error: UNKNOWN_STRATEGY: {name} ({strategyNames})"
   | .unknownPolicy name =>
     s!"error: UNKNOWN_POLICY: {name} ({", ".intercalate policyNames})"
+  | .unknownGoal name => s!"error: UNKNOWN_GOAL: {name} (self-consumption, import)"
 
 /-! ## Numbers -/
 
