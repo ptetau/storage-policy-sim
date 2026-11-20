@@ -1,10 +1,11 @@
 /-
 The `sim forecast` and `sim policy` commands. Built: `sim forecast`, `sim policy run`,
-`sim policy compare`, `sim policy robust`, `sim policy tune` and `sim policy plan`, with `--home`
-and `--tank2`.
+`sim policy compare`, `sim policy robust`, `sim policy tune` and `sim policy plan`, with `--home`,
+`--tank2` and `--model simple|physics` (the physics model of spec 002).
 -/
 import StoragePolicySim.Cli
 import StoragePolicySim.HomeSim
+import StoragePolicySim.PhysRun
 
 namespace StoragePolicySim
 
@@ -111,11 +112,19 @@ private structure PolicyLine where
   arrays : Array PanelArray := #[]
   /-- The home of `--home`, as typed. It is a name of `homeNames`. -/
   homeName : String := "generic"
+  /-- The model of `--model`: `simple` or `physics`. -/
+  model : String := "simple"
   /-- The second tank of `--tank2`: its capacity, its element power and its draw share. -/
   tank2 : Option (Float × Float × Float) := none
 
 /-- The flag that picks the home. -/
 private def homeFlag : String := "--home"
+
+/-- The flag that picks the model. -/
+private def modelFlag : String := "--model"
+
+/-- The model names. -/
+private def modelNames : List String := ["simple", "physics"]
 
 /-- The flag of the second tank: `--tank2 KWH:ELEMENT:SHARE`. -/
 private def tank2Flag : String := "--tank2"
@@ -163,6 +172,13 @@ private def readPolicyOptions (allowPolicy allowGoal : Bool) (options : List Num
         if homeNames.contains name then
           readPolicyOptions allowPolicy allowGoal options { line with homeName := name } afterName
         else .error (.unknownHome name (", ".intercalate homeNames))
+    else if flag == modelFlag then
+      match rest with
+      | [] => .error (.missingValue flag)
+      | name :: afterName =>
+        if modelNames.contains name then
+          readPolicyOptions allowPolicy allowGoal options { line with model := name } afterName
+        else .error (.unknownModel name)
     else if flag == tank2Flag then
       match rest with
       | [] => .error (.missingValue flag)
@@ -273,6 +289,22 @@ private def PolicyLine.policyOf (line : PolicyLine) : Policy :=
                              heatHours := wholeIn line.numbers heatHoursOption }],
               dischargeFrom, flexStart := wholeIn line.numbers flexStartOption }
 
+/-! ## The model of the options -/
+
+/-- True when `--model physics` is typed last. -/
+private def PolicyLine.physics (line : PolicyLine) : Bool := line.model == "physics"
+
+/-- One run of the model of the options. -/
+private def PolicyLine.run (line : PolicyLine) (home : Home) (policy : Policy) (seed days : Nat) :
+    HomeResult :=
+  if line.physics then runPhysics home policy seed days else runHome home policy seed days
+
+/-- The evaluation over seeds on the model of the options. -/
+private def PolicyLine.evaluate (line : PolicyLine) (home : Home) (policy : Policy)
+    (seed seeds days : Nat) : Evaluation :=
+  if line.physics then evaluatePhysics home policy seed seeds days
+  else StoragePolicySim.evaluate home policy seed seeds days
+
 /-! ## Output -/
 
 /-- The policy starts each day: 0 for 0 days. -/
@@ -305,7 +337,7 @@ private def policyRun (words : List String) : Except Problem (List String) := do
   | some problem => .error problem
   | none =>
     let policy := line.policyOf
-    let result := runHome line.home policy (wholeIn line.numbers seedOption)
+    let result := line.run line.home policy (wholeIn line.numbers seedOption)
       (wholeIn line.numbers daysOption)
     .ok (policyRunLines line policy result.totals)
 
@@ -368,7 +400,7 @@ private def policyCompare (words : List String) : Except Problem (List String) :
     let days := wholeIn line.numbers daysOption
     .ok (table (paddedHeader compareHeader)
       ((comparisonRows line).map fun row =>
-        compareRow row.name days (runHome row.home row.policy seed days).totals))
+        compareRow row.name days (line.run row.home row.policy seed days).totals))
 
 /-! ## The commands `sim policy robust` and `sim policy tune` -/
 
@@ -392,7 +424,7 @@ private def robustTable (line : PolicyLine) (seeds : Nat) (staticPolicy : Option
   let days := wholeIn line.numbers daysOption
   table (paddedHeader robustHeader)
     ((comparisonRows line staticPolicy).map fun row =>
-      robustRow row.name (evaluate row.home row.policy seed seeds days))
+      robustRow row.name (line.evaluate row.home row.policy seed seeds days))
 
 /-- The lines of `sim policy robust`, or the first problem of its options. -/
 private def policyRobust (words : List String) : Except Problem (List String) := do
@@ -418,8 +450,10 @@ private def policyTune (words : List String) : Except Problem (List String) := d
   | none =>
     let goal := if line.goal == "import" then Goal.gridImport else Goal.selfConsumption
     let seeds := wholeIn line.numbers (seedsOption 5)
-    let tuned := tuneStatic line.home goal (wholeIn line.numbers seedOption) seeds
-      (wholeIn line.numbers daysOption)
+    let seed := wholeIn line.numbers seedOption
+    let days := wholeIn line.numbers daysOption
+    let tuned := if line.physics then tunePhysics line.home goal seed seeds days
+      else tuneStatic line.home goal seed seeds days
     -- The first tank has `heat-start` and `heat-hours`, the second `heat-start-2`, and so on.
     let windowLines := (tuned.best.windows.toList.zipIdx).flatMap fun (window, i) =>
       let suffix := if i == 0 then "" else s!"-{i + 1}"
@@ -446,7 +480,9 @@ private def planHeader (tanks : Nat) : List String :=
 
 /-- The lines of `sim policy plan`, or the first problem of its options. The values come from
 `runHome` with the precomputed policy: the request of each tank and the battery discharge gate of
-each hour of the day, and the forecast of that day. -/
+each hour of the day, and the forecast of that day. With `--model physics` the run is `runPhysics`:
+the request of a tank in an hour is the sum of its 4 steps, and the gate is that of the first
+step. -/
 private def policyPlan (words : List String) : Except Problem (List String) := do
   let line ← readPolicyOptions false false (runOptions ++ [dayReadOption]) {} words
   let days := wholeIn line.numbers daysOption
@@ -457,13 +493,19 @@ private def policyPlan (words : List String) : Except Problem (List String) := d
     let day := wholeIn line.numbers (dayOption days)
     let seed := wholeIn line.numbers seedOption
     let home := line.home
-    let result := runHome home ({ line with policy := "precomputed" }.policyOf) seed days
-    let forecast := dayForecast home seed days day
+    let result := line.run home ({ line with policy := "precomputed" }.policyOf) seed days
+    let forecast := if line.physics then physDayForecast home seed days day
+      else dayForecast home seed days day
+    -- The records of an hour: one in the simple model, 4 steps in the physics model.
+    let perHour := if line.physics then 4 else 1
     let rows := (List.range hoursInDay).map fun hour =>
-      let homeHour := result.hours[hoursInDay * day + hour]!
+      let first := perHour * (hoursInDay * day + hour)
+      let records := result.hours.extract first (first + perHour)
+      let askKwh (i : Nat) : Float :=
+        records.foldl (fun sum record => sum + (record.tanks[i]?.map (·.askKwh)).getD 0.0) 0.0
       [toString hour, oneDecimal (forecast[hour]?.getD 0.0)] ++
-        homeHour.tanks.toList.map (fun tank => oneDecimal tank.askKwh) ++
-        [if homeHour.allowDischarge then "yes" else "no"]
+        (List.range home.tanks.size).map (fun i => oneDecimal (askKwh i)) ++
+        [if records[0]!.allowDischarge then "yes" else "no"]
     .ok (table (planHeader home.tanks.size) rows)
 
 /-- The usage of `sim policy`. -/

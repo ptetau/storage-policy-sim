@@ -160,6 +160,20 @@ first tank. `--heat-start` and `--heat-hours` give the window of each tank. `sim
 more tanks searches the window of one tank at a time, then the discharge hour, and prints
 `heat-start-2` and `heat-hours-2` for the second tank.
 
+### The physics model
+
+Each `sim policy` command takes `--model simple|physics` (default `simple`, the last value counts).
+`simple` gives the output of spec 001. `physics` runs the home in steps of 15 minutes (96 a day,
+spec 002): the sun, the cloud and the air and inlet temperatures follow physical rules, a tank is
+a hot layer above cold water in litres, the battery and the inverter have losses, and the flexible
+load is a dishwasher, a washing machine and a dryer with a cycle each. A policy still decides once an
+hour, and its heating request spreads over the 4 steps of the hour. A policy sees a tank as its
+energy above the inlet temperature, and the capacity that it compares with is the full tank at
+that temperature. The cycles of a day start in the first hour in which the policy gives flexible
+energy, one after the other, and end inside the day. `sim policy run`, `compare`, `robust`, `tune`
+and `plan` use the physics run (`runPhysics`) with `--model physics`. `sim policy plan` prints the
+sum of the 4 steps of each hour. A tune over many years takes longer than in the simple model.
+
 ## The forecast command
 
 `sim forecast [options]` prints the simulated Solcast JSON of the fetch at one hour of the run,
@@ -196,6 +210,7 @@ The line is `error: <code>: <detail>`, for example `error: OUT_OF_RANGE: --days 
 | `UNKNOWN_STRATEGY` | The strategy name is not in the list |
 | `UNKNOWN_POLICY` | The name after `--policy` is not `static`, `precomputed` or `dynamic` (`sim policy run` only) |
 | `UNKNOWN_GOAL` | The name after `--goal` is not `self-consumption` or `import` (`sim policy tune` only) |
+| `UNKNOWN_MODEL` | The name after `--model` is not `simple` or `physics` (each `sim policy` command) |
 
 ## Run the checks
 

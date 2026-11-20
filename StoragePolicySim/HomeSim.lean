@@ -2,7 +2,9 @@
 The simulation of a home with a policy, the evaluation over seeds, and the tuner. Built: the
 structures, `defaultHome`, `runHome` for the three policies with any panel arrays and the limits of
 the inverter and the export (with any number of tanks), `dayForecast`, `evaluate`, `tuneStatic` (the search over
-more tanks too), and the five homes of D20 and D21 (`homeNames`, `homeNamed`).
+more tanks too), and the five homes of D20 and D21 (`homeNames`, `homeNamed`). A `Runner` gives the
+totals of a policy for one seed: `evaluateRunners` and `tuneWith` serve the simple model and the
+physics model (`PhysRun`).
 -/
 import StoragePolicySim.Policy
 import StoragePolicySim.Simulation
@@ -147,7 +149,7 @@ private def homeScenario (home : Home) (seed days : Nat) : Array Hour :=
 
 /-- The expected draw of each tank in a day: the draw profile with the season, and without the
 random factor of the day. -/
-private def expectedDraw (home : Home) (dayOfYear : Nat) : Array Float :=
+def expectedDraw (home : Home) (dayOfYear : Nat) : Array Float :=
   (Array.range home.tanks.size).map fun i =>
     (Array.range hoursInDay).foldl (init := 0.0) fun sum hour =>
       sum + drawKwh (home.drawKwhPerDay * home.drawShares[i]!) home.site.latitude dayOfYear hour
@@ -161,12 +163,26 @@ private def sumTankHours (hours : Array HomeHour) (value : TankHour → Float) :
   sumHours hours fun hour => hour.tanks.foldl (fun sum tank => sum + value tank) 0.0
 
 /-- The forecast solar energy of each hour of a day, from the fetch at hour 0 of that day, as the
-precomputed policy reads it. `runHomeOn` and `dayForecast` share this. -/
-private def forecastOfDay (home : Home) (seed : Nat) (scenarioHours : Array Hour) (day : Nat) :
+precomputed policy reads it. `runHomeOn`, `dayForecast` and the physics run share this. -/
+def forecastOfDay (home : Home) (seed : Nat) (scenarioHours : Array Hour) (day : Nat) :
     Array Float :=
   let fetch := hoursInDay * day
   (hourlyEnergy (forecastOf scenarioHours home.site seed home.errorScale fetch) fetch).extract
     0 hoursInDay
+
+/-- The forecast solar energy of the 48 hours from hour `fetch` of a run, as the dynamic policy
+reads it from the fetch at that hour. -/
+def fetchedEnergy (home : Home) (seed : Nat) (scenarioHours : Array Hour) (fetch : Nat) :
+    Array Float :=
+  hourlyEnergy (forecastOf scenarioHours home.site seed home.errorScale fetch) fetch
+
+/-- The forecast solar energy of the hours after hour `hourOfRun` to the end of `day`, from the
+hourly energy of the fetch at hour `fetch` (see `fetchedEnergy`). -/
+def restOfDayForecast (fetchedKwh : Array Float) (fetch hourOfRun day : Nat) : Float := Id.run do
+  let mut rest := 0.0
+  for k in [hourOfRun + 1 - fetch : hoursInDay * (day + 1) - fetch] do
+    rest := rest + fetchedKwh[k]?.getD 0.0
+  return rest
 
 /-- The forecast solar energy of each hour of a day of a run, as the precomputed policy of
 `runHome` reads it at hour 0 of the day. -/
@@ -217,12 +233,9 @@ private def runHomeOn (home : Home) (policy : Policy) (seed days : Nat)
       if let .dynamic params := policy then
         let fetch := latestFetch home.fetchesPerDay hourOfRun
         if fetchedAt != some fetch then
-          fetchedKwh := hourlyEnergy (forecastOf scenarioHours home.site seed home.errorScale
-            fetch) fetch
+          fetchedKwh := fetchedEnergy home seed scenarioHours fetch
           fetchedAt := some fetch
-        let mut forecastRestKwh := 0.0
-        for k in [hourOfRun + 1 - fetch : hoursInDay * (day + 1) - fetch] do
-          forecastRestKwh := forecastRestKwh + fetchedKwh[k]?.getD 0.0
+        let forecastRestKwh := restOfDayForecast fetchedKwh fetch hourOfRun day
         let observation : Observation :=
           { hour := scenarioHour.hour, tankKwh := states.map (·.energyKwh),
             socKwh := socKwh,
@@ -326,17 +339,24 @@ private def summarise (runs : Array HomeTotals) (days : Nat) : Evaluation :=
 private def scenariosOf (home : Home) (seed seeds days : Nat) : Array (Array Hour) :=
   (Array.range seeds).map fun k => homeScenario home (seed + k) days
 
-/-- The evaluation of a policy on scenarios that are already built. -/
-private def evaluateOn (home : Home) (policy : Policy) (seed days : Nat)
-    (scenarios : Array (Array Hour)) : Evaluation :=
-  let runs := (Array.range scenarios.size).map fun k =>
+/-- The run of one seed: the totals of a policy. A runner holds what does not depend on the policy
+(the scenario of the seed), so that the tuner builds it once. -/
+abbrev Runner := Policy → HomeTotals
+
+/-- The runner of each seed from `seed` on the simple model: the scenarios are built once. -/
+private def simpleRunners (home : Home) (seed seeds days : Nat) : Array Runner :=
+  let scenarios := scenariosOf home seed seeds days
+  (Array.range seeds).map fun k policy =>
     (runHomeOn home policy (seed + k) days scenarios[k]!).totals
-  summarise runs days
+
+/-- The evaluation of a policy over runners that are already built, one for each seed. -/
+def evaluateRunners (runners : Array Runner) (policy : Policy) (days : Nat) : Evaluation :=
+  summarise (runners.map fun run => run policy) days
 
 /-- The evaluation of a policy over the seeds from `seed`: the run of each seed from `seed` to
 `seed + seeds - 1`, with the mean, the worst and the total of R10. 0 seeds give 0 in each field. -/
 def evaluate (home : Home) (policy : Policy) (seed seeds days : Nat) : Evaluation :=
-  evaluateOn home policy seed days (scenariosOf home seed seeds days)
+  evaluateRunners (simpleRunners home seed seeds days) policy days
 
 /-- What the tuner ranks by. -/
 inductive Goal where
@@ -406,11 +426,11 @@ candidates are the 704 of D12, in the order of the start, the heating hours and 
 With more tanks (D23), the search takes the window of one tank at a time, in tank order, from the
 default window of each tank and the default discharge hour, with the other tanks at their best
 window so far (88 candidates for each tank), and then the discharge hour (8 candidates). Each
-candidate keeps the flexible-load start of the default static policy. -/
-def tuneStatic (home : Home) (goal : Goal) (seed seeds days : Nat) : TuneResult :=
-  let scenarios := scenariosOf home seed seeds days
+candidate keeps the flexible-load start of the default static policy. The runners (one for each
+seed) give the model. -/
+def tuneWith (home : Home) (goal : Goal) (runners : Array Runner) (days : Nat) : TuneResult :=
   let evaluateParams (params : StaticParams) : StaticParams × Evaluation :=
-    (params, evaluateOn home (.static params) seed days scenarios)
+    (params, evaluateRunners runners (.static params) days)
   if home.tanks.size ≤ 1 then
     let candidates := windowGrid.flatMap fun window =>
       dischargeGrid.map fun discharge =>
@@ -432,5 +452,9 @@ def tuneStatic (home : Home) (goal : Goal) (seed seeds days : Nat) : TuneResult 
     let (best, safeHere) := pickBest goal tried
     { best := best.1, evaluation := best.2, candidates := count + tried.size,
       safe := safe + safeHere }
+
+/-- `tuneWith` on the simple model, over the seeds from `seed`. -/
+def tuneStatic (home : Home) (goal : Goal) (seed seeds days : Nat) : TuneResult :=
+  tuneWith home goal (simpleRunners home seed seeds days) days
 
 end StoragePolicySim

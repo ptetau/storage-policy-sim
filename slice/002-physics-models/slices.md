@@ -17,7 +17,7 @@
   - Given latitude -41.3 and a clear day, when the air temperature is read, then day 15 at 15:00 is 21.0 °C, within 0.01, day 15 at 03:00 is 14.0 °C, and day 197 at 15:00 is 12.0 °C. A day with a clearness of 0.5 is 1.0 °C lower. (R5)
   - Given latitude -41.3, when the inlet temperature is read, then day 45 gives 17.0 °C, within 0.01, and day 227 gives 11.0 °C, within 0.05. (R5)
 - Layers: weather library
-- Status: review
+- Status: done
 - Test rounds: 1
 - Review rounds: 1
 
@@ -55,7 +55,7 @@
 - Layers: appliance library
 - Status: review
 - Test rounds: 1
-- Review rounds: 1
+- Review rounds: 2
 
 ## S4: Run the policies on the physics model
 
@@ -72,6 +72,6 @@
   - Given `--model physics --days 30 --seeds 2`, when the person runs `sim policy compare`, `robust`, `tune` and `plan`, then each exits with 0 and prints its table of spec 001. `sim policy plan` prints 24 rows, one for each hour. (R12)
   - Given `--model magic`, when the person runs `sim policy run`, then stderr is `error: UNKNOWN_MODEL: magic (simple, physics)`, stdout is empty and the exit code is 2. (R12)
 - Layers: command, physics run, policy
-- Status: building
+- Status: review
 - Test rounds: 2
-- Review rounds: 0
+- Review rounds: 1
