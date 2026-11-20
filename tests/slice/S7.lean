@@ -183,9 +183,15 @@ def tFamilyPv : IO (Option String) := do
   let b ← Harness.sim ["policy", "run", "--home", "family", "--array", "6:0:0", "--days", "30"]
   let c ← Harness.sim ["policy", "run", "--home", "generic", "--pv", "6", "--days", "30"]
   let d ← Harness.sim ["policy", "run", "--home", "family", "--days", "30"]
+  let some f := homeNamed "family" | return some "homeNamed \"family\" gave none"
+  let flat : PanelArray := { f.arrays[0]! with kw := 6.0, direction := 0.0, tilt := 0.0 }
+  let six : Home := { f with arrays := #[flat], site := { f.site with pvKw := 6.0 } }
+  let r := runHome six (Policy.static defaultStatic) 1 30
   return Harness.firstFail [
     (a.code == 0, s!"family --pv 6: {showOut a}"),
     (d.code == 0, s!"family: {showOut d}"),
+    ((cliCheck a r.totals).isNone,
+      s!"family --pv 6 differs from family with one flat 6 kW array: {(cliCheck a r.totals).getD ""}"),
     (a.out == b.out, s!"--pv 6 is not one flat 6 kW array: [{a.out}] and [{b.out}]"),
     (valueOf a.out "solar" == valueOf c.out "solar" && (valueOf a.out "solar").isSome,
       s!"solar of family --pv 6 {valueOf a.out "solar"}, of generic --pv 6 {valueOf c.out "solar"}"),
@@ -426,6 +432,15 @@ def tDynFirstLower : IO (Option String) := do
     (nr a[0]! 3.0 0.000000001, s!"first tank (30%) asks {a[0]!}, want 3.0"),
     (nr a[1]! 0.0 0.000000001, s!"second tank (50%) asks {a[1]!}, want 0") ]
 
+def tDynShareNotKwh : IO (Option String) := do
+  let some h := homeNamed "mine" | return some "homeNamed \"mine\" gave none"
+  -- first tank 40% of 13.1 = 5.24 kWh, second 50% of 9.4 = 4.7 kWh: the lower share holds more kWh
+  let a := dynRequest h 0.4 0.5
+  return Harness.firstFail [
+    (a.size == 2, s!"requests: {a.size}, want 2"),
+    (nr a[0]! 3.0 0.000000001, s!"first tank (40%, 5.24 kWh) asks {a[0]!}, want 3.0"),
+    (nr a[1]! 0.0 0.000000001, s!"second tank (50%, 4.7 kWh) asks {a[1]!}, want 0") ]
+
 def tTank2Option : IO (Option String) := do
   let some g := homeNamed "generic" | return some "homeNamed \"generic\" gave none"
   let some m := homeNamed "mine" | return some "homeNamed \"mine\" gave none"
@@ -464,6 +479,7 @@ def tests : List Harness.Test := [
   { name := "test_001_S7_R22_dynamic_lowest_share_goes_first", run := tDynLowestFirst },
   { name := "test_001_S7_R22_dynamic_tie_goes_to_first_tank", run := tDynTie },
   { name := "test_001_S7_R22_dynamic_lower_first_tank_goes_first", run := tDynFirstLower },
+  { name := "test_001_S7_R22_dynamic_share_not_kwh_decides_order", run := tDynShareNotKwh },
   { name := "test_001_S7_R22_tank2_option_adds_second_tank", run := tTank2Option } ]
 
 def main (args : List String) : IO UInt32 := Harness.run tests args
