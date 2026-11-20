@@ -102,9 +102,10 @@ def limitsHold : IO (Option String) := do
     (r3.flow.dischargeKwh > 0.0, s!"no discharge for a load of 20 kWh: {fmt r3}"),
     (gap 0.0 20.0 13.5 r3 ≤ 0.000001, s!"balance with discharge limit: {fmt r3}")]
 
-/-- Energy through the inverter in one step: direct, discharge and export. -/
-def invEnergy (r : LimitedFlow) : Float :=
-  r.flow.directKwh + r.flow.dischargeKwh + r.flow.exportKwh
+/-- Energy on the house side of the inverter in one step: direct energy, the load that
+the battery covers (load - import - direct) and export. The sum is load - import + export. -/
+def invEnergy (load : Float) (r : LimitedFlow) : Float :=
+  r.flow.directKwh + (load - r.flow.importKwh - r.flow.directKwh) + r.flow.exportKwh
 
 def inverterLimit : IO (Option String) := do
   let lim : Limits := { inverterKw := 2.0, exportKw := 0.0 }
@@ -114,15 +115,15 @@ def inverterLimit : IO (Option String) := do
   let c := physBatteryStep lim bat135 10.0 true true 1.0 3.0
   let d := physBatteryStep lim bat135 13.5 true true 5.0 0.2
   return Harness.firstFail [
-    (invEnergy a ≤ 0.5 + 0.000001, s!"solar, large load: direct+discharge+export above 0.5 kWh: {fmt a}"),
-    (invEnergy a > 0.0, s!"solar, large load: nothing through the inverter: {fmt a}"),
+    (invEnergy 3.0 a ≤ 0.5 + 0.000001, s!"solar, large load: house-side energy above 0.5 kWh: {fmt a}"),
+    (invEnergy 3.0 a > 0.0, s!"solar, large load: nothing through the inverter: {fmt a}"),
     (gap 5.0 3.0 6.0 a ≤ 0.000001, s!"solar, large load: balance: {fmt a}"),
-    (invEnergy b ≤ 0.5 + 0.000001, s!"full battery, large load: direct+discharge+export above 0.5 kWh: {fmt b}"),
+    (invEnergy 3.0 b ≤ 0.5 + 0.000001, s!"full battery, large load: house-side energy above 0.5 kWh: {fmt b}"),
     (b.flow.dischargeKwh > 0.0, s!"full battery, large load: no discharge: {fmt b}"),
     (gap 0.0 3.0 13.5 b ≤ 0.000001, s!"full battery, large load: balance: {fmt b}"),
-    (invEnergy c ≤ 0.5 + 0.000001, s!"solar and battery, large load: direct+discharge+export above 0.5 kWh: {fmt c}"),
+    (invEnergy 3.0 c ≤ 0.5 + 0.000001, s!"solar and battery, large load: house-side energy above 0.5 kWh: {fmt c}"),
     (gap 1.0 3.0 10.0 c ≤ 0.000001, s!"solar and battery, large load: balance: {fmt c}"),
-    (invEnergy d ≤ 0.5 + 0.000001, s!"full battery, solar surplus: direct+discharge+export above 0.5 kWh: {fmt d}"),
+    (invEnergy 0.2 d ≤ 0.5 + 0.000001, s!"full battery, solar surplus: house-side energy above 0.5 kWh: {fmt d}"),
     (gap 5.0 0.2 13.5 d ≤ 0.000001, s!"full battery, solar surplus: balance: {fmt d}")]
 
 /-- A signature of the cycles of one day. -/
