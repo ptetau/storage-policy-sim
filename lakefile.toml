@@ -49,3 +49,11 @@ root = "tests.slice.S8"
 [[lean_exe]]
 name = "slicetest_S9"
 root = "tests.slice.S9"
+
+[[lean_lib]]
+name = "Analysis"
+globs = ["analysis.+"]
+
+[[lean_exe]]
+name = "monthly"
+root = "analysis.Monthly"
