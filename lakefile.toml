@@ -9,3 +9,43 @@ globs = ["StoragePolicySim.+"]
 [[lean_exe]]
 name = "sim"
 root = "Main"
+
+[[lean_lib]]
+name = "SliceTests"
+globs = ["tests.slice.+"]
+
+[[lean_exe]]
+name = "slicetest_S1"
+root = "tests.slice.S1"
+
+[[lean_exe]]
+name = "slicetest_S2"
+root = "tests.slice.S2"
+
+[[lean_exe]]
+name = "slicetest_S3"
+root = "tests.slice.S3"
+
+[[lean_exe]]
+name = "slicetest_S4"
+root = "tests.slice.S4"
+
+[[lean_exe]]
+name = "slicetest_S5"
+root = "tests.slice.S5"
+
+[[lean_exe]]
+name = "slicetest_S6"
+root = "tests.slice.S6"
+
+[[lean_exe]]
+name = "slicetest_S7"
+root = "tests.slice.S7"
+
+[[lean_exe]]
+name = "slicetest_S8"
+root = "tests.slice.S8"
+
+[[lean_exe]]
+name = "slicetest_S9"
+root = "tests.slice.S9"

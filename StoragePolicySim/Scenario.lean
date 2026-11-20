@@ -2,6 +2,7 @@
 The scenario of a site: the solar output, the daily sky and the household load of each hour.
 CAP-scenario (sun, weather and load) gives the rules.
 -/
+import StoragePolicySim.Stub
 namespace StoragePolicySim
 
 /-- The sky of a day. -/
@@ -158,5 +159,18 @@ def scenario (site : Site) (seed days : Nat) : Array Hour := Id.run do
         baseLoadKwh := baseLoad site doy h,
         flexKwh := defaultFlex site h }
   return out
+
+/-- One array of panels: its power in kW, the compass direction that it faces in degrees (0 is
+north, 90 is east), and its tilt from flat in degrees. -/
+structure PanelArray where
+  kw : Float
+  direction : Float
+  tilt : Float
+  deriving Repr, Inhabited
+
+/-- The solar energy of one array in an hour, in kWh. Not built yet. -/
+def arrayOutput (latitude : Float) (array : PanelArray) (dayOfYear hour : Nat) (sky : Sky) : Float :=
+  let _ := (latitude, array, sky, hour)
+  todo "arrayOutput" dayOfYear
 
 end StoragePolicySim

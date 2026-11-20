@@ -5,6 +5,7 @@ CAP-simulation (hourly energy flows) gives the rules.
 -/
 import StoragePolicySim.Scenario
 import StoragePolicySim.Strategy
+import StoragePolicySim.Stub
 
 namespace StoragePolicySim
 
@@ -190,5 +191,32 @@ def simulate (site : Site) (battery : Battery) (strategy : Strategy) (seed days 
   if openMonth.days > 0 then
     months := months.push (openMonth.close socKwh)
   return { hours, totals := runSums.toTotals socKwh, months }
+
+/-- The flows of one hour with a battery gate. Not built yet. -/
+def stepHourGated (battery : Battery) (socKwh : Float) (allowCharge allowDischarge : Bool)
+    (pvKwh loadKwh : Float) : Flow :=
+  let _ := (battery, socKwh, allowCharge, allowDischarge, pvKwh, loadKwh)
+  todo "stepHourGated" 0
+
+/-- The limits of a home in kW. 0 means no limit. -/
+structure Limits where
+  inverterKw : Float
+  exportKw : Float
+  deriving Repr, Inhabited
+
+/-- No inverter limit and no export limit. -/
+def noLimits : Limits := { inverterKw := 0.0, exportKw := 0.0 }
+
+/-- The flows of one hour under the limits, and the solar energy that nothing could take. -/
+structure LimitedFlow where
+  flow : Flow
+  curtailedKwh : Float
+  deriving Repr, Inhabited
+
+/-- The flows of one hour with a battery gate and the limits. Not built yet. -/
+def stepHourLimited (limits : Limits) (battery : Battery) (socKwh : Float)
+    (allowCharge allowDischarge : Bool) (pvKwh loadKwh : Float) : LimitedFlow :=
+  let _ := (limits, battery, socKwh, allowCharge, allowDischarge, pvKwh, loadKwh)
+  todo "stepHourLimited" 0
 
 end StoragePolicySim

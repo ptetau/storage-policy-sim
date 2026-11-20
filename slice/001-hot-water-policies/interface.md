@@ -1,6 +1,6 @@
 # Interface
 
-Status: draft
+Status: approved
 
 Stack: a Lean 4 library (`StoragePolicySim`, namespace `StoragePolicySim`) and the `sim` command (`.lake/build/bin/sim`). A test calls the library functions, or runs `sim` as a process and reads stdout, stderr and the exit code.
 
@@ -43,7 +43,7 @@ The test writer sees only this file, not the code. Each structure derives `Repr`
   - Home options: `--home NAME`, `--lat`, `--pv` (replaces the arrays with one flat array), `--array KW:DIRECTION:TILT`, `--battery`, `--power`, `--load`, `--flex`, `--inverter`, `--export-limit`, `--tank` (the capacity of the first tank), `--element`, `--cut-in`, `--floor`, `--tank2 KWH:ELEMENT:SHARE`, `--draw`, `--draw-cv`, `--fetches`, `--forecast-error`, `--days`, `--seed`.
   - Policy options: `--policy`, `--heat-start`, `--heat-hours` (the window of each tank), `--discharge-from`, `--flex-start`, `--target`, `--min-solar`, `--low`. Other options: `--seeds`, `--goal`, `--day`, `--hour`, `--lon`.
 
-The stubs fail with the not-implemented error of the stack: `panic! "not implemented"`. The message holds "not implemented". A stubbed command prints `error: not implemented` on stderr and exits with 3.
+The stubs fail with the not-implemented error of the stack: a panic whose message holds "not implemented". A stubbed command prints `error: not implemented` on stderr and exits with 3. The defaults (`defaultStatic`, `defaultPlan`, `defaultDynamic`, `defaultHome`, `homeNames`) are placeholders with empty values until their slice is built, so a test of a default alone fails by assertion (see `- Changed:`).
 
 ### How a test is written
 
@@ -68,7 +68,7 @@ The app reads only its command line, and writes only stdout and stderr. It opens
 
 - Uses: `planDay`, `dynamicAction`, `defaultPlan`, `defaultDynamic`, `Policy.name`, `runHome`, `sim policy run`, `sim forecast`
 - Stubs: `StoragePolicySim/Policy.lean`, `StoragePolicySim/PolicyCommands.lean`
-- Changed: none
+- Changed: R5
 
 ## S3
 
@@ -98,7 +98,7 @@ The app reads only its command line, and writes only stdout and stderr. It opens
 
 - Uses: `homeNamed`, `homeNames`, `runHome`, `dynamicAction`, `sim policy run`
 - Stubs: `StoragePolicySim/HomeSim.lean`
-- Changed: none
+- Changed: R21
 
 ## S8
 

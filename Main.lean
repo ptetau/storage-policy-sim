@@ -3,6 +3,7 @@ The `sim` command. `sim run` simulates one strategy, and `sim compare` simulates
 strategy on the same weather. JOB-simulate (simulate a year of solar) gives the rules.
 -/
 import StoragePolicySim.Simulation
+import StoragePolicySim.PolicyCommands
 
 open StoragePolicySim
 
@@ -321,6 +322,10 @@ def runCommand (command : Command) (words : List String) : Except Problem (List 
   | none => .ok (output command commandLine)
 
 def main (args : List String) : IO UInt32 := do
+  match args with
+  | "forecast" :: words => return (← forecastCommand words)
+  | "policy" :: words => return (← policyCommand words)
+  | _ => pure ()
   let outcome : Except Problem (List String) := match args with
     | [] | "help" :: _ | "--help" :: _ => .ok usage
     | "run" :: words => runCommand .run words
