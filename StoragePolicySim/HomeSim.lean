@@ -1,7 +1,7 @@
 /-
 The simulation of a home with a policy, the evaluation over seeds, and the tuner. Built: the
 structures, `defaultHome`, `runHome` for the three policies with any panel arrays and the limits of
-the inverter and the export (with any number of tanks), `evaluate`, `tuneStatic` (the search over
+the inverter and the export (with any number of tanks), `dayForecast`, `evaluate`, `tuneStatic` (the search over
 more tanks too), and the five homes of D20 and D21 (`homeNames`, `homeNamed`).
 -/
 import StoragePolicySim.Policy
@@ -160,6 +160,19 @@ private def sumHours (hours : Array HomeHour) (value : HomeHour → Float) : Flo
 private def sumTankHours (hours : Array HomeHour) (value : TankHour → Float) : Float :=
   sumHours hours fun hour => hour.tanks.foldl (fun sum tank => sum + value tank) 0.0
 
+/-- The forecast solar energy of each hour of a day, from the fetch at hour 0 of that day, as the
+precomputed policy reads it. `runHomeOn` and `dayForecast` share this. -/
+private def forecastOfDay (home : Home) (seed : Nat) (scenarioHours : Array Hour) (day : Nat) :
+    Array Float :=
+  let fetch := hoursInDay * day
+  (hourlyEnergy (forecastOf scenarioHours home.site seed home.errorScale fetch) fetch).extract
+    0 hoursInDay
+
+/-- The forecast solar energy of each hour of a day of a run, as the precomputed policy of
+`runHome` reads it at hour 0 of the day. -/
+def dayForecast (home : Home) (seed days day : Nat) : Array Float :=
+  forecastOfDay home seed (homeScenario home seed days) day
+
 /-- One run of a home with a policy, from a full tank and an empty battery on 1 January. In each
 hour, the policy gives its action, each tank runs its hour, the heating and the backstop heating
 join the house load, and the battery runs its hour. A precomputed policy plans at hour 0 of each
@@ -192,8 +205,7 @@ private def runHomeOn (home : Home) (policy : Policy) (seed days : Nat)
     | .static _ => dayPlan := staticPlan
     | .precomputed params =>
       let fetch := hoursInDay * day
-      let forecastKwh := (hourlyEnergy (forecastOf scenarioHours home.site seed home.errorScale
-        fetch) fetch).extract 0 hoursInDay
+      let forecastKwh := forecastOfDay home seed scenarioHours day
       dayPlan := planDay home.tanks params forecastKwh (states.map (·.energyKwh))
         (expectedDraw home scenarioHours[fetch]!.dayOfYear) home.site.flexKwh
     | .dynamic _ => pure ()

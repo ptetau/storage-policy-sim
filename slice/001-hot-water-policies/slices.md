@@ -165,6 +165,6 @@
   - Given the same options, when the lines are compared with `runHome` for the precomputed policy, then the heating of each tank in each hour equals the request of that hour on day 10, with one decimal. (R23)
   - Given no `--day`, when the person runs `sim policy plan`, then it prints the plan of day 0. `--day 365` with 365 days gives `error: OUT_OF_RANGE: --day 365 (0 to 364)`. (R23)
 - Layers: command, home simulation, policy
-- Status: review
+- Status: done
 - Test rounds: 1
-- Review rounds: 1
+- Review rounds: 2

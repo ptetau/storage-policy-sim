@@ -48,8 +48,12 @@ The command is then at `.lake/build/bin/sim`. The toolchain is Lean 4.35.0.
   and the table of `sim policy robust` with that profile in the row `static`. `--goal` is
   `self-consumption` (the default) or `import`. The options `--heat-start`, `--heat-hours` and
   `--discharge-from` give `UNKNOWN_OPTION`. With the defaults it takes about 25 seconds.
-- Not built yet: `sim policy plan`. It prints `error: not implemented` on stderr and exits
-  with 3.
+- `sim policy plan [options]` prints the plan of the precomputed policy for one day. It takes
+  the home and policy options of `sim policy run` except `--policy`, and `--day D` (a whole number
+  from 0 to the days less 1, default 0). The header is `hour forecast-kWh tank1-kWh ... discharge`
+  (one `tank<i>-kWh` for each tank), then 24 rows, one for each hour: the forecast solar energy
+  of the hour (from the fetch at hour 0 of the day), the heating that the policy asks for each
+  tank, and `yes` or `no` for the battery discharge. The values come from `runHome`.
 
 For example:
 

@@ -2,7 +2,6 @@
 The scenario of a site: the solar output, the daily sky and the household load of each hour.
 CAP-scenario (sun, weather and load) gives the rules.
 -/
-import StoragePolicySim.Stub
 namespace StoragePolicySim
 
 /-- The sky of a day. -/

@@ -1,7 +1,7 @@
 /-
 The `sim forecast` and `sim policy` commands. Built: `sim forecast`, `sim policy run`,
-`sim policy compare`, `sim policy robust` and `sim policy tune`, with `--home` and `--tank2`. The
-policy command `plan` is not built yet.
+`sim policy compare`, `sim policy robust`, `sim policy tune` and `sim policy plan`, with `--home`
+and `--tank2`.
 -/
 import StoragePolicySim.Cli
 import StoragePolicySim.HomeSim
@@ -430,6 +430,42 @@ private def policyTune (words : List String) : Except Problem (List String) := d
          [labelledLine "discharge-from" (toString tuned.best.dischargeFrom), ""] ++
       robustTable line seeds (some (.static tuned.best)))
 
+/-! ## The command `sim policy plan` -/
+
+/-- The `--day` option of `sim policy plan`, with the last day of a run of `days` days. -/
+private def dayOption (days : Nat) : NumberOption :=
+  policyNumberOption "--day" "day of the run to plan" 0 0 (days.toFloat - 1) (wholeOnly := true)
+
+/-- The `--day` option for the reading step: the widest true range, that of the most days. -/
+private def dayReadOption : NumberOption := dayOption daysOption.highest.toUInt64.toNat
+
+/-- The header of `sim policy plan`: one heating column for each tank. -/
+private def planHeader (tanks : Nat) : List String :=
+  ["hour", "forecast-kWh"] ++ (List.range tanks).map (fun i => s!"tank{i + 1}-kWh") ++
+    ["discharge"]
+
+/-- The lines of `sim policy plan`, or the first problem of its options. The values come from
+`runHome` with the precomputed policy: the request of each tank and the battery discharge gate of
+each hour of the day, and the forecast of that day. -/
+private def policyPlan (words : List String) : Except Problem (List String) := do
+  let line ← readPolicyOptions false false (runOptions ++ [dayReadOption]) {} words
+  let days := wholeIn line.numbers daysOption
+  let options := runOptions ++ [dayOption days]
+  match line.rangeProblem options with
+  | some problem => .error problem
+  | none =>
+    let day := wholeIn line.numbers (dayOption days)
+    let seed := wholeIn line.numbers seedOption
+    let home := line.home
+    let result := runHome home ({ line with policy := "precomputed" }.policyOf) seed days
+    let forecast := dayForecast home seed days day
+    let rows := (List.range hoursInDay).map fun hour =>
+      let homeHour := result.hours[hoursInDay * day + hour]!
+      [toString hour, oneDecimal (forecast[hour]?.getD 0.0)] ++
+        homeHour.tanks.toList.map (fun tank => oneDecimal tank.askKwh) ++
+        [if homeHour.allowDischarge then "yes" else "no"]
+    .ok (table (planHeader home.tanks.size) rows)
+
 /-- The usage of `sim policy`. -/
 private def policyUsage : List String :=
   ["usage: sim policy run|compare|robust|tune|plan [options]",
@@ -437,7 +473,8 @@ private def policyUsage : List String :=
    "sim policy run simulates one policy and prints the totals.",
    "sim policy compare simulates each policy on the same weather and prints a table.",
    "sim policy robust evaluates each policy over several weather years (--seeds).",
-   "sim policy tune searches the best static profile (--goal self-consumption|import)."]
+   "sim policy tune searches the best static profile (--goal self-consumption|import).",
+   "sim policy plan prints the precomputed plan of one day (--day)."]
 
 /-- Prints the lines of a command, or its error line. Returns the exit code. -/
 private def finish (outcome : Except Problem (List String)) : IO UInt32 := do
@@ -502,7 +539,7 @@ private def forecastRun (words : List String) : Except Problem (List String) := 
 /-- Runs `sim forecast` with its words: prints the Solcast JSON of one fetch. -/
 def forecastCommand (words : List String) : IO UInt32 := finish (forecastRun words)
 
-/-- Runs `sim policy` with its words. The command `plan` is not built yet. -/
+/-- Runs `sim policy` with its words. -/
 def policyCommand (words : List String) : IO UInt32 := do
   match words with
   | [] | "help" :: _ => finish (.ok policyUsage)
@@ -510,10 +547,8 @@ def policyCommand (words : List String) : IO UInt32 := do
   | "compare" :: options => finish (policyCompare options)
   | "robust" :: options => finish (policyRobust options)
   | "tune" :: options => finish (policyTune options)
+  | "plan" :: options => finish (policyPlan options)
   | word :: _ =>
-    if word == "plan" then
-      IO.eprintln "error: not implemented"
-      return 3
-    else finish (.error (.unknownCommand s!"policy {word}"))
+    finish (.error (.unknownCommand s!"policy {word}"))
 
 end StoragePolicySim

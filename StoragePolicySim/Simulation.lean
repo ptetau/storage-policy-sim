@@ -5,7 +5,6 @@ CAP-simulation (hourly energy flows) gives the rules.
 -/
 import StoragePolicySim.Scenario
 import StoragePolicySim.Strategy
-import StoragePolicySim.Stub
 
 namespace StoragePolicySim
 
