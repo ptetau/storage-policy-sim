@@ -42,18 +42,18 @@ structure Flow where
 private def limitTo (a b c : Float) : Float :=
   max 0 (min a (min b c))
 
-/-- The flows of one hour. `socKwh` is the energy in the battery before the hour. The
-battery takes what the strategy asks, up to the surplus, the power and the free room. The
-battery gives what the strategy asks, up to the shortfall, the power and the stored energy.
-The power limit applies to the energy in, and to the energy out after the loss. The
-stored energy after the hour stays from 0 to the capacity, so that a rounding error of the
+/-- The flows of one hour for a request of the battery. `socKwh` is the energy in the battery
+before the hour. The battery takes what the request asks, up to the surplus, the power and the
+free room. The battery gives what the request asks, up to the shortfall, the power and the
+stored energy. The power limit applies to the energy in, and to the energy out after the loss.
+The stored energy after the hour stays from 0 to the capacity, so that a rounding error of the
 floats cannot move it out of this range. -/
-def stepHour (battery : Battery) (socKwh : Float) (strategy : Strategy) (hour : Nat)
-    (pvKwh loadKwh : Float) : Flow :=
+private def stepRequested (battery : Battery) (socKwh : Float)
+    (request : Float → Float → Request) (pvKwh loadKwh : Float) : Flow :=
   let directKwh := min pvKwh loadKwh
   let surplusKwh := pvKwh - directKwh
   let shortfallKwh := loadKwh - directKwh
-  let request := strategy.decide hour surplusKwh shortfallKwh
+  let request := request surplusKwh shortfallKwh
   let chargeToFillKwh := (battery.capacityKwh - socKwh) / efficiency
   let chargeKwh := limitTo request.chargeKwh surplusKwh (min battery.powerKw chargeToFillKwh)
   let storedAfterChargeKwh := socKwh + chargeKwh * efficiency
@@ -65,6 +65,23 @@ def stepHour (battery : Battery) (socKwh : Float) (strategy : Strategy) (hour : 
     importKwh := shortfallKwh - dischargeKwh,
     lossKwh := chargeKwh - chargeKwh * efficiency + takenOutKwh - dischargeKwh,
     socKwh := max 0 (min battery.capacityKwh (storedAfterChargeKwh - takenOutKwh)) }
+
+/-- The flows of one hour. `socKwh` is the energy in the battery before the hour. The strategy
+gives the request of the battery, and the limits of the battery apply to it. -/
+def stepHour (battery : Battery) (socKwh : Float) (strategy : Strategy) (hour : Nat)
+    (pvKwh loadKwh : Float) : Flow :=
+  stepRequested battery socKwh (strategy.decide hour) pvKwh loadKwh
+
+/-- The flows of one hour with a battery gate, by the rules of `stepHour` with the `greedy`
+strategy. A battery that may not charge keeps the surplus as export. A battery that may not
+discharge leaves the shortfall as import. -/
+def stepHourGated (battery : Battery) (socKwh : Float) (allowCharge allowDischarge : Bool)
+    (pvKwh loadKwh : Float) : Flow :=
+  stepRequested battery socKwh
+    (fun surplusKwh shortfallKwh =>
+      { chargeKwh := if allowCharge then surplusKwh else 0,
+        dischargeKwh := if allowDischarge then shortfallKwh else 0 })
+    pvKwh loadKwh
 
 /-- One hour of a run. -/
 structure HourResult where
@@ -126,7 +143,7 @@ private def HourSums.add (sums : HourSums) (hourResult : HourResult) : HourSums 
     lossKwh := sums.lossKwh + hourResult.flow.lossKwh }
 
 /-- `part` as a percentage of `whole`. A ratio with nothing to divide by is 0%. -/
-private def percent (part whole : Float) : Float :=
+def percent (part whole : Float) : Float :=
   if whole == 0 then 0 else 100 * part / whole
 
 /-- The totals of the sums, with the energy in the battery at the end. -/
@@ -191,12 +208,6 @@ def simulate (site : Site) (battery : Battery) (strategy : Strategy) (seed days 
   if openMonth.days > 0 then
     months := months.push (openMonth.close socKwh)
   return { hours, totals := runSums.toTotals socKwh, months }
-
-/-- The flows of one hour with a battery gate. Not built yet. -/
-def stepHourGated (battery : Battery) (socKwh : Float) (allowCharge allowDischarge : Bool)
-    (pvKwh loadKwh : Float) : Flow :=
-  let _ := (battery, socKwh, allowCharge, allowDischarge, pvKwh, loadKwh)
-  todo "stepHourGated" 0
 
 /-- The limits of a home in kW. 0 means no limit. -/
 structure Limits where
