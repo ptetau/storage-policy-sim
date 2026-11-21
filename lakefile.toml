@@ -67,6 +67,10 @@ name = "oracle"
 root = "analysis.Oracle"
 
 [[lean_exe]]
+name = "calibrate"
+root = "analysis.Calibrate"
+
+[[lean_exe]]
 name = "slicetest2_S1"
 root = "tests.slice2.S1"
 
