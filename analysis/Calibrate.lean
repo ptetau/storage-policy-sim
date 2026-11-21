@@ -172,6 +172,46 @@ def main (args : List String) : IO Unit := do
   let some mine := homeNamed "mine" | IO.println "no home"
   let mode := args[0]?.getD "monthly"
   let seeds := [1, 2, 3, 4, 5]
+  if mode == "export" then
+    let timer : StaticParams :=
+      { windows := #[{ heatStart := 8, heatHours := 9 }, { heatStart := 13, heatHours := 2 }], dischargeFrom := 0, flexStart := 11 }
+    for cap in [10.0, 8.8] do
+      let base := asToday (measured mine 1.1 23.9 13.5 0.81 false) 0.15
+      let home := { base with limits := { base.limits with exportKw := cap } }
+      let runners := (physTotalsOf home seeds.toArray 365).toList
+      let report (label : String) (p : StaticParams) : IO Unit := do
+        let ts := runners.map fun r => r (.static p)
+        let n := ts.length.toFloat
+        let sum (f : HomeTotals → Float) := ts.foldl (fun s t => s + f t) 0.0
+        IO.println s!"cap {cap} kW, {label}: import {f1 (sum (·.importKwh) / n)}, export {f1 (sum (·.exportKwh) / n)}, curtailed {f1 (sum (·.curtailedKwh) / n)} kWh/yr, backstop {f1 (sum (·.backstopKwh) / n)}, cold hours {f1 (sum (·.coldHours.toFloat) / n)}"
+      report "tuned timer" timer
+      -- The timer with the least import less 0.4 of the export.
+      let train := (physTotalsOf home #[11, 12, 13] 365).toList
+      let cost (p : StaticParams) : Float :=
+        train.foldl (fun sum run =>
+          let t := run (.static p)
+          sum + t.importKwh - 0.4 * t.exportKwh + 1000.0 * t.unmetKwh + 10.0 * t.coldHours.toFloat) 0.0
+      let mut best := timer
+      let mut bestCost := cost best
+      for _ in [0:2] do
+        for tank in [0:2] do
+          for heatStart in [6:18] do
+            for heatHours in [1:10] do
+              let c := { best with windows := best.windows.set! tank { heatStart, heatHours } }
+              let k := cost c
+              if k < bestCost - 0.01 then best := c; bestCost := k
+        for flexStart in [6:21] do
+          let c := { best with flexStart }
+          let k := cost c
+          if k < bestCost - 0.01 then best := c; bestCost := k
+      report s!"timer tuned with export valued [{descr best}]" best
+      if cap < 9.0 then
+        let mut months := Array.replicate 12 0.0
+        for seed in seeds do
+          for h in (runPhysics home (.static timer) seed 365).hours do
+            months := months.modify (monthOf h.day) (· + h.curtailedKwh)
+        IO.println s!"curtailed by month, kWh: {months.map fun x => f1 (x / seeds.length.toFloat)}"
+    return
   if mode == "ideas" then
     let home60 := asToday (measured mine 1.1 23.9 13.5 0.81 false) 0.15
     let timer : StaticParams :=
