@@ -29,6 +29,9 @@ structure Home where
   heatDayKwh : Array Float := #[]
   /-- The share of the space heating of a day that falls in each hour. -/
   heatShape : Array Float := #[]
+  /-- The set point of the tanks on each day of the year, read by the physics run only. Empty
+  means 60 degrees. -/
+  setPointByDay : Array Float := #[]
   deriving Repr, Inhabited
 
 /-- The home `generic`: latitude -41.3, one flat array of 5 kW, 20 kWh of load a day with 3 kWh

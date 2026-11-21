@@ -117,6 +117,16 @@ private structure PhysCarry where
   asked : Array Bool
   deriving Inhabited
 
+/-- A rule that heats from the battery level (an analysis aid, not a policy of the spec). A tank
+starts in an hour that begins with the battery at `socShare` of its capacity or more and with more
+sun than base load, one tank an hour, the emptier tank first. A tank with no start yet today
+starts at its hour of `lateStart` at the latest. A start runs until the tank is full, and a tank
+has at most 2 starts a day. -/
+structure Divert where
+  socShare : Float
+  lateStart : Array Nat
+  deriving Repr, Inhabited
+
 /-- The run of a home with a policy on the physics model, from a full tank and an empty battery on
 1 January. In each hour, the policy gives its action from what it sees: the tanks as their energy
 above the inlet temperature, and the capacity of a full tank at that temperature. Then each of the 4
@@ -127,7 +137,8 @@ from `first` to before `days`, and starts from `carry` when it is given. `plans`
 a day in place of the plan of the policy. The run also returns what it carries on. -/
 private def runPhysicsOn (home : Home) (policy : Policy) (seed days : Nat) (pre : PhysPre)
     (record : Bool) (first : Nat := 0) (carry : Option PhysCarry := none)
-    (plans : Nat → Option (Array Action) := fun _ => none) : HomeResult × PhysCarry := Id.run do
+    (plans : Nat → Option (Array Action) := fun _ => none) (divert : Option Divert := none) :
+    HomeResult × PhysCarry := Id.run do
   let latitude := home.site.latitude
   let tanks := home.tanks.map physTankOf
   let tankCount := home.tanks.size
@@ -147,6 +158,7 @@ private def runPhysicsOn (home : Home) (policy : Policy) (seed days : Nat) (pre 
   let mut coldHours := 0
   let mut policyStarts := 0
   let mut startsToday := Array.replicate tankCount 0
+  let mut latched := Array.replicate tankCount false
   let mut fetchedAt : Option Nat := none
   let mut fetchedKwh : Array Float := #[]
   let mut hours : Array HomeHour := Array.mkEmpty (if record then stepsPerDay * days else 0)
@@ -154,15 +166,18 @@ private def runPhysicsOn (home : Home) (policy : Policy) (seed days : Nat) (pre 
     let dayOfYear := day % daysInYear
     let inletC := pre.inletC.get! day
     -- The guard hour of the day (D13): early enough for the element to fill a full tank by midnight.
+    let setC := home.setPointByDay[dayOfYear]?.getD 60.0
     let dayTanks := tanks.map fun tank =>
+      let tank := { tank with setC }
       if tank.elementKw > 0.0 && tank.guardHour < hoursInDay then
-        let hoursNeeded := (tankEnergyKwh (physStart tank) inletC / tank.elementKw).ceil.toUInt64.toNat
+        let hoursNeeded :=
+          (tankEnergyKwh (physStart tank) inletC setC / tank.elementKw).ceil.toUInt64.toNat
         { tank with guardHour := min tank.guardHour (hoursInDay - hoursNeeded) }
       else tank
     startsToday := Array.replicate tankCount 0
     -- A full tank at the inlet temperature is the capacity that a policy compares with.
     let seen : Array TankConfig := home.tanks.mapIdx fun i tank =>
-      { tank with capacityKwh := tankEnergyKwh (physStart tanks[i]!) inletC }
+      { tank with capacityKwh := tankEnergyKwh (physStart tanks[i]!) inletC setC }
     let mut dayPlan : Array Action := #[]
     match plans day, policy with
     | some plan, _ => dayPlan := plan
@@ -171,7 +186,7 @@ private def runPhysicsOn (home : Home) (policy : Policy) (seed days : Nat) (pre 
       -- The draw of the day takes `(40 - inlet) / 26` of the energy that the profile gives.
       let drawScale := (40.0 - inletC) / tapRiseK
       dayPlan := planDay seen params (forecastOfDay home seed pre.hours day)
-        (states.map fun state => tankEnergyKwh state inletC)
+        (states.map fun state => tankEnergyKwh state inletC setC)
         ((expectedDraw home dayOfYear).map (· * drawScale)) home.site.flexKwh
     | none, .dynamic _ => pure ()
     -- The cycles of the day: they start in the first hour with flexible energy.
@@ -191,7 +206,7 @@ private def runPhysicsOn (home : Home) (policy : Policy) (seed days : Nat) (pre 
           fetchedAt := some fetch
         let hourSums := pre.hours[hourOfRun]!
         let observation : Observation :=
-          { hour, tankKwh := states.map fun state => tankEnergyKwh state inletC,
+          { hour, tankKwh := states.map fun state => tankEnergyKwh state inletC setC,
             socKwh := sums.get! slotSoc,
             surplusKwh := max 0.0 (hourSums.pvKwh - hourSums.baseLoadKwh),
             forecastRestKwh := restOfDayForecast fetchedKwh fetch hourOfRun day,
@@ -201,6 +216,23 @@ private def runPhysicsOn (home : Home) (policy : Policy) (seed days : Nat) (pre 
         if !placed && action.flexKwh > 0.0 then
           flexSteps := placeCycles pre.cycles[day]! (stepsPerHour * hour)
           placed := true
+      if let some rule := divert then
+        let hourSums := pre.hours[hourOfRun]!
+        let ready := sums.get! slotSoc ≥ rule.socShare * home.battery.capacityKwh
+          && hourSums.pvKwh > hourSums.baseLoadKwh
+        let shareOf (i : Nat) : Float := states[i]!.hotLitres / dayTanks[i]!.litres
+        let order := (Array.range tankCount).qsort fun a b => shareOf a < shareOf b
+        let mut heat := Array.replicate tankCount 0.0
+        let mut startedNow := false
+        for i in order do
+          if latched[i]! && shareOf i ≥ 0.995 then latched := latched.set! i false
+          if !latched[i]! && shareOf i < 0.9 && startsToday[i]! < maxStartsPerDay then
+            let late := startsToday[i]! == 0 && hour ≥ rule.lateStart[i]?.getD hoursInDay
+            if late || (ready && !startedNow) then
+              latched := latched.set! i true
+              startedNow := true
+          if latched[i]! then heat := heat.set! i dayTanks[i]!.elementKw
+        action := { action with heatKwh := heat }
       for tankIndex in [0:tankCount] do
         let askKwh := action.heatKwh[tankIndex]!
         if askKwh > 0 && !asked[tankIndex]! then
@@ -218,7 +250,7 @@ private def runPhysicsOn (home : Home) (policy : Policy) (seed days : Nat) (pre 
           let tapLitres := pre.tapLitres[i]!.get! hourOfRun / stepsPerHour.toFloat
           let result := physTankStep tank states[i]! step askKwh tapLitres inletC
           states := states.set! i result.state
-          let energyKwh := tankEnergyKwh result.state inletC
+          let energyKwh := tankEnergyKwh result.state inletC setC
           sums := bump sums slotTankLoss result.lossKwh
           sums := bump sums slotTankLoad (result.heatKwh + result.backstopKwh)
           sums := bump sums slotHeat result.heatKwh
@@ -286,6 +318,23 @@ loads of a seed are built once. -/
 def physTotalsOf (home : Home) (seeds : Array Nat) (days : Nat) : Array (Policy → HomeTotals) :=
   let pres := seeds.map fun seed => (seed, physPre home seed days)
   pres.map fun (seed, pre) policy => (runPhysicsOn home policy seed days pre false).1.totals
+
+/-- A static policy with no heating windows: the battery may always discharge, and the flexible
+load starts at `flexStart`. -/
+private def noWindows (flexStart : Nat) : Policy :=
+  .static { windows := #[{ heatStart := 0, heatHours := 0 }], dischargeFrom := 0, flexStart }
+
+/-- One run with the rule `rule` for the tanks (an analysis aid). -/
+def runDivert (home : Home) (flexStart : Nat) (rule : Divert) (seed days : Nat) : HomeResult :=
+  (runPhysicsOn home (noWindows flexStart) seed days (physPre home seed days) true
+    (divert := some rule)).1
+
+/-- For each seed, the totals of a run for each rule (an analysis aid). -/
+def divertTotalsOf (home : Home) (flexStart : Nat) (seeds : Array Nat) (days : Nat) :
+    Array (Divert → HomeTotals) :=
+  let pres := seeds.map fun seed => (seed, physPre home seed days)
+  pres.map fun (seed, pre) rule =>
+    (runPhysicsOn home (noWindows flexStart) seed days pre false (divert := some rule)).1.totals
 
 /-- `evaluate` on the physics model. -/
 def evaluatePhysics (home : Home) (policy : Policy) (seed seeds days : Nat) : Evaluation :=

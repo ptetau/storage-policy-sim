@@ -18,9 +18,11 @@ structure PhysTank where
   cutInShare : Float
   floorShare : Float
   guardHour : Nat
+  /-- The set point of the thermostat, in degrees Celsius. -/
+  setC : Float := 60.0
   deriving Repr, Inhabited
 
-/-- The set point of a tank, in degrees Celsius. -/
+/-- The usual set point of a tank, in degrees Celsius. -/
 private def setPointC : Float := 60.0
 
 /-- The temperature of the room around a tank, in degrees Celsius. -/
@@ -52,16 +54,16 @@ structure PhysTankState where
 
 /-- The energy of one hot litre above the inlet water, in kWh. The difference to the set point
 is at least 0.001 degrees, so that a division by this energy is safe. -/
-private def litreKwh (inletC : Float) : Float :=
-  kwhPerLitreK * max 0.001 (setPointC - inletC)
+private def litreKwh (inletC : Float) (setC : Float := setPointC) : Float :=
+  kwhPerLitreK * max 0.001 (setC - inletC)
 
 /-- A full tank: all hot, thermostat off, full today. -/
 def physStart (t : PhysTank) : PhysTankState :=
   { hotLitres := t.litres, heating := false, fullToday := true }
 
 /-- The energy of the hot litres above the inlet temperature, in kWh. -/
-def tankEnergyKwh (state : PhysTankState) (inletC : Float) : Float :=
-  state.hotLitres * litreKwh inletC
+def tankEnergyKwh (state : PhysTankState) (inletC : Float) (setC : Float := 60.0) : Float :=
+  state.hotLitres * litreKwh inletC setC
 
 /-- The result of one step of a tank. -/
 structure PhysTankStep where
@@ -90,11 +92,11 @@ litre. -/
 def physTankStep (t : PhysTank) (state : PhysTankState) (step : Nat) (requestKwh tapLitres inletC : Float) :
     PhysTankStep :=
   let dayStep := step % stepsPerDay
-  let perLitre := litreKwh inletC
+  let perLitre := litreKwh inletC t.setC
   let share := if t.litres > 0.0 then state.hotLitres / t.litres else 0.0
-  let lossKwh := min (t.uaKwPerK * (setPointC - roomC) * share * stepHours) (state.hotLitres * perLitre)
+  let lossKwh := min (t.uaKwPerK * (t.setC - roomC) * share * stepHours) (state.hotLitres * perLitre)
   let afterLoss := state.hotLitres - lossKwh / perLitre
-  let neededLitres := max 0.0 (tapLitres * (tapC - inletC) / max 0.001 (setPointC - inletC))
+  let neededLitres := max 0.0 (tapLitres * (tapC - inletC) / max 0.001 (t.setC - inletC))
   let servedLitres := min neededLitres afterLoss
   let servedKwh := servedLitres * perLitre
   let unmetKwh := (neededLitres - servedLitres) * perLitre
