@@ -1,0 +1,164 @@
+# CAP-simulation · Hourly energy flows and self-consumption results
+
+Status: active
+
+## What it is for
+
+CAP-simulation (hourly energy flows) runs one strategy over a scenario, hour by hour, with
+a battery. It gives the energy flows of each hour, the totals, and the totals of each
+month. The totals include the self-consumption and the self-sufficiency, so that a caller
+can compare strategies on the same weather.
+
+A caller can also gate the battery by hour: charging and discharging are each allowed or
+not allowed. A policy uses this gate to plan the battery with the hot-water tank.
+
+## Code map
+
+- `StoragePolicySim/Simulation.lean`
+
+## Interface
+
+- `Battery` · type · `StoragePolicySim/Simulation.lean`
+  - in: not applicable
+  - out: a structure with `Repr` and `Inhabited`, and the fields `capacityKwh` and `powerKw`, each a `Float`
+  - errors: none
+- `efficiency : Float` · constant · `StoragePolicySim/Simulation.lean`
+  - in: not applicable
+  - out: 0.95
+  - errors: none
+- `Flow` · type · `StoragePolicySim/Simulation.lean`
+  - in: not applicable
+  - out: a structure with `Repr` and `Inhabited`. Each field is a `Float` in kWh: `directKwh`, `chargeKwh`, `dischargeKwh`, `exportKwh`, `importKwh`, `lossKwh` and `socKwh`.
+  - errors: none
+- `stepHour (battery : Battery) (socKwh : Float) (strategy : Strategy) (hour : Nat) (pvKwh loadKwh : Float) : Flow` · function · `StoragePolicySim/Simulation.lean`
+  - in: a battery, the energy that it holds, a strategy, the hour of the day, and the solar energy and the load of the hour
+  - out: the flows of the hour. `socKwh` of the flow is the energy that the battery holds after the hour.
+  - errors: none
+- `HourResult` · type · `StoragePolicySim/Simulation.lean`
+  - in: not applicable
+  - out: a structure with `Repr` and `Inhabited`, and the fields `hour : Hour`, `loadKwh : Float` and `flow : Flow`
+  - errors: none
+- `Totals` · type · `StoragePolicySim/Simulation.lean`
+  - in: not applicable
+  - out: a structure with `Repr` and `Inhabited`. Each field is a `Float`: `pvKwh`, `loadKwh`, `selfUsedKwh`, `importKwh`, `exportKwh`, `lossKwh`, `finalSocKwh`, `selfConsumption` and `selfSufficiency`.
+  - errors: none
+- `Month` · type · `StoragePolicySim/Simulation.lean`
+  - in: not applicable
+  - out: a structure with `Repr` and `Inhabited`, and the fields `name : String`, `days : Nat` and `totals : Totals`
+  - errors: none
+- `Result` · type · `StoragePolicySim/Simulation.lean`
+  - in: not applicable
+  - out: a structure with `Repr` and `Inhabited`, and the fields `hours : Array HourResult`, `totals : Totals` and `months : Array Month`
+  - errors: none
+- `simulate (site : Site) (battery : Battery) (strategy : Strategy) (seed days : Nat) : Result` · function · `StoragePolicySim/Simulation.lean`
+  - in: a site, a battery, a strategy, a seed, and the days of the run
+  - out: the hours, the totals and the months of the run
+  - errors: none
+- `stepHourGated (battery : Battery) (socKwh : Float) (allowCharge allowDischarge : Bool) (pvKwh loadKwh : Float) : Flow` · function · `StoragePolicySim/Simulation.lean` · proposed
+  - in: a battery, the energy that it holds, whether it may charge, whether it may discharge, and the solar energy and the load of the hour
+  - out: the flows of the hour, with the same rules as `stepHour`. The battery charges only when it may charge, and discharges only when it may discharge.
+  - errors: none
+
+### Test seams
+
+- `seed` · seam: randomness · `StoragePolicySim/Simulation.lean`
+  - in: the `seed` argument of `simulate`. The same seed gives the same weather.
+  - errors: none
+
+## Requirements
+
+### CAP-simulation.R1 · Energy flows of an hour
+
+Status: verified · Intents: IN-0001
+
+The house first uses solar energy directly. Then the battery takes what the strategy asks,
+up to the surplus, the battery power for one hour, and the free room. The rest goes to
+the grid as export.
+
+For a shortfall, the battery gives what the strategy asks, up to the shortfall, the battery
+power for one hour, and the stored energy. The rest comes from the grid as import.
+
+The battery keeps 95% of the energy that goes in, and gives 95% of the energy that comes
+out (assumed). The battery is empty at the start (assumed). In these lines, the battery
+holds 10 kWh with 5 kW of power, unless the line says otherwise.
+
+- Given an empty battery, when `greedy` meets 3 kWh of solar and 1 kWh of load, then 1 kWh is direct and 2 kWh charges. The battery then holds 1.9 kWh.
+- Given a full battery, when `greedy` meets 3 kWh of solar and 1 kWh of load, then 0 kWh charges and 2 kWh is export.
+- Given 9.05 kWh stored, when `greedy` meets a surplus of 2 kWh, then 1 kWh charges and 1 kWh is export. The battery then holds 10 kWh.
+- Given a battery with 2 kW of power, when `greedy` meets a surplus of 3 kWh, then 2 kWh charges and 1 kWh is export.
+- Given 1.9 kWh stored, when `greedy` meets a shortfall of 2 kWh, then the battery gives 1.805 kWh and the import is 0.195 kWh.
+- Given 1.9 kWh stored, when `none` meets 3 kWh of solar and 1 kWh of load, then 2 kWh is export. The battery still holds 1.9 kWh.
+- Given `greedy` and seed 7, when the simulation runs 365 days, then the first hour imports its full load.
+
+### CAP-simulation.R2 · Battery limits
+
+Status: verified · Intents: IN-0001
+
+Over a run, the battery never goes past its power or its capacity. The energy of each run
+balances, with the battery losses included. In these lines, the site is at latitude 45
+with 5 kW of panels and 20 kWh of daily load, 3 kWh of it flexible. The seed is 7, unless
+the line says otherwise.
+
+- Given a 5 kWh battery with 2 kW of power, when `greedy` runs 365 days, then no hour charges or discharges over 2 kWh.
+- Given a 5 kWh battery with 2 kW of power, when `greedy` runs 365 days, then the battery holds 0 to 5 kWh each hour.
+- Given a 10 kWh battery, when `greedy` runs 365 days, then solar plus import equals load, export, losses and the stored energy. The tolerance is 0.01 kWh.
+- Given a battery of 0 kWh, when `greedy` and `none` each run 365 days, then the two runs have the same totals.
+
+### CAP-simulation.R3 · Totals and ratios
+
+Status: verified · Intents: IN-0001
+
+The totals add up the hours of the run. The self-consumption is the solar energy less the
+export, as a percentage of the solar energy. The self-sufficiency is the load less the
+import, as a percentage of the load. A ratio with nothing to divide by is 0% (assumed).
+
+- Given latitude 45 and `none`, when the simulation runs 365 days, then each total equals the sum of its hours. The tolerance is 0.01 kWh.
+- Given latitude 45 and `greedy`, when the simulation runs 365 days, then the self-consumption is 100 × (solar - export) / solar.
+- Given latitude 45 and `greedy`, when the simulation runs 365 days, then the self-sufficiency is 100 × (load - import) / load.
+- Given 0 kW of panels, when `greedy` runs 365 days, then the self-consumption is 0% and the self-sufficiency is 0%.
+- Given 0 days, when `greedy` runs, then each total is 0, each ratio is 0%, and there are no months.
+
+### CAP-simulation.R4 · Monthly totals
+
+Status: verified · Intents: IN-0001
+
+The result has the totals of each calendar month in the run, in order. A year has 365
+days, with no leap day (assumed). Each month also has its own two ratios.
+
+- Given 365 days, when `greedy` runs, then the result has 12 months. Their days are 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30 and 31.
+- Given 365 days, when `greedy` runs, then the solar totals of the 12 months add up to the solar total of the run. The tolerance is 0.01 kWh.
+- Given 400 days, when `greedy` runs, then the result has 14 months. The last month is February with 4 days.
+- Given 10 days, when `greedy` runs, then the result has one month, January with 10 days.
+- Given latitude 45 and seed 7, when `greedy` runs 365 days, then July has more than twice the solar energy of December.
+- Given latitude 45 and seed 7, when `greedy` runs 365 days, then the July self-sufficiency is more than the January self-sufficiency.
+
+### CAP-simulation.R5 · Strategy order
+
+Status: verified · Intents: IN-0001
+
+On the same weather, a battery must raise the self-consumption, and a later discharge must
+not raise it. In these lines, the site is at latitude 45 with 5 kW of panels and 20 kWh of
+daily load, 3 kWh of it flexible. The seed is 7, and each run is 365 days.
+
+- Given a battery of 10 kWh with 5 kW of power, when `none` and `greedy` run, then `greedy` has the higher self-consumption.
+- Given a battery of 10 kWh with 5 kW of power, when `evening` and `greedy` run, then `evening` has a self-consumption no higher than `greedy`.
+- Given a battery of 0 kWh, when `none` and `shift` run, then `shift` has the higher self-consumption.
+
+### CAP-simulation.R6 · Allowed battery use
+
+Status: ready · Intents: IN-0008
+
+`stepHourGated` runs an hour as `stepHour` does with the `greedy` strategy, but a battery
+that may not charge keeps the surplus as export, and a battery that may not discharge leaves
+the shortfall as import. The battery limits of R1 and R2 still hold. In these lines, the
+battery holds 10 kWh with 5 kW of power, unless the line says otherwise. The tolerance is
+0.000000001 kWh.
+
+- Given an empty battery that may charge and discharge, when the hour has 3 kWh of solar and 1 kWh of load, then 1 kWh is direct and 2 kWh charges. The battery then holds 1.9 kWh.
+- Given an empty battery that may not charge, when the hour has 3 kWh of solar and 1 kWh of load, then 0 kWh charges and 2 kWh is export. The battery still holds 0 kWh.
+- Given 1.9 kWh stored and a battery that may discharge, when the hour has 0 kWh of solar and 2 kWh of load, then the battery gives 1.805 kWh and the import is 0.195 kWh.
+- Given 1.9 kWh stored and a battery that may not discharge, when the hour has 0 kWh of solar and 2 kWh of load, then the battery gives 0 kWh and the import is 2.0 kWh. The battery still holds 1.9 kWh.
+- Given 9.05 kWh stored and a battery that may charge, when the hour has a surplus of 2 kWh, then 1 kWh charges and 1 kWh is export. The battery then holds 10 kWh.
+- Given a battery that may not charge and may not discharge, when an hour has a surplus of 2 kWh, then the export is 2 kWh. When the hour has a shortfall of 2 kWh, then the import is 2 kWh.
+- Given a battery that may charge and discharge, when each of the 24 hours of day 100 of a run with latitude 45 and seed 7 runs with the battery energy of the hour before, then each flow equals the flow of `stepHour` with `greedy`. The tolerance is 0.000000001 kWh.
+- Given a battery that may charge, and may discharge only from 17:00, when the same 24 hours run, then each flow equals the flow of `stepHour` with `evening`. The tolerance is 0.000000001 kWh.

@@ -1,0 +1,56 @@
+{
+  "kind": "terminal",
+  "title": "CH-0006 \u00b7 Forecast from built hours",
+  "width": 1100,
+  "height": 700,
+  "steps": [
+    {
+      "caption": "CAP-forecast \u00b7 setup: build the library",
+      "run": "lake build 2>&1 | tail -1"
+    },
+    {
+      "caption": "CAP-forecast.R6 \u00b7 forecastOf gives the same periods as forecast at the fetch hours 0, 4116 and 8750",
+      "run": "lake env lean --run pdlc/changes/CH-0006-forecast-fast/demo.lean r6-1"
+    },
+    {
+      "caption": "CAP-forecast.R6 \u00b7 error scale 0: each value of a fetch at hour 4000 equals its actual power",
+      "run": "lake env lean --run pdlc/changes/CH-0006-forecast-fast/demo.lean r6-2"
+    },
+    {
+      "caption": "CAP-forecast.R6 \u00b7 hours of a run of 8760 hours: a fetch at hour 8760 has no period",
+      "run": "lake env lean --run pdlc/changes/CH-0006-forecast-fast/demo.lean r6-3"
+    },
+    {
+      "caption": "CAP-forecast.R6 \u00b7 no hours give no period for a fetch at hour 0",
+      "run": "lake env lean --run pdlc/changes/CH-0006-forecast-fast/demo.lean r6-4"
+    },
+    {
+      "caption": "CAP-forecast.R6 \u00b7 the hours of seeds 7 and 8 give a different estimate at hour 4000",
+      "run": "lake env lean --run pdlc/changes/CH-0006-forecast-fast/demo.lean r6-5"
+    },
+    {
+      "caption": "CAP-forecast.R7 \u00b7 the errors at 11:30 and at 13:30 of a day have a correlation from 0.55 to 0.85",
+      "run": "lake env lean --run pdlc/changes/CH-0006-forecast-fast/demo.lean r7-1"
+    },
+    {
+      "caption": "CAP-forecast.R7 \u00b7 the errors at 11:30 of a day and of the next day have a correlation from -0.25 to 0.25",
+      "run": "lake env lean --run pdlc/changes/CH-0006-forecast-fast/demo.lean r7-2"
+    },
+    {
+      "caption": "CAP-forecast.R7 \u00b7 at least 62% of the days have the same sign at 13:30 in the fetches at hour 0 and hour 10",
+      "run": "lake env lean --run pdlc/changes/CH-0006-forecast-fast/demo.lean r7-3"
+    },
+    {
+      "caption": "CAP-forecast.R7 \u00b7 error scale 0: each value of a fetch at hour 0 equals its actual power",
+      "run": "lake env lean --run pdlc/changes/CH-0006-forecast-fast/demo.lean r7-4"
+    },
+    {
+      "caption": "CAP-forecast.R7 \u00b7 60% to 95% of the sunny periods have the actual power in the band",
+      "run": "lake env lean --run pdlc/changes/CH-0006-forecast-fast/demo.lean r7-5"
+    },
+    {
+      "caption": "CH-0006 \u00b7 the checks of CAP-forecast and of IN-0002 pass",
+      "run": "for f in tests/CAP-forecast.lean tests/acceptance/IN-0002.acceptance.lean; do lake env lean --run \"$f\" | grep 'checks,'; done"
+    }
+  ]
+}

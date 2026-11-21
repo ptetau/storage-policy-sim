@@ -1,0 +1,196 @@
+/-
+The `sim` command. `sim run` simulates one strategy, and `sim compare` simulates each
+strategy on the same weather. JOB-simulate (simulate a year of solar) gives the rules.
+-/
+import StoragePolicySim.Cli
+import StoragePolicySim.Simulation
+import StoragePolicySim.PolicyCommands
+
+open StoragePolicySim
+
+/-! ## Options -/
+
+/-- A command that simulates. -/
+inductive Command
+  | run
+  | compare
+  deriving BEq
+
+def strategyFlag : String := "--strategy"
+
+def monthlyFlag : String := "--monthly"
+
+def defaultStrategy : Strategy := .greedy
+
+/-- The options of a command line after the reading step. -/
+structure CommandLine where
+  strategy : Strategy := defaultStrategy
+  monthly : Bool := false
+  /-- The number options, the last typed first. -/
+  numbers : List (String × TypedNumber) := []
+
+/-- The last value that the person typed for the option. -/
+def CommandLine.typed (commandLine : CommandLine) (flag : String) : Option TypedNumber :=
+  typedIn commandLine.numbers flag
+
+/-- The last typed value of the option, or its default. -/
+def CommandLine.number (commandLine : CommandLine) (option : NumberOption) : Float :=
+  numberIn commandLine.numbers option
+
+/-! ## Reading the command line -/
+
+def numberOption? (flag : String) : Option NumberOption :=
+  numberOptionIn rangedOptions flag
+
+/-- Adds the value of an option that takes a value. A bad number or strategy name is a
+problem. -/
+def CommandLine.add (commandLine : CommandLine) (flag value : String) :
+    Except Problem CommandLine :=
+  if flag == strategyFlag then
+    match Strategy.ofName? value with
+    | some strategy => .ok { commandLine with strategy }
+    | none => .error (.unknownStrategy value)
+  else
+    let wholeOnly := ((numberOption? flag).map (·.wholeOnly)).getD false
+    match readNumber wholeOnly value with
+    | some number =>
+      .ok { commandLine with numbers := (flag, ⟨value, number⟩) :: commandLine.numbers }
+    | none => .error (.badNumber flag value)
+
+/-- True when the command takes the option and the option takes a value. -/
+def takesValue (command : Command) (flag : String) : Bool :=
+  (numberOption? flag).isSome || flag == flexFlag || (command == .run && flag == strategyFlag)
+
+/-- Reads each option and its value, from left to right. The first problem stops the reading. -/
+def readOptions (command : Command) (commandLine : CommandLine) :
+    List String → Except Problem CommandLine
+  | [] => .ok commandLine
+  | flag :: rest =>
+    if command == .run && flag == monthlyFlag then
+      readOptions command { commandLine with monthly := true } rest
+    else if !takesValue command flag then .error (.unknownOption flag)
+    else match rest with
+      | [] => .error (.missingValue flag)
+      | value :: afterValue => do
+        readOptions command (← commandLine.add flag value) afterValue
+
+/-- Finds the first option outside its range. Then finds a `--flex` value outside 0 to the
+`--load` value. -/
+def CommandLine.rangeProblem? (commandLine : CommandLine) : Option Problem :=
+  rangeProblemIn rangedOptions commandLine.numbers
+
+/-! ## Simulation and output -/
+
+def CommandLine.site (commandLine : CommandLine) : Site :=
+  let loadKwh := commandLine.number loadOption
+  let flexKwh := ((commandLine.typed flexFlag).map (·.value)).getD (min defaultFlexKwh loadKwh)
+  { latitude := commandLine.number latitudeOption, pvKw := commandLine.number pvOption,
+    dailyLoadKwh := loadKwh, flexKwh }
+
+def CommandLine.battery (commandLine : CommandLine) : Battery :=
+  { capacityKwh := commandLine.number batteryOption, powerKw := commandLine.number powerOption }
+
+/-- The value of a whole-number option. The reading step makes sure that the value is whole,
+and the range step makes sure that it is not negative. -/
+def CommandLine.whole (commandLine : CommandLine) (option : NumberOption) : Nat :=
+  wholeIn commandLine.numbers option
+
+def CommandLine.simulate (commandLine : CommandLine) (strategy : Strategy) : Result :=
+  StoragePolicySim.simulate commandLine.site commandLine.battery strategy
+    (commandLine.whole seedOption) (commandLine.whole daysOption)
+
+/-- The 11 lines of `sim run`. -/
+def runLines (commandLine : CommandLine) (totals : Totals) : List String :=
+  let energy (label : String) (kwh : Float) := labelledLine label (oneDecimal kwh ++ " kWh")
+  let ratio (label : String) (percent : Float) := labelledLine label (oneDecimal percent ++ " %")
+  [labelledLine "strategy" commandLine.strategy.name,
+   labelledLine "days" (toString (commandLine.whole daysOption)),
+   labelledLine "seed" (toString (commandLine.whole seedOption)),
+   energy "solar" totals.pvKwh, energy "load" totals.loadKwh,
+   energy "self-used" totals.selfUsedKwh, energy "import" totals.importKwh,
+   energy "export" totals.exportKwh, energy "losses" totals.lossKwh,
+   ratio "self-consumption" totals.selfConsumption,
+   ratio "self-sufficiency" totals.selfSufficiency]
+
+def monthHeader : List String :=
+  ["month", "solar-kWh", "load-kWh", "import-kWh", "export-kWh", "self-consumption-%",
+   "self-sufficiency-%"]
+
+def monthRow (month : Month) : List String :=
+  let totals := month.totals
+  month.name :: [totals.pvKwh, totals.loadKwh, totals.importKwh, totals.exportKwh,
+    totals.selfConsumption, totals.selfSufficiency].map oneDecimal
+
+def compareHeader : List String :=
+  ["strategy", "self-consumption-%", "self-sufficiency-%", "import-kWh", "export-kWh"]
+
+def compareRow (strategy : Strategy) (totals : Totals) : List String :=
+  strategy.name :: [totals.selfConsumption, totals.selfSufficiency, totals.importKwh,
+    totals.exportKwh].map oneDecimal
+
+/-- The stdout lines of a command with good options. -/
+def output (command : Command) (commandLine : CommandLine) : List String :=
+  match command with
+  | .run =>
+    let result := commandLine.simulate commandLine.strategy
+    let monthTable := if commandLine.monthly
+      then "" :: table monthHeader (result.months.toList.map monthRow) else []
+    runLines commandLine result.totals ++ monthTable
+  | .compare =>
+    table compareHeader (Strategy.all.map fun strategy =>
+      compareRow strategy (commandLine.simulate strategy).totals)
+
+/-! ## The command -/
+
+/-- The width of the option, its value and its spaces in a line of the usage. -/
+def usageOptionWidth : Nat := 18
+
+/-- A line of the usage: two spaces, the option and its value, spaces to fill
+`usageOptionWidth`, and the meaning. -/
+def usageLine (option meaning : String) : String :=
+  "  " ++ option ++ "".pushn ' ' (usageOptionWidth - option.length) ++ meaning
+
+def usage : List String :=
+  let numberLine (option : NumberOption) :=
+    usageLine s!"{option.flag} N" (s!"{option.meaning}. Default {boundText option.default}, " ++
+      s!"range {boundText option.lowest} to {boundText option.highest}.")
+  ["usage: sim run [options] | sim compare [options] | sim forecast [options] | " ++
+     "sim policy <command> [options]",
+   "",
+   "sim run simulates one strategy and prints the totals.",
+   "sim compare simulates each strategy on the same weather.",
+   "sim policy <command> simulates the policies of a home. See sim policy help.",
+   "",
+   "Options:",
+   usageLine s!"{strategyFlag} NAME"
+     s!"sim run only. Default {defaultStrategy.name}, one of {strategyNames}.",
+   usageLine monthlyFlag "sim run only. Also prints the totals of each month."] ++
+  rangedOptions.map numberLine ++
+  [usageLine s!"{flexFlag} N" (s!"kWh of the daily load that a strategy can move. " ++
+     s!"Default {boundText defaultFlexKwh}, or the --load value when that is less. " ++
+     "Range 0 to the --load value.")]
+
+/-- Reads the options of the command. The first problem gives the error. -/
+def runCommand (command : Command) (words : List String) : Except Problem (List String) := do
+  let commandLine ← readOptions command {} words
+  match commandLine.rangeProblem? with
+  | some problem => .error problem
+  | none => .ok (output command commandLine)
+
+def main (args : List String) : IO UInt32 := do
+  match args with
+  | "forecast" :: words => return (← forecastCommand words)
+  | "policy" :: words => return (← policyCommand words)
+  | _ => pure ()
+  let outcome : Except Problem (List String) := match args with
+    | [] | "help" :: _ | "--help" :: _ => .ok usage
+    | "run" :: words => runCommand .run words
+    | "compare" :: words => runCommand .compare words
+    | word :: _ => .error (.unknownCommand word)
+  match outcome with
+  | .ok lines =>
+    IO.print (String.join (lines.map (· ++ "\n")))
+    return 0
+  | .error problem =>
+    IO.eprintln problem.line
+    return 2

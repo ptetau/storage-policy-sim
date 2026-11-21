@@ -1,0 +1,87 @@
+name = "storage-policy-sim"
+version = "0.1.0"
+defaultTargets = ["StoragePolicySim", "sim"]
+
+[[lean_lib]]
+name = "StoragePolicySim"
+globs = ["StoragePolicySim.+"]
+
+[[lean_exe]]
+name = "sim"
+root = "Main"
+
+[[lean_lib]]
+name = "SliceTests"
+globs = ["tests.slice.+", "tests.slice2.+"]
+
+[[lean_exe]]
+name = "slicetest_S1"
+root = "tests.slice.S1"
+
+[[lean_exe]]
+name = "slicetest_S2"
+root = "tests.slice.S2"
+
+[[lean_exe]]
+name = "slicetest_S3"
+root = "tests.slice.S3"
+
+[[lean_exe]]
+name = "slicetest_S4"
+root = "tests.slice.S4"
+
+[[lean_exe]]
+name = "slicetest_S5"
+root = "tests.slice.S5"
+
+[[lean_exe]]
+name = "slicetest_S6"
+root = "tests.slice.S6"
+
+[[lean_exe]]
+name = "slicetest_S7"
+root = "tests.slice.S7"
+
+[[lean_exe]]
+name = "slicetest_S8"
+root = "tests.slice.S8"
+
+[[lean_exe]]
+name = "slicetest_S9"
+root = "tests.slice.S9"
+
+[[lean_lib]]
+name = "Analysis"
+globs = ["analysis.+"]
+
+[[lean_exe]]
+name = "monthly"
+root = "analysis.Monthly"
+
+[[lean_exe]]
+name = "nosensor"
+root = "analysis.NoSensor"
+
+[[lean_exe]]
+name = "oracle"
+root = "analysis.Oracle"
+
+[[lean_exe]]
+name = "calibrate"
+root = "analysis.Calibrate"
+
+[[lean_exe]]
+name = "slicetest2_S1"
+root = "tests.slice2.S1"
+
+[[lean_exe]]
+name = "slicetest2_S2"
+root = "tests.slice2.S2"
+
+[[lean_exe]]
+name = "slicetest2_S3"
+root = "tests.slice2.S3"
+
+[[lean_exe]]
+name = "slicetest2_S4"
+root = "tests.slice2.S4"

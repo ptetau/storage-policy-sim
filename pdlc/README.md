@@ -20,6 +20,8 @@ rules that all pdlc skills share. Each skill reads this file first, and names it
 7. Each review remit gets one fresh reviewer, and the reviewer sees only its packet.
 8. A change merges only when all of these are true, as `bin/check_merge.py` confirms:
    - The requirements of the change are `verified`.
+   - Each "Interface" entry of the change is in the "Interface" of its spec, with the
+     same error codes, and is not `proposed` there ("Interfaces").
    - The tests of the change did not change after the lock.
    - Each review remit passed.
    - The branch of the change merges into main without conflicts.
@@ -27,6 +29,11 @@ rules that all pdlc skills share. Each skill reads this file first, and names it
    - The acceptance checks of the intent are locked, reviewed, and passed at its last
      change.
 9. These files are the truth. Boards and dashboards only show what these files contain.
+10. The specs are sufficient to rebuild the project. The specs are the job, capability,
+    and design specs in `specs/`, and `config.md`. A new build from the specs alone
+    passes each acceptance check of the project. Change specs are history, not specs.
+    Thus, each name that a check calls is in the "Interface" of a job or capability
+    ("Interfaces").
 
 ## Commits
 
@@ -35,9 +42,12 @@ rules that all pdlc skills share. Each skill reads this file first, and names it
 - The trailers follow a blank line, one on each line: `Intent: IN-xxxx` first, then
   `Change: CH-xxxx` on the branch of a change. A commit that changes code, checks, or the
   README also has `Req: <IDs>`.
+- The pdlc trailers are the last paragraph of the message. Any other trailer, such as
+  `Co-Authored-By`, goes directly under them, with no blank line between them.
 - A hook examines each new commit. On a pdlc branch, it examines the subject and the
-  trailers. On every branch, it examines the writing in the specs, the intents, and the
-  change folders. The skill fixes all the problems that the hook names in one edit, and
+  trailers. On every branch, it examines the trailers of a commit with a pdlc subject.
+  Also on every branch, it examines the writing in the specs, the intents, and the change
+  folders. The skill fixes all the problems that the hook names in one edit, and
   amends the commit one time.
 
 ## Writing
@@ -71,9 +81,15 @@ rules that all pdlc skills share. Each skill reads this file first, and names it
   remote.
 - `templates/`: blank documents. A filled document has real content in place of each
   `<placeholder>` and each guide sentence.
-- `bin/`: `check_merge.py`, `check_writing.py`, `make_packets.py`, `record_gif.mjs`,
-  `record_merges.py`.
+- `bin/`: `check_handoff.py`, `check_merge.py`, `check_order.py`, `check_writing.py`,
+  `make_packets.py`, `record_gif.mjs`, `record_merges.py`.
+- `version.json`: the pdlc version of these files, and the hash of each file that pdlc wrote.
+  Only `/pdlc:upgrade` and init write it.
 - `.tools/`: the tools of the visual review. This folder is not committed.
+- `.logs/`: the debug log of each ship run, `ship-<UTC start>.jsonl`, one JSON object on
+  each line. A hook of the pdlc plugin writes it. This folder is not committed. After an
+  interruption or an API error, type `/pdlc:ship` to continue, because a normal prompt ends
+  the run.
 
 ## Code maps
 
@@ -92,6 +108,67 @@ change.
   parts. A new route or command adds its own part beside the others.
 - The README of the project is in no code map. A change changes only what the README says
   about its own spec, and how to run the app and the checks.
+
+## Interfaces
+
+The "Interface" of each job and capability lists what a check can call. The names are
+in the specs, so a rebuild from the specs keeps them, and the checks still pass.
+
+- A job lists what its user touches: commands and flags, routes, form fields, and the
+  page elements and page text that a check reads.
+- A capability lists the calls that jobs use: the public functions, each with its file.
+- Each test seam goes under "Test seams" in the "Interface" of the spec that owns it.
+  A seam controls the clock, randomness, or an outside vendor or store.
+- The first line of an entry gives the name in backticks, the kind, and the file. The
+  merge check matches entries by the first text in backticks.
+- Under the first line, "in" and "out" give what goes in and what comes out. For a
+  command, "out" names the stream, for example "on standard output", and the exit code.
+- "errors" is `errors: none`, or `errors:` with one line under it for each error. Each line
+  gives the code, the exact message, and the result, with ` · ` between them:
+  `` - `TOP_INVALID` · `error: --top needs a whole number greater than zero` · exit 2 · stderr ``.
+  The result is `exit <n>` for a command, `status <n>` for a route, or `raises <Name>` for a
+  function.
+- A command error ends with the stream that gets the message: `stderr` or `stdout`. On
+  an error, a command writes only the message to that stream, and the other stream is
+  empty, unless "out" says otherwise. A route error and a function error have no stream.
+- The code comes from `DES-errors`. An error that the app gives today, with no code in
+  `DES-errors`, has `no code`. When a line of an intent uses that error, the error gets a
+  code, as each failure line does. A function error with no message has `no message`.
+- Each entry has an `errors:` line. An `(assumed)` mark goes after the code, the message,
+  or the result that is a guess: `` - `USAGE` (assumed) · `usage: …` (assumed) · exit 2 · stderr ``.
+  The merge check leaves the marks out when it compares.
+- `errors: none` has nothing after it. The merge check compares the code, the message,
+  the result, and the stream of each error, and refuses any other form.
+- A new entry ends its first line with ` · proposed`. The `verify` stage removes the
+  mark in the scope spec when the change that builds the entry passes.
+- When a requirement retires, each entry that only it used gets ` · retiring`. The
+  build stage removes that entry with its code.
+- Intake writes the entries that the acceptance lines need. Recon writes the entries of
+  existing code, with no mark.
+- A change spec copies each entry that its checks call, word for word, as it copies
+  the requirements, but without the mark. A job change that calls an entry of another
+  job lists that job under "Relies on".
+- A missing entry goes into its spec first, as `proposed`, and then into the change
+  spec. This rule holds for the change stage, and for a missing item that the test
+  writer reports.
+- Suppose the spec that owns the item is not the scope of this change (at the change
+  stage: of a change of this intent). Then the item goes into the scope spec of this
+  change, or becomes a question for the user.
+- The changes of an intent go in the order of their entries. A change comes after each
+  change that builds an entry that its acceptance lines or its Interface use. It also
+  comes after the change of each spec under its "Relies on". `bin/check_order.py`
+  checks the order at the change stage.
+
+```
+- `send(template: TemplateName, to: Email) -> SentId` · function · `src/email.js`
+  - in: the name of a template, and an email address
+  - out: the ID of the sent email
+  - errors:
+    - `TEMPLATE_NOT_FOUND` · `no template named <name>` · raises `TemplateNotFound`
+    - `INVALID_ADDRESS` · `not a valid email address: <address>` · raises `InvalidAddress`
+```
+
+A `<placeholder>` in a message is permitted only in a template. A spec gives the real message.
 
 ## Who does what
 
@@ -125,7 +202,7 @@ merge.
   `templates/handoff.md`, which replaces the old one. Git keeps the history.
 - An intent stage writes the "Handoff" of the intent, with the template sections as `###`
   headings. A change stage writes `changes/CH-xxxx-name/handoff.md`.
-- The title comes from the list in the template. Every section stays, with "none" under an
+- The title comes from the list in the template. Every section stays, with "- none" under an
   empty one. The time comes from the real clock (`date -Iseconds`).
 - A handoff says only what the files show, with real counts of the checks that ran and of
   the acceptance lines shown.
@@ -156,8 +233,11 @@ change spec.
   as failing. The error comes from the missing interface, not from a mistake in the check.
 - A run has a time limit of a few minutes. A run that does not finish has a broken check,
   not a red one. The broken check goes back to the test writer before the lock.
-- When the test writer reports a missing "Interface" item, the skill adds the item to the
-  change spec itself (it can see the code). Then the test writer runs again.
+- When the test writer reports a missing "Interface" item, the skill adds the item to its
+  spec, as `proposed` ("Interfaces"). The skill can see the code. Then the skill copies
+  the item into the change spec that builds it. Suppose the spec that owns the item is
+  not the scope of this change. Then the item goes into the scope spec of this change,
+  or becomes a question for the user. Then the test writer runs again.
 - Lock: the commit of the checks. Its hash goes on the lock line, and replaces an older
   hash.
 - After the lock, only the test writer changes the checks, and only through the skill of
@@ -252,6 +332,8 @@ Its `Base:` names that branch, and its pull request targets that branch.
   base into it first, with the trailer `Intent`.
 - In that merge, a requirement that the intent changed keeps the text and status of the
   intent. Each other requirement keeps the text and status of the base.
+- An "Interface" entry follows the same rule. If the base removed ` · proposed`, the
+  entry keeps the base's line unless this intent changed it.
 - The changes of an intent merge together, bottom first. The merge check fails each of
   them until all are `in review`.
 - The base can merge into main before `verify` proposes the change
@@ -271,14 +353,15 @@ Its `Base:` names that branch, and its pull request targets that branch.
   answer has a mark and one line on why. The reply `skip` takes it.
 - A decision that a skill makes without an instruction (a name, a limit, a message, an
   order, a default answer) has the mark `(assumed)` where the spec or change spec states
-  it. The handoff lists it too. Thus, no guess stays hidden.
+  it. The handoff lists it too. `bin/check_handoff.py` makes sure that the list names each
+  new mark. Thus, no guess stays hidden.
 - The mark is plain, right after the words that it marks, with any reason outside the
   brackets: "at most 20 items (assumed), to keep the list short". In a change, the merge
   check rejects `(limit assumed)`, `*(assumed)*`, and each mark that does not start with
   `(assumed`.
 - With `defaults`, a skill asks nothing, and takes its recommended answer. Each answer goes
-  as `<question> → <answer> (assumed)` in "Decided on defaults" in the handoff and in the
-  intent "Notes", so that the user can change it.
+  as `- <requirement>: <question> → <answer> (assumed)` in "Decided on defaults" in the
+  handoff and in the intent "Notes", so that the user can change it.
 
 ## Spec patches
 
@@ -334,11 +417,16 @@ branch.
 
 ## pdlc's own files
 
-`README.md`, `ports/`, `adapters/`, `templates/`, and `bin/` come from the pdlc plugin.
-They change only in a pdlc upgrade, on main, in a commit of their own, and not on the
-branch of a change. An upgrade can also refresh the `DES-pdlc-*` design specs and the
-`reviews/` files that say `Default: yes`. A file that the project changes says
-`Default: no`, and belongs to the project.
+`README.md`, `ports/`, `adapters/`, `templates/`, `bin/`, and the `reviews/` and
+`specs/design/` files that say `Default: yes` come from the pdlc plugin. `/pdlc:upgrade`
+refreshes each of these files that the project did not change, and keeps each changed file.
+`version.json` records the version and the content that pdlc wrote. A file that the project
+changes on purpose says `Default: no`, and belongs to the project.
+
+- The upgrade commits "Upgrade pdlc" on main, or on the newest unmerged pdlc branch, as the
+  intent stages do ("Where pdlc commits").
+- The upgrade does not write a spec. A spec that needs a newer form goes into one intent that
+  waits for approval.
 
 ## Ports
 

@@ -1,6 +1,10 @@
 # DES-writing-style · How pdlc writes
 
-Status: agreed · Default: yes · Ask at init: yes
+Status: agreed · Default: no · Ask at init: yes
+
+In this project, these rules are a guideline, not a hard rule, for now. A review notes a
+break of a rule, but the break does not fail the review. The user decided this on
+2026-11-01, and https://github.com/ptetau/pskills/issues/24 tracks the rules in pdlc.
 
 ## Rule
 
