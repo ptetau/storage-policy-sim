@@ -59,7 +59,9 @@ private def physPre (home : Home) (seed days : Nat) : PhysPre := Id.run do
         let kw := home.arrays.foldl (init := 0.0) fun sum array =>
           sum + arrayKw array (panelWm2 latitude array dayOfYear step clear) airC
         let solarStep := kw * stepHours
-        let baseStep := baseLoadKw baseDailyKwh latitude dayOfYear step * stepHours
+        let heatingStep := (home.heatDayKwh[dayOfYear]?.getD 0.0) * (home.heatShape[hour]?.getD 0.0)
+          / stepsPerHour.toFloat
+        let baseStep := baseLoadKw baseDailyKwh latitude dayOfYear step * stepHours + heatingStep
         solar := solar.push solarStep
         base := base.push baseStep
         pvKwh := pvKwh + solarStep
@@ -278,6 +280,12 @@ private def physRunners (home : Home) (seed seeds days : Nat) : Array Runner :=
   let pres := (Array.range seeds).map fun k => physPre home (seed + k) days
   (Array.range seeds).map fun k policy =>
     (runPhysicsOn home policy (seed + k) days pres[k]! false).1.totals
+
+/-- For each seed, the totals of a run for each policy (an analysis aid). The weather and the
+loads of a seed are built once. -/
+def physTotalsOf (home : Home) (seeds : Array Nat) (days : Nat) : Array (Policy → HomeTotals) :=
+  let pres := seeds.map fun seed => (seed, physPre home seed days)
+  pres.map fun (seed, pre) policy => (runPhysicsOn home policy seed days pre false).1.totals
 
 /-- `evaluate` on the physics model. -/
 def evaluatePhysics (home : Home) (policy : Policy) (seed seeds days : Nat) : Evaluation :=
