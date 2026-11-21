@@ -172,6 +172,28 @@ def main (args : List String) : IO Unit := do
   let some mine := homeNamed "mine" | IO.println "no home"
   let mode := args[0]?.getD "monthly"
   let seeds := [1, 2, 3, 4, 5]
+  if mode == "pvcap" then
+    -- A limit on the solar power that reaches the house and the grid, as the meter data shows.
+    let timer : StaticParams :=
+      { windows := #[{ heatStart := 8, heatHours := 9 }, { heatStart := 13, heatHours := 2 }], dischargeFrom := 0, flexStart := 11 }
+    let noon : StaticParams :=
+      { windows := #[{ heatStart := 8, heatHours := 9 }, { heatStart := 11, heatHours := 4 }], dischargeFrom := 0, flexStart := 11 }
+    for cap in [11.0, 8.85] do
+      let base := asToday (measured mine 1.1 23.9 13.5 0.81 false) 0.15
+      let home := { base with limits := { inverterKw := cap, exportKw := 10.0 } }
+      for (label, p) in [("tuned timer", timer), ("studio 11:00 to 15:00", noon)] do
+        let mut months := Array.replicate 12 0.0
+        let mut imp := 0.0
+        let mut exp := 0.0
+        for seed in seeds do
+          let r := runPhysics home (.static p) seed 365
+          imp := imp + r.totals.importKwh
+          exp := exp + r.totals.exportKwh
+          for h in r.hours do
+            months := months.modify (monthOf h.day) (· + h.curtailedKwh)
+        let n := seeds.length.toFloat
+        IO.println s!"solar-to-AC cap {cap} kW, {label}: import {f1 (imp / n)}, export {f1 (exp / n)}, curtailed {f1 (months.foldl (· + ·) 0.0 / n)} kWh/yr; by month {months.map fun x => f1 (x / n)}"
+    return
   if mode == "export" then
     let timer : StaticParams :=
       { windows := #[{ heatStart := 8, heatHours := 9 }, { heatStart := 13, heatHours := 2 }], dischargeFrom := 0, flexStart := 11 }
