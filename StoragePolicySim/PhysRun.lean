@@ -155,7 +155,7 @@ private def runPhysicsOn (home : Home) (policy : Policy) (seed days : Nat) (pre 
     let inletC := pre.inletC.get! day
     -- The guard hour of the day (D13): early enough for the element to fill a full tank by midnight.
     let dayTanks := tanks.map fun tank =>
-      if tank.elementKw > 0.0 then
+      if tank.elementKw > 0.0 && tank.guardHour < hoursInDay then
         let hoursNeeded := (tankEnergyKwh (physStart tank) inletC / tank.elementKw).ceil.toUInt64.toNat
         { tank with guardHour := min tank.guardHour (hoursInDay - hoursNeeded) }
       else tank

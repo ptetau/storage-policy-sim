@@ -103,12 +103,50 @@ def descr (p : StaticParams) : String :=
   let w0 := p.windows[0]!; let w1 := p.windows[1]!
   s!"main {w0.heatStart}:00 for {w0.heatHours} h | studio {w1.heatStart}:00 for {w1.heatHours} h | discharge from {p.dischargeFrom}:00 | flexible from {p.flexStart}:00"
 
+/-- The home as it runs today: no evening top-up, and a boost by hand to a full tank when a tank
+falls below `boost` of its capacity. -/
+def asToday (home : Home) (boost : Float) : Home :=
+  { home with tanks := home.tanks.map fun (t : TankConfig) =>
+      { t with cutInKwh := boost * t.capacityKwh, guardHour := 24 } }
+
+/-- A line of results with the boosts: for each tank, the days a year with a boost and the energy
+of the boosts a year. -/
+def boostLine (label : String) (rs : List HomeResult) : IO Unit := do
+  line label (rs.map (·.totals))
+  let n := rs.length.toFloat
+  for tank in [0:2] do
+    let mut days := 0
+    let mut kwh := 0.0
+    for r in rs do
+      for day in [0:r.hours.size / 96] do
+        let mut b := 0.0
+        for k in [0:96] do
+          let t := r.hours[96 * day + k]!.tanks[tank]!
+          b := b + t.backstopKwh
+        kwh := kwh + b
+        if b > 0.3 then days := days + 1
+    IO.println s!"    tank {tank + 1}: boost on {f1 (days.toFloat / n)} days a year, {f1 (kwh / n)} kWh a year"
+
 def main (args : List String) : IO Unit := do
   let some mine := homeNamed "mine" | IO.println "no home"
+  let mode := args[0]?.getD "monthly"
+  let seeds := [1, 2, 3, 4, 5]
+  if mode == "today" then
+    let boost := (args[1]?.map fun s => s.toNat!.toFloat / 100.0).getD 0.25
+    let home := asToday (measured mine 1.1 23.9 13.5 0.81 false) boost
+    let run (p : Policy) := seeds.map fun s => runPhysics home p s 365
+    let now : StaticParams :=
+      { windows := #[{ heatStart := 10, heatHours := 5 }, { heatStart := 10, heatHours := 5 }], dischargeFrom := 0, flexStart := 18 }
+    boostLine "timer like today" (run (.static now))
+    if args[2]? == some "quick" then return
+    let tuned := tune (physTotalsOf home #[11, 12, 13] 365).toList now
+    IO.println s!"tuned: {descr tuned}"
+    boostLine "tuned timer" (run (.static tuned))
+    boostLine "tuned timer, discharge held to 15:00" (run (.static { tuned with dischargeFrom := 15 }))
+    boostLine "perfect day knowledge" (seeds.map fun s => runOracle home tuned s 365)
+    return
   let sensor := args[1]? == some "sensor"
   let home := measured mine 1.1 23.9 13.5 0.81 sensor
-  let seeds := [1, 2, 3, 4, 5]
-  let mode := args[0]?.getD "monthly"
   if mode == "monthly" then
     monthly home base seeds
   else
