@@ -63,6 +63,10 @@ name = "nosensor"
 root = "analysis.NoSensor"
 
 [[lean_exe]]
+name = "oracle"
+root = "analysis.Oracle"
+
+[[lean_exe]]
 name = "slicetest2_S1"
 root = "tests.slice2.S1"
 
