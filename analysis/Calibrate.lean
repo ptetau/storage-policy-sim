@@ -172,6 +172,30 @@ def main (args : List String) : IO Unit := do
   let some mine := homeNamed "mine" | IO.println "no home"
   let mode := args[0]?.getD "monthly"
   let seeds := [1, 2, 3, 4, 5]
+  if mode == "buffer" then
+    -- The battery level opens the window of a tank, and the window stays open until a fixed hour.
+    let home := asToday (measured mine 1.1 23.9 13.5 0.81 false) 0.15
+    let timer : StaticParams :=
+      { windows := #[{ heatStart := 8, heatHours := 9 }, { heatStart := 13, heatHours := 2 }], dischargeFrom := 0, flexStart := 11 }
+    ideaLine "timer 08-17 / 13-15" home (seeds.map fun s => runPhysics home (.static timer) s 365)
+    let runs := (divertTotalsOf home 11 #[11, 12, 13] 365).toList
+    let cost (d : Divert) : Float :=
+      runs.foldl (fun sum run =>
+        let t := run d
+        sum + t.importKwh + 1000.0 * t.unmetKwh + 10.0 * t.coldHours.toFloat) 0.0
+    for socs in [[0.8], [0.2, 0.35, 0.5, 0.65, 0.8, 0.9, 0.97]] do
+      let mut best : Divert := { socShare := 0.8, lateStart := #[8, 13], holdUntil := #[17, 15] }
+      let mut bestCost := cost best
+      for soc in socs do
+        for a in [7:14] do
+          for b in [9:16] do
+            for ea in [15, 17, 19, 21] do
+              for eb in [15, 17, 19] do
+                let d : Divert := { socShare := soc, lateStart := #[a, b], holdUntil := #[ea, eb] }
+                let k := cost d
+                if k < bestCost - 0.01 then best := d; bestCost := k
+      ideaLine s!"battery opens the window at {f1 (100.0 * best.socShare)} %, latest starts {best.lateStart}, closes {best.holdUntil}" home (seeds.map fun s => runDivert home 11 best s 365)
+    return
   if mode == "pvcap" then
     -- A limit on the solar power that reaches the house and the grid, as the meter data shows.
     let timer : StaticParams :=

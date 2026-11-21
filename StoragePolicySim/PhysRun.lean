@@ -125,6 +125,9 @@ has at most 2 starts a day. -/
 structure Divert where
   socShare : Float
   lateStart : Array Nat
+  /-- When given for a tank, a start stays on until this hour, and the thermostat alone stops and
+  restarts the element. A tank then starts once a day. -/
+  holdUntil : Array Nat := #[]
   deriving Repr, Inhabited
 
 /-- The run of a home with a policy on the physics model, from a full tank and an empty battery on
@@ -225,8 +228,15 @@ private def runPhysicsOn (home : Home) (policy : Policy) (seed days : Nat) (pre 
         let mut heat := Array.replicate tankCount 0.0
         let mut startedNow := false
         for i in order do
-          if latched[i]! && shareOf i ≥ 0.995 then latched := latched.set! i false
-          if !latched[i]! && shareOf i < 0.9 && startsToday[i]! < maxStartsPerDay then
+          let hold := rule.holdUntil[i]?
+          let ended := match hold with
+            | some last => hour ≥ last
+            | none => shareOf i ≥ 0.995
+          if latched[i]! && ended then latched := latched.set! i false
+          let mayStart := match hold with
+            | some last => startsToday[i]! == 0 && hour < last
+            | none => shareOf i < 0.9 && startsToday[i]! < maxStartsPerDay
+          if !latched[i]! && mayStart then
             let late := startsToday[i]! == 0 && hour ≥ rule.lateStart[i]?.getD hoursInDay
             if late || (ready && !startedNow) then
               latched := latched.set! i true
